@@ -1,0 +1,92 @@
+﻿@{
+    ViewData["Title"] = "Đánh giá nghề nghiệp";
+}
+
+<section class="career-test-hero">
+    <span class="page-badge">🧭 Career Assessment</span>
+
+    <h1>Khám phá nghề nghiệp phù hợp với bạn</h1>
+
+    <p>
+        Trả lời bài đánh giá mẫu để hệ thống tính điểm và gợi ý nghề nghiệp phù hợp.
+    </p>
+
+    <div class="test-overview">
+        <div>
+            <h3>8</h3>
+            <p>Câu hỏi</p>
+        </div>
+
+        <div>
+            <h3>5 phút</h3>
+            <p>Thời gian</p>
+        </div>
+
+        <div>
+            <h3>4 nhóm</h3>
+            <p>Nghề nghiệp</p>
+        </div>
+
+        <div>
+            <h3>Demo</h3>
+            <p>Không backend</p>
+        </div>
+    </div>
+</section>
+
+<section class="content-section">
+    <div class="career-test-main-full">
+
+        <div class="top-progress-card">
+            <div class="progress-header">
+                <span id="questionCounter">Câu hỏi 1/8</span>
+                <span id="progressText">Hoàn thành 0%</span>
+            </div>
+
+            <div class="progress-track">
+                <span id="progressBar" style="width: 0%"></span>
+            </div>
+        </div>
+
+        <div id="questionCard" class="question-card">
+            <div class="question-header">
+                <strong id="questionGroup">Nhóm: Sở thích nghề nghiệp</strong>
+            </div>
+
+            <h2 id="questionTitle">Loading...</h2>
+
+            <p class="question-desc">
+                Hãy chọn phương án mô tả đúng nhất với bạn.
+            </p>
+
+            <div id="answerList" class="answer-list detailed"></div>
+
+            <div class="test-actions">
+                <button id="prevBtn" class="secondary-btn" type="button">Quay lại</button>
+                <button id="nextBtn" class="primary-btn" type="button">Tiếp tục</button>
+            </div>
+        </div>
+
+        <div id="resultBox" class="sample-result hidden">
+            <div class="section-title">
+                <span>📊 Kết quả bài test</span>
+                <h3>Nghề nghiệp phù hợp với bạn</h3>
+            </div>
+
+            <div id="resultGrid" class="result-grid"></div>
+
+            <div class="result-actions">
+                <button id="restartBtn" class="secondary-btn" type="button">
+                    Làm lại bài test
+                </button>
+
+                <a class="primary-btn" asp-controller="Home" asp-action="CareerPath">
+                    Xem lộ trình nghề nghiệp
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script src="~/js/career-test.js" asp-append-version="true"></script>
