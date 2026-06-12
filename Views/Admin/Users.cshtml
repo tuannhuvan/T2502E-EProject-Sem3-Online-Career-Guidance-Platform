@@ -1,0 +1,120 @@
+﻿@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Users";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Management</div>
+            <h2 class="page-title">Users</h2>
+        </div>
+
+        <div class="col-auto ms-auto">
+            <a href="#" class="btn btn-primary">
+                <i class="ti ti-plus me-1"></i>
+                Add User
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body border-bottom py-3">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <input class="form-control" placeholder="Search user..." />
+            </div>
+
+            <div class="col-md-3">
+                <select class="form-select">
+                    <option>All Roles</option>
+                    <option>User</option>
+                    <option>Mentor</option>
+                    <option>Admin</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select class="form-select">
+                    <option>All Status</option>
+                    <option>Active</option>
+                    <option>Pending</option>
+                    <option>Blocked</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button class="btn btn-outline-primary w-100">Filter</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+            <tr>
+                <th><input type="checkbox" class="form-check-input" /></th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Career Goal</th>
+                <th>Status</th>
+                <th class="w-1">Actions</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td>Nguyễn Minh Anh</td>
+                <td>minhanh@gmail.com</td>
+                <td>User</td>
+                <td>Software Engineer</td>
+                <td><span class="badge bg-green-lt">Active</span></td>
+                <td class="table-actions">
+                    <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
+                </td>
+            </tr>
+
+            <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td>Trần Hà Linh</td>
+                <td>halinh@gmail.com</td>
+                <td>User</td>
+                <td>UI/UX Designer</td>
+                <td><span class="badge bg-green-lt">Active</span></td>
+                <td class="table-actions">
+                    <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
+                </td>
+            </tr>
+
+            <tr>
+                <td><input type="checkbox" class="form-check-input" /></td>
+                <td>Phạm Quốc Huy</td>
+                <td>huypham@gmail.com</td>
+                <td>Mentor</td>
+                <td>Business Analyst</td>
+                <td><span class="badge bg-yellow-lt">Pending</span></td>
+                <td class="table-actions">
+                    <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-footer d-flex align-items-center">
+        <p class="m-0 text-muted">Showing 1 to 3 of 20 entries</p>
+
+        <ul class="pagination m-0 ms-auto">
+            <li class="page-item disabled"><a class="page-link" href="#">prev</a></li>
+            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">next</a></li>
+        </ul>
+    </div>
+</div>
