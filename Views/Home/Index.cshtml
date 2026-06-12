@@ -1,8 +1,146 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section id="home" class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">
+            <span>✨</span>
+            <span>Khám phá con đường sự nghiệp của bạn</span>
+        </div>
+
+        <h1>
+            Tìm kiếm nghề nghiệp<br />
+            phù hợp với bạn
+        </h1>
+
+        <p>
+            Nền tảng hướng nghiệp thông minh giúp bạn khám phá năng lực,
+            tìm kiếm lộ trình phát triển và kết nối với cơ hội việc làm phù hợp nhất.
+        </p>
+
+        <div class="hero-actions">
+            <a class="primary-btn" asp-controller="Home" asp-action="CareerTest">Bắt đầu đánh giá →</a>
+            <a class="secondary-btn" href="#features">Tìm hiểu thêm</a>
+        </div>
+
+        <div class="stats-grid">
+            <div>
+                <h3>50K+</h3>
+                <p>Người dùng</p>
+            </div>
+            <div>
+                <h3>200+</h3>
+                <p>Nghề nghiệp</p>
+            </div>
+            <div>
+                <h3>1000+</h3>
+                <p>Việc làm</p>
+            </div>
+            <div>
+                <h3>95%</h3>
+                <p>Hài lòng</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="features" class="features">
+    <div class="section-header">
+        <h2>Tính năng nổi bật</h2>
+        <p>Hệ sinh thái hoàn chỉnh hỗ trợ bạn từ khám phá bản thân đến phát triển sự nghiệp</p>
+    </div>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="icon blue">📋</div>
+            <h3>Đánh giá nghề nghiệp</h3>
+            <p>Bài test Holland, MBTI và đánh giá năng lực chuyên sâu để hiểu rõ bản thân.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="icon purple">🎯</div>
+            <h3>Gợi ý & Lộ trình</h3>
+            <p>Nhận gợi ý nghề nghiệp phù hợp và lộ trình phát triển cụ thể theo năng lực.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="icon green">📚</div>
+            <h3>Tài nguyên đào tạo</h3>
+            <p>Thư viện khóa học, sách và tài liệu để phát triển kỹ năng cần thiết.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="icon orange">👥</div>
+            <h3>Cố vấn nghề nghiệp</h3>
+            <p>Kết nối với mentor có kinh nghiệm để được tư vấn 1-1 hoặc theo nhóm.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="icon red">💼</div>
+            <h3>Việc làm & Thực tập</h3>
+            <p>Khám phá hàng nghìn cơ hội việc làm và thực tập phù hợp với bạn.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="icon cyan">📄</div>
+            <h3>Công cụ tạo CV</h3>
+            <p>Tạo CV chuyên nghiệp với nhiều mẫu đẹp và dễ dàng tùy chỉnh.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="icon pink">📈</div>
+            <h3>Theo dõi mục tiêu</h3>
+            <p>Đặt mục tiêu nghề nghiệp và theo dõi tiến độ phát triển của bạn.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="icon indigo">📅</div>
+            <h3>Sự kiện & Cộng đồng</h3>
+            <p>Tham gia webinar, workshop và kết nối với cộng đồng cùng lĩnh vực.</p>
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works">
+    <div class="section-header">
+        <h2>Cách thức hoạt động</h2>
+        <p>4 bước đơn giản để khám phá và phát triển sự nghiệp của bạn</p>
+    </div>
+
+    <div class="steps-grid">
+        <div class="step-card">
+            <span class="step-number">01</span>
+            <div class="step-icon">👤</div>
+            <h3>Đăng ký tài khoản</h3>
+            <p>Tạo hồ sơ cá nhân và cập nhật thông tin về kỹ năng, sở thích của bạn.</p>
+        </div>
+
+        <div class="step-card">
+            <span class="step-number">02</span>
+            <div class="step-icon">📝</div>
+            <h3>Hoàn thành đánh giá</h3>
+            <p>Làm các bài test nghề nghiệp để hiểu rõ năng lực và xu hướng của bản thân.</p>
+        </div>
+
+        <div class="step-card">
+            <span class="step-number">03</span>
+            <div class="step-icon">🧭</div>
+            <h3>Nhận gợi ý phù hợp</h3>
+            <p>Khám phá các nghề nghiệp phù hợp và lộ trình phát triển cụ thể.</p>
+        </div>
+
+        <div class="step-card">
+            <span class="step-number">04</span>
+            <div class="step-icon">🚀</div>
+            <h3>Bắt đầu hành trình</h3>
+            <p>Học tập, kết nối mentor và ứng tuyển vào các vị trí phù hợp.</p>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <h2>Sẵn sàng bắt đầu hành trình nghề nghiệp?</h2>
+    <p>Tham gia cùng hàng nghìn người dùng đã tìm thấy con đường sự nghiệp phù hợp với CareerPath</p>
+    <a class="cta-btn" asp-controller="Account" asp-action="Register">Bắt đầu ngay - Miễn phí →</a>
+</section>

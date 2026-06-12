@@ -1,0 +1,39 @@
+﻿@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<section class="auth-page">
+    <div class="auth-card">
+        <div class="auth-badge">🎓 CareerPath</div>
+
+        <h1>Đăng nhập</h1>
+        <p>Chào mừng bạn quay trở lại. Tiếp tục hành trình định hướng nghề nghiệp của bạn.</p>
+
+        <form>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" placeholder="Nhập email của bạn" />
+            </div>
+
+            <div class="form-group">
+                <label>Mật khẩu</label>
+                <input type="password" placeholder="Nhập mật khẩu" />
+            </div>
+
+            <div class="form-row">
+                <label>
+                    <input type="checkbox" />
+                    Ghi nhớ đăng nhập
+                </label>
+                <a href="#">Quên mật khẩu?</a>
+            </div>
+
+            <button type="button" class="auth-btn">Đăng nhập</button>
+        </form>
+
+        <p class="auth-switch">
+            Chưa có tài khoản?
+            <a asp-controller="Account" asp-action="Register">Đăng ký ngay</a>
+        </p>
+    </div>
+</section>
