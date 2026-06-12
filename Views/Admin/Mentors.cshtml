@@ -1,0 +1,128 @@
+﻿@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Mentors";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Management</div>
+            <h2 class="page-title">Mentor CRUD Demo</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards">
+    <div class="col-lg-5">
+        <form class="card">
+            <div class="card-header">
+                <h3 class="card-title">Mentor Form</h3>
+            </div>
+
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input class="form-control is-invalid" placeholder="Nguyễn Văn An" />
+                    <div class="invalid-feedback">Name is required</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Expertise</label>
+                    <select class="form-select">
+                        <option>.NET Developer</option>
+                        <option>UI/UX Designer</option>
+                        <option>Business Analyst</option>
+                        <option>Data Analyst</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Gender</label>
+
+                    <label class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="gender" checked />
+                        <span class="form-check-label">Male</span>
+                    </label>
+
+                    <label class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="gender" />
+                        <span class="form-check-label">Female</span>
+                    </label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Available Date</label>
+                    <input type="date" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Avatar Upload</label>
+                    <input type="file" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Bio / CKEditor Demo</label>
+                    <textarea rows="5" class="form-control">Senior mentor with 8 years of experience...</textarea>
+                </div>
+
+                <label class="form-check">
+                    <input class="form-check-input" type="checkbox" checked />
+                    <span class="form-check-label">Verified Mentor</span>
+                </label>
+            </div>
+
+            <div class="card-footer text-end">
+                <button type="button" class="btn btn-secondary">Cancel</button>
+                <button type="button" class="btn btn-primary">Save Mentor</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Mentor List</h3>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Expertise</th>
+                        <th>Rating</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr>
+                        <td>Nguyễn Văn An</td>
+                        <td>.NET Developer</td>
+                        <td>4.9</td>
+                        <td><span class="badge bg-green-lt">Verified</span></td>
+                        <td><a class="btn btn-sm btn-outline-primary">Edit</a></td>
+                    </tr>
+
+                    <tr>
+                        <td>Trần Mai Linh</td>
+                        <td>UI/UX Designer</td>
+                        <td>4.8</td>
+                        <td><span class="badge bg-green-lt">Verified</span></td>
+                        <td><a class="btn btn-sm btn-outline-primary">Edit</a></td>
+                    </tr>
+
+                    <tr>
+                        <td>Phạm Minh Huy</td>
+                        <td>Business Analyst</td>
+                        <td>4.7</td>
+                        <td><span class="badge bg-yellow-lt">Pending</span></td>
+                        <td><a class="btn btn-sm btn-outline-primary">Edit</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

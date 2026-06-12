@@ -1,0 +1,152 @@
+﻿@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Overview</div>
+            <h2 class="page-title">Career Guidance Dashboard</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            <a href="#" class="btn btn-primary">
+                <i class="ti ti-download me-1"></i>
+                Export Report
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row row-deck row-cards">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="subheader">Total Users</div>
+                <div class="h1 mb-2">1,240</div>
+                <div class="text-success"><i class="ti ti-trending-up"></i> +12% this month</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="subheader">Mentors</div>
+                <div class="h1 mb-2">86</div>
+                <div class="text-muted">24 verified mentors</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="subheader">Career Tests</div>
+                <div class="h1 mb-2">3,420</div>
+                <div class="text-success">Completed tests</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="subheader">Jobs Posted</div>
+                <div class="h1 mb-2">312</div>
+                <div class="text-muted">Active job listings</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards mt-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Career Test Analytics</h3>
+            </div>
+
+            <div class="card-body">
+                <canvas id="careerChart" height="110"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Top Careers</h3>
+            </div>
+
+            <div class="list-group list-group-flush">
+                <div class="list-group-item d-flex justify-content-between">
+                    Software Engineer <span class="badge bg-blue-lt">420</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between">
+                    UI/UX Designer <span class="badge bg-purple-lt">310</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between">
+                    Business Analyst <span class="badge bg-green-lt">180</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between">
+                    Data Analyst <span class="badge bg-yellow-lt">120</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header">
+        <h3 class="card-title">Recent Test Results</h3>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+            <tr>
+                <th>User</th>
+                <th>Top Career</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>Nguyễn Minh Anh</td>
+                <td>Software Engineer</td>
+                <td><span class="badge bg-green-lt">92%</span></td>
+                <td><span class="badge bg-blue-lt">Completed</span></td>
+                <td>12/06/2026</td>
+            </tr>
+
+            <tr>
+                <td>Trần Hà Linh</td>
+                <td>UI/UX Designer</td>
+                <td><span class="badge bg-green-lt">84%</span></td>
+                <td><span class="badge bg-blue-lt">Completed</span></td>
+                <td>12/06/2026</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    new Chart(document.getElementById("careerChart"), {
+        type: "bar",
+        data: {
+            labels: ["Software", "UI/UX", "Business Analyst", "Data Analyst"],
+            datasets: [{
+                label: "Career Match Count",
+                data: [420, 310, 180, 120],
+                borderWidth: 1
+            }]
+        }
+    });
+</script>
+}
