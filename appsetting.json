@@ -1,0 +1,20 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=CareerGuidanceDb;User=root;Password=;"
+  },
+  "UploadSettings": {
+    "ImageFolder": "uploads/images",
+    "AttachmentFolder": "uploads/attachments",
+    "MaxImageSize": 10485760,
+    "MaxAttachmentSize": 52428800,
+    "AllowedImageExtensions": ".jpg,.jpeg,.png,.gif",
+    "AllowedAttachmentExtensions": ".pdf,.doc,.docx"
+  }
+}

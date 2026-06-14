@@ -1,0 +1,71 @@
+@model IEnumerable<Career_Guidance_Platform.Models.SampleCrudModel>
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Mẫu CRUD";
+}
+
+<div class="page-header d-print-none mb-4">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Quản lý</div>
+            <h2 class="page-title">Quản lý Mẫu CRUD</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            <a asp-action="SampleCrudCreate" class="btn btn-primary">
+                <i class="ti ti-plus me-2"></i> Tạo mới
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Loại</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th class="w-1">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Id</td>
+                        <td>@item.Name</td>
+                        <td>@item.Category</td>
+                        <td>
+                            <span class="badge @(item.IsActive ? "bg-success" : "bg-danger")">
+                                @(item.IsActive ? "Hoạt động" : "Không hoạt động")
+                            </span>
+                        </td>
+                        <td>@item.CreatedDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <div class="btn-list">
+                                <a asp-action="SampleCrudEdit" asp-route-id="@item.Id" class="btn btn-icon btn-ghost-primary" title="Sửa">
+                                    <i class="ti ti-edit"></i>
+                                </a>
+                                <button class="btn btn-icon btn-ghost-danger" title="Xóa" disabled>
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

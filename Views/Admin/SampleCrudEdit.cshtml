@@ -1,0 +1,146 @@
+@model Career_Guidance_Platform.Models.SampleCrudModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Cập nhật Mẫu CRUD";
+}
+
+<div class="page-header d-print-none mb-4">
+    <div class="row g-2 align-items-center">
+        <div class="col"><h2 class="page-title">Cập nhật Mẫu CRUD</h2></div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form asp-action="SampleCrudEdit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="card">
+            <div class="card-body">
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Name">Tên <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" asp-for="Name" placeholder="Nhập tên">
+                    <span class="invalid-feedback" asp-validation-for="Name"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Description">Mô tả <span class="text-danger">*</span></label>
+                    <textarea class="form-control" asp-for="Description" rows="3"></textarea>
+                    <span class="invalid-feedback" asp-validation-for="Description"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Loại</label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Category" id="category1" value="Category1" @(Model.Category == "Category1" ? "checked" : "")>
+                            <label class="form-check-label" for="category1">Loại 1</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Category" id="category2" value="Category2" @(Model.Category == "Category2" ? "checked" : "")>
+                            <label class="form-check-label" for="category2">Loại 2</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Category" id="category3" value="Category3" @(Model.Category == "Category3" ? "checked" : "")>
+                            <label class="form-check-label" for="category3">Loại 3</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" @(Model.IsActive ? "checked" : "")>
+                        <label class="form-check-label" for="isActive">Kích hoạt</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="CreatedDate">Ngày tạo</label>
+                    <div class="input-icon">
+                        <span class="input-icon-addon"><i class="ti ti-calendar"></i></span>
+                        <input type="datetime-local" class="form-control datetimepicker" asp-for="CreatedDate" id="datetimepicker">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Content">Nội dung chi tiết</label>
+                    <textarea id="content" name="Content" class="form-control ckeditor">@Model.Content</textarea>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Hình ảnh hiện tại</label>
+                        <div><img src="@Model.ImagePath" alt="Current Image" style="max-width:200px;" class="rounded"></div>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">Cập nhật hình ảnh</label>
+                    <input type="file" class="form-control" name="imageFile" accept="image/*" id="imageFile">
+                    <small class="text-muted d-block mt-2">Để trống nếu không thay đổi</small>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.AttachmentPath))
+                {
+                    <div class="mb-3">
+                        <label class="form-label">File đính kèm hiện tại</label>
+                        <div>
+                            <a href="@Model.AttachmentPath" target="_blank" class="btn btn-sm btn-outline-primary"><i class="ti ti-download"></i> Tải về</a>
+                        </div>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">Cập nhật file đính kèm</label>
+                    <input type="file" class="form-control" name="attachmentFile" accept=".pdf,.doc,.docx" id="attachmentFile">
+                    <small class="text-muted d-block mt-2">Để trống nếu không thay đổi</small>
+                </div>
+            </div>
+
+            <div class="card-footer text-end">
+                <a asp-action="SampleCrud" class="btn btn-link">Hủy</a>
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Thông tin</h3></div>
+            <div class="card-body">
+                <p><strong>Tạo lúc:</strong> @Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</p>
+                @if (Model.UpdatedDate.HasValue) { <p><strong>Cập nhật lúc:</strong> @Model.UpdatedDate.Value.ToString("dd/MM/yyyy HH:mm")</p> }
+                <p><strong>Trạng thái:</strong> <span class="badge @(Model.IsActive ? "bg-success" : "bg-danger")">@(Model.IsActive ? "Hoạt động" : "Không hoạt động")</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+
+    <script>
+        flatpickr("#datetimepicker", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i"
+        });
+
+        ClassicEditor.create(document.querySelector('#content'))
+            .catch(error => console.error(error));
+
+        document.getElementById('imageFile').addEventListener('change', function(e) {
+            const f = e.target.files[0];
+            if (f && f.size > 10 * 1024 * 1024) { alert('Hình ảnh quá lớn (max 10MB)'); e.target.value = ''; }
+        });
+        document.getElementById('attachmentFile').addEventListener('change', function(e) {
+            const f = e.target.files[0];
+            if (f && f.size > 50 * 1024 * 1024) { alert('File quá lớn (max 50MB)'); e.target.value = ''; }
+        });
+    </script>
+}
