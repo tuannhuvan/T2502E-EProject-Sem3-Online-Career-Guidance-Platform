@@ -1,0 +1,103 @@
+@model Career_Guidance_Platform.Models.TestResult
+
+@{
+    ViewData["Title"] = "Kết quả bài test";
+}
+
+<section class="content-section result-detail">
+    <div class="container">
+        <div class="section-header">
+            <h1>Kết quả bài test</h1>
+            <p>Chi tiết kết quả đánh giá nghề nghiệp của bạn</p>
+        </div>
+
+        <div class="result-summary card">
+            <div class="result-left">
+                <h2>Kết quả chính</h2>
+
+                @if (Model.RecommendedCareerPath != null)
+                {
+                    <div class="recommended-career">
+                        <h3>@Model.RecommendedCareerPath.Title</h3>
+                        @if (!string.IsNullOrWhiteSpace(Model.RecommendedCareerPath.Content))
+                        {
+                            <div class="career-content">@Html.Raw(Model.RecommendedCareerPath.Content)</div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p><em>Không có nghề nghiệp gợi ý.</em></p>
+                }
+
+                <div class="compatibility" style="margin-top:0.8rem">
+                    <strong>Độ phù hợp:</strong>
+                    @if (Model.CompatibilityScore.HasValue)
+                    {
+                        <span class="score">@Model.CompatibilityScore.Value.ToString("0.##") %</span>
+                    }
+                    else
+                    {
+                        <span class="score">—</span>
+                    }
+                </div>
+
+                <div class="meta" style="margin-top:0.6rem">
+                    <small>Ngày làm: @Model.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small><br />
+                    <small>Người làm: @Model.Student?.FullName ?? Model.StudentId.ToString()</small>
+                </div>
+
+                <div class="result-actions" style="margin-top:1rem;">
+                    @if (Model.RecommendedCareerPath != null)
+                    {
+                        <a asp-controller="CareerPath" asp-action="Details" asp-route-id="@Model.RecommendedCareerPath.Id" class="btn primary-btn">Xem lộ trình nghề nghiệp</a>
+                    }
+                    <a asp-controller="CareerTest" asp-action="TakeTest" class="btn secondary-btn">Làm lại bài test</a>
+                    <a asp-controller="Home" asp-action="Index" class="btn">Trang chủ</a>
+                </div>
+            </div>
+
+            <div class="result-right">
+                <h3>Chi tiết câu hỏi & đáp án</h3>
+
+                @if (Model.TestAnswers != null && Model.TestAnswers.Any())
+                {
+                    <ol class="answer-list">
+                        @foreach (var ans in Model.TestAnswers)
+                        {
+                            <li class="answer-item">
+                                <div class="question">
+                                    <strong>
+                                        @(
+                                            !string.IsNullOrWhiteSpace(ans.QuestionTest?.Content)
+                                            ? ans.QuestionTest.Content
+                                            : $"Câu hỏi #{ans.QuestionId}"
+                                        )
+                                    </strong>
+                                </div>
+                                <div class="selected-option" style="margin-top:.35rem">
+                                    <span style="font-size:.95rem;color:#666">Đáp án đã chọn:</span>
+                                    <div class="option-content" style="margin-top:.25rem">
+                                        @if (ans.QuestionOption != null)
+                                        {
+                                            <strong>@ans.QuestionOption.Content</strong>
+                                        }
+                                        else
+                                        {
+                                            <em>Không tìm thấy đáp án (id: @ans.OptionId)</em>
+                                        }
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ol>
+                }
+                else
+                {
+                    <p>Không có câu trả lời lưu trữ.</p>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+

@@ -1,6 +1,25 @@
-namespace Career_Guidance_Platform.Data;
+using Microsoft.EntityFrameworkCore;
+using Career_Guidance_Platform.Models;
 
-public class AppDbContext
+namespace Career_Guidance_Platform.Data
 {
-    
+    public class AppDbContext : DbContext
+    {
+        public AppDbContext(DbContextOptions<AppDbContext> opts) : base(opts) { }
+
+        public DbSet<Test> Tests { get; set; }
+        public DbSet<QuestionTest> QuestionTests { get; set; }
+        public DbSet<QuestionOption> QuestionOptions { get; set; }
+        public DbSet<TestResult> TestResults { get; set; }
+        public DbSet<TestAnswer> TestAnswers { get; set; }
+        public DbSet<OptionCareerPath> OptionCareerPaths { get; set; }
+        public DbSet<CareerPath> CareerPaths { get; set; }
+        public DbSet<User> Users { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            // Entities already have [Table]/[Column] attributes; add extra mapping if needed here.
+        }
+    }
 }
