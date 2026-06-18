@@ -3,13 +3,36 @@
     ViewData["Title"] = "Career Tests";
 }
 
-<h2 class="page-title mb-3">Career Tests</h2>
+<h2 class="page-title mb-3">Career Test Questions</h2>
 
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title">Career Test Questions</h3>
-        <div class="card-actions">
-            <a href="#" class="btn btn-primary">Add Question</a>
+        <h3 class="card-title">Question Management</h3>
+
+        <div class="card-actions d-flex gap-2">
+            <input type="text"
+                   id="searchInput"
+                   class="form-control"
+                   placeholder="Search question..."
+                   style="width:220px;">
+
+            <select class="form-select"
+                    id="filterType"
+                    style="width:180px;">
+                <option value="">All Types</option>
+                <option value="Interest">Interest</option>
+                <option value="Skill">Skill</option>
+                <option value="Personality">Personality</option>
+                <option value="Value">Value</option>
+            </select>
+
+            <button class="btn btn-primary"
+                    id="btnAddQuestion"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#questionModal">
+                Add Question
+            </button>
         </div>
     </div>
 
@@ -18,27 +41,185 @@
             <thead>
             <tr>
                 <th>Question</th>
-                <th>Group</th>
-                <th>Answers</th>
+                <th>Type</th>
+                <th>Options</th>
                 <th>Status</th>
+                <th class="text-end">Actions</th>
             </tr>
             </thead>
 
-            <tbody>
+            <tbody id="questionTableBody">
             <tr>
-                <td>Bạn thích hoạt động nào nhất?</td>
-                <td>Interest</td>
-                <td>4</td>
-                <td><span class="badge bg-green-lt">Active</span></td>
+                <td class="question-content">Bạn thích lập trình phần mềm?</td>
+
+                <td class="question-type">Interest</td>
+
+                <td class="question-options"
+                    data-option1="Rất thích"
+                    data-option2="Thích"
+                    data-option3="Bình thường"
+                    data-option4="Không thích">
+                    4 Options
+                </td>
+
+                <td class="question-status">
+                    <span class="badge bg-green-lt">Active</span>
+                </td>
+
+                <td class="text-end">
+                    <div class="btn-list justify-content-end">
+                        <button class="btn btn-sm btn-outline-primary btn-edit-question"
+                                type="button">
+                            Edit
+                        </button>
+
+                        <button class="btn btn-sm btn-outline-danger btn-delete-question"
+                                type="button">
+                            Delete
+                        </button>
+                    </div>
+                </td>
             </tr>
 
             <tr>
-                <td>Bạn tự tin nhất với kỹ năng nào?</td>
-                <td>Skill</td>
-                <td>4</td>
-                <td><span class="badge bg-green-lt">Active</span></td>
+                <td class="question-content">Bạn thích phân tích dữ liệu?</td>
+
+                <td class="question-type">Skill</td>
+
+                <td class="question-options"
+                    data-option1="Rất thích"
+                    data-option2="Thích"
+                    data-option3="Bình thường"
+                    data-option4="Không thích">
+                    4 Options
+                </td>
+
+                <td class="question-status">
+                    <span class="badge bg-green-lt">Active</span>
+                </td>
+
+                <td class="text-end">
+                    <div class="btn-list justify-content-end">
+                        <button class="btn btn-sm btn-outline-primary"
+                                type="button"
+                                onclick="openEditModal(this)">
+                            Edit
+                        </button>
+
+                        <button class="btn btn-sm btn-outline-danger btn-delete-question"
+                                type="button">
+                            Delete
+                        </button>
+                    </div>
+                </td>
             </tr>
             </tbody>
         </table>
     </div>
 </div>
+
+<div class="modal modal-blur fade"
+     id="questionModal"
+     tabindex="-1"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">
+                    Add Question
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Question</label>
+
+                    <input type="text"
+                           id="questionInput"
+                           class="form-control"
+                           placeholder="Nhập câu hỏi">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Question Type</label>
+
+                    <select id="groupInput" class="form-select">
+                        <option value="Interest">Interest</option>
+                        <option value="Skill">Skill</option>
+                        <option value="Personality">Personality</option>
+                        <option value="Value">Value</option>
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Option 1</label>
+
+                        <input type="text"
+                               class="form-control option-input"
+                               placeholder="Option 1">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Option 2</label>
+
+                        <input type="text"
+                               class="form-control option-input"
+                               placeholder="Option 2">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Option 3</label>
+
+                        <input type="text"
+                               class="form-control option-input"
+                               placeholder="Option 3">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Option 4</label>
+
+                        <input type="text"
+                               class="form-control option-input"
+                               placeholder="Option 4">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+
+                    <select id="statusInput" class="form-select">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-link"
+                        type="button"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button class="btn btn-primary"
+                        id="btnSaveQuestion"
+                        type="button">
+                    Save
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/career-tests.js"></script>
+}
