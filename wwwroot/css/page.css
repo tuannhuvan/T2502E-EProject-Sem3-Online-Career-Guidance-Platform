@@ -359,6 +359,18 @@
     font-weight: 800;
 }
 
+.result-summary { display:flex; gap:2rem; padding:1rem; border:1px solid #e5e7eb; border-radius:6px; background:#fff; }
+.result-left { flex: 1 1 40%; min-width:280px; }
+.result-right { flex: 1 1 60%; max-height: 60vh; overflow:auto; padding-left:0.5rem; }
+.compatibility .score { font-size:1.4rem; color:#1f7a1f; margin-left:.5rem; }
+.answer-list { padding-left: 1rem; margin:0; }
+.answer-item { margin-bottom: 1rem; padding-bottom: .6rem; border-bottom:1px dashed #eee; }
+.option-content strong { color:#0b5ed7; }
+.btn { padding:.45rem .9rem; border-radius:4px; display:inline-block; text-decoration:none; margin-right:.5rem; border:1px solid transparent; }
+.primary-btn { background:#0b5ed7; color:white; }
+.secondary-btn { background:#6c757d; color:white; }
+
+
 /* =========================
    BOOKING MENTOR
 ========================= */
