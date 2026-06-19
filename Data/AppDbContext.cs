@@ -1,25 +1,25 @@
-using Career_Guidance_Platform.Data.SeedData;
-using Career_Guidance_Platform.Models;
-using Career_Guidance_Platform.Models.SeedData;
 using Microsoft.EntityFrameworkCore;
+using Career_Guidance_Platform.Models;
 
-namespace Career_Guidance_Platform.Data;
-
-public class AppDbContext : DbContext
+namespace Career_Guidance_Platform.Data
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options)
+    public class AppDbContext : DbContext
     {
-    }
+        public AppDbContext(DbContextOptions<AppDbContext> opts) : base(opts) { }
 
-    public DbSet<Category> Categories { get; set; }
-    public DbSet<CareerPath> CareerPaths { get; set; }
+        public DbSet<Test> Tests { get; set; }
+        public DbSet<QuestionTest> QuestionTests { get; set; }
+        public DbSet<QuestionOption> QuestionOptions { get; set; }
+        public DbSet<TestResult> TestResults { get; set; }
+        public DbSet<TestAnswer> TestAnswers { get; set; }
+        public DbSet<OptionCareerPath> OptionCareerPaths { get; set; }
+        public DbSet<CareerPath> CareerPaths { get; set; }
+        public DbSet<User> Users { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<Category>().HasData(CategorySeed.Data);
-        modelBuilder.Entity<CareerPath>().HasData(CareerPathSeed.Data);
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            // Entities already have [Table]/[Column] attributes; add extra mapping if needed here.
+        }
     }
 }
