@@ -1,4 +1,6 @@
-﻿@{
+﻿@model Career_Guidance_Platform.Dtos.Auth.RegisterViewModel
+
+@{
     ViewData["Title"] = "Đăng ký";
 }
 
@@ -9,25 +11,31 @@
         <h1>Tạo tài khoản</h1>
         <p>Bắt đầu khám phá năng lực, nghề nghiệp phù hợp và lộ trình phát triển của bạn.</p>
 
-        <form>
+        <form asp-action="Register" asp-controller="Account" method="post">
+            @Html.AntiForgeryToken()
+
             <div class="form-group">
                 <label>Họ và tên</label>
-                <input type="text" placeholder="Nhập họ và tên" />
+                <input asp-for="FullName" class="form-control" placeholder="Nhập họ và tên" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" placeholder="Nhập email của bạn" />
+                <input asp-for="Email" class="form-control" placeholder="Nhập email của bạn" />
+                <span asp-validation-for="Email" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label>Mật khẩu</label>
-                <input type="password" placeholder="Tạo mật khẩu" />
+                <input asp-for="Password" type="password" class="form-control" placeholder="Tạo mật khẩu" />
+                <span asp-validation-for="Password" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label>Xác nhận mật khẩu</label>
-                <input type="password" placeholder="Nhập lại mật khẩu" />
+                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Nhập lại mật khẩu" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
             </div>
 
             <div class="form-row terms">
@@ -37,7 +45,7 @@
                 </label>
             </div>
 
-            <button type="button" class="auth-btn">Đăng ký</button>
+            <button type="submit" class="auth-btn">Đăng ký</button>
         </form>
 
         <p class="auth-switch">
@@ -46,3 +54,7 @@
         </p>
     </div>
 </section>
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}
