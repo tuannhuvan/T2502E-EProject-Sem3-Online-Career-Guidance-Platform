@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "Payment Success";
+}
+
+<section class="payment-page">
+    <div class="container">
+
+        <div class="payment-result-card success">
+
+            <div class="payment-result-icon">
+                ✓
+            </div>
+
+            <h1>Payment Successful</h1>
+
+            <p>
+                Your payment has been completed successfully.
+                You can now continue using the premium career service.
+            </p>
+
+            <div class="payment-result-info">
+                <div>
+                    <span>Order Number</span>
+                    <strong>ORD-2026-0001</strong>
+                </div>
+
+                <div>
+                    <span>Amount</span>
+                    <strong>499,000 VNĐ</strong>
+                </div>
+
+                <div>
+                    <span>Payment Status</span>
+                    <strong class="text-success">Paid</strong>
+                </div>
+            </div>
+
+            <div class="payment-result-actions">
+                <a asp-controller="Home"
+                   asp-action="Index"
+                   class="payment-btn payment-btn-light">
+                    Back Home
+                </a>
+
+                <a asp-controller="Home"
+                   asp-action="CareerTest"
+                   class="payment-btn payment-btn-primary">
+                    Start Career Test
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</section>

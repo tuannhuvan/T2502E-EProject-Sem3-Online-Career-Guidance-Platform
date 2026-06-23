@@ -1,0 +1,107 @@
+@{
+    ViewData["Title"] = "Cart";
+}
+
+@section Styles
+{
+    <link rel="stylesheet" href="~/css/payment.css" asp-append-version="true" />
+}
+
+<section class="payment-page">
+
+    <div class="container">
+
+        <div class="payment-title">
+            <span class="tag">
+                CareerPath Payment
+            </span>
+
+            <h1>Your Cart</h1>
+
+            <p>
+                Review your selected career service before checkout.
+            </p>
+        </div>
+
+        <div class="payment-card">
+
+            <div class="payment-body">
+
+                <div class="payment-product">
+
+                    <div class="payment-icon">
+                        🎓
+                    </div>
+
+                    <div class="payment-product-info">
+                        <h3>Premium Career Assessment</h3>
+
+                        <p>
+                            Career test, compatibility score,
+                            career roadmap and personalized recommendations.
+                        </p>
+                    </div>
+
+                    <div class="payment-price">
+                        <strong>499,000 VNĐ</strong>
+
+                        <span class="payment-badge">
+                            Pending
+                        </span>
+                    </div>
+
+                </div>
+
+                <hr class="payment-divider"/>
+
+                <div class="payment-summary">
+
+                    <div class="payment-summary-item">
+                        <span>Order Number</span>
+
+                        <strong>
+                            ORD-2026-0001
+                        </strong>
+                    </div>
+
+                    <div class="payment-summary-item">
+                        <span>Amount</span>
+
+                        <strong>
+                            499,000 VNĐ
+                        </strong>
+                    </div>
+
+                    <div class="payment-summary-item">
+                        <span>Payment Status</span>
+
+                        <strong class="text-warning">
+                            Pending
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="payment-footer">
+
+                <a asp-controller="Home"
+                   asp-action="Index"
+                   class="payment-btn payment-btn-light">
+                    Continue Browsing
+                </a>
+
+                <a asp-controller="Payment"
+                   asp-action="Checkout"
+                   class="payment-btn payment-btn-primary">
+                    Proceed To Checkout →
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>

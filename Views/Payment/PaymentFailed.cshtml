@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "Payment Failed";
+}
+
+<section class="payment-page">
+    <div class="container">
+
+        <div class="payment-result-card failed">
+
+            <div class="payment-result-icon">
+                ×
+            </div>
+
+            <h1>Payment Failed</h1>
+
+            <p>
+                Your payment was cancelled or could not be completed.
+                Please try again or choose another payment method.
+            </p>
+
+            <div class="payment-result-info">
+                <div>
+                    <span>Order Number</span>
+                    <strong>ORD-2026-0001</strong>
+                </div>
+
+                <div>
+                    <span>Amount</span>
+                    <strong>499,000 VNĐ</strong>
+                </div>
+
+                <div>
+                    <span>Payment Status</span>
+                    <strong class="text-danger">Failed</strong>
+                </div>
+            </div>
+
+            <div class="payment-result-actions">
+                <a asp-controller="Home"
+                   asp-action="Index"
+                   class="payment-btn payment-btn-light">
+                    Back Home
+                </a>
+
+                <a asp-controller="Payment"
+                   asp-action="Checkout"
+                   class="payment-btn payment-btn-danger">
+                    Try Again
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</section>  

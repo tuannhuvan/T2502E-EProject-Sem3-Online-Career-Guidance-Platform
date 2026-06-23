@@ -1,57 +1,78 @@
 ﻿@model Career_Guidance_Platform.Models.ViewModels.TakeTestViewModel
 @using System.Text.Json
+@using Career_Guidance_Platform.Models.ViewModels
 
 @{
     ViewData["Title"] = "Đánh giá nghề nghiệp";
+
+    var questions = Model == null
+        ? new List<TakeTestQuestionVm>()
+        : Model.Questions ?? new List<TakeTestQuestionVm>();
+
+    var testId = Model == null ? 1 : Model.TestId;
 }
 
 <section class="career-test-hero">
     <span class="page-badge">🧭 Career Assessment</span>
     <h1>Khám phá nghề nghiệp phù hợp với bạn</h1>
     <p>Trả lời bài đánh giá mẫu để hệ thống tính điểm và gợi ý nghề nghiệp phù hợp.</p>
-    <!-- ... your existing static markup ... -->
 </section>
 
 <section class="content-section">
     <div class="career-test-main-full">
-        <!-- existing structure: progress, question card, result box, etc. -->
-        <div id="questionCard" class="question-card">
-            <!-- JS will render question content -->
-            <div class="question-header">
-                <strong id="questionGroup">Nhóm: ...</strong>
-            </div>
-            <h2 id="questionTitle">Loading...</h2>
-            <p class="question-desc">Hãy chọn phương án mô tả đúng nhất với bạn.</p>
-            <div id="answerList" class="answer-list detailed"></div>
-            <div class="test-actions">
-                <button id="prevBtn" class="secondary-btn" type="button">Quay lại</button>
-                <button id="nextBtn" class="primary-btn" type="button">Tiếp tục</button>
-            </div>
-        </div>
 
-        <div id="resultBox" class="sample-result hidden">
-            <div class="section-title">
-                <span>📊 Kết quả bài test</span>
-                <h3>Nghề nghiệp phù hợp với bạn</h3>
+        @if (questions.Count == 0)
+        {
+            <div class="sample-result">
+                <div class="section-title">
+                    <span>⚠️ Chưa có dữ liệu</span>
+                    <h3>Hiện chưa có câu hỏi cho bài test này</h3>
+                </div>
+                <p>Vào bằng đường dẫn: <strong>/CareerTest/TakeTest/1</strong></p>
             </div>
-            <div id="resultGrid" class="result-grid"></div>
-            <div class="result-actions">
-                <button id="restartBtn" class="secondary-btn" type="button">Làm lại bài test</button>
-                <a class="primary-btn" asp-controller="Home" asp-action="CareerPath">Xem lộ trình nghề nghiệp</a>
+        }
+        else
+        {
+            <div id="questionCard" class="question-card">
+                <div class="question-header">
+                    <strong id="questionGroup">Nhóm: ...</strong>
+                </div>
+
+                <h2 id="questionTitle">Loading...</h2>
+                <p class="question-desc">Hãy chọn phương án mô tả đúng nhất với bạn.</p>
+
+                <div id="answerList" class="answer-list detailed"></div>
+
+                <div class="test-actions">
+                    <button id="prevBtn" class="secondary-btn" type="button">Quay lại</button>
+                    <button id="nextBtn" class="primary-btn" type="button">Tiếp tục</button>
+                </div>
             </div>
-        </div>
+
+            <div id="resultBox" class="sample-result hidden">
+                <div class="section-title">
+                    <span>📊 Kết quả bài test</span>
+                    <h3>Nghề nghiệp phù hợp với bạn</h3>
+                </div>
+
+                <div id="resultGrid" class="result-grid"></div>
+
+                <div class="result-actions">
+                    <button id="restartBtn" class="secondary-btn" type="button">Làm lại bài test</button>
+                    <a class="primary-btn" asp-controller="Home" asp-action="CareerPath">Xem lộ trình nghề nghiệp</a>
+                </div>
+            </div>
+        }
     </div>
 </section>
 
-@* Hidden antiforgery token (rendered into a tiny hidden form for JS to copy) *@
 <form id="__antiForgeryForm" style="display:none">
     @Html.AntiForgeryToken()
 </form>
 
-@* Embed server questions JSON for the JS to consume *@
 <script>
-    var serverQuestions = @Html.Raw(JsonSerializer.Serialize(Model.Questions));
-    var serverTestId = @Model.TestId;
+    window.serverQuestions = @Html.Raw(JsonSerializer.Serialize(questions));
+    window.serverTestId = @testId;
 </script>
 
 <script src="~/js/career-test.js" asp-append-version="true"></script>

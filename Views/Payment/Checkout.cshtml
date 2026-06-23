@@ -1,0 +1,82 @@
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<section class="payment-page">
+    <div class="container">
+
+        <div class="payment-title">
+            <span class="tag">Checkout</span>
+            <h1>Confirm Your Payment</h1>
+            <p>Check order information before continuing payment.</p>
+        </div>
+
+        <div class="payment-card">
+            <div class="payment-body">
+
+                <div class="payment-summary">
+                    <div class="payment-summary-item">
+                        <span>Order Number</span>
+                        <strong>ORD-2026-0001</strong>
+                    </div>
+
+                    <div class="payment-summary-item">
+                        <span>Amount</span>
+                        <strong>499,000 VNĐ</strong>
+                    </div>
+
+                    <div class="payment-summary-item">
+                        <span>Payment Status</span>
+                        <strong class="text-warning">Pending</strong>
+                    </div>
+                </div>
+
+                <hr class="payment-divider" />
+
+                <div class="payment-method-box">
+                    <h3>Payment Method</h3>
+
+                    <label class="payment-method active">
+                        <input type="radio" name="method" checked />
+                        <div>
+                            <strong>PayPal</strong>
+                            <p>Demo payment gateway for Success Return URL.</p>
+                        </div>
+                    </label>
+
+                    <label class="payment-method">
+                        <input type="radio" name="method" />
+                        <div>
+                            <strong>Credit / Debit Card</strong>
+                            <p>Frontend only, backend integration later.</p>
+                        </div>
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="payment-footer">
+                <a asp-controller="Payment"
+                   asp-action="Cart"
+                   class="payment-btn payment-btn-light">
+                    Back To Cart
+                </a>
+
+                <div class="payment-actions">
+                    <a asp-controller="Payment"
+                       asp-action="PaymentFailed"
+                       class="payment-btn payment-btn-danger">
+                        Cancel 
+                    </a>
+
+                    <a asp-controller="Payment"
+                       asp-action="PaymentSuccess"
+                       class="payment-btn payment-btn-success">
+                        Success 
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
