@@ -1,279 +1,36 @@
-﻿@{
-    Layout = "_AdminLayout";
+﻿@model IEnumerable<Career_Guidance_Platform.Models.Test>
+
+@{
     ViewData["Title"] = "Career Tests";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<h2 class="page-title mb-3">Career Test Questions</h2>
+<h1>Career Tests</h1>
 
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Question Management</h3>
-
-        <div class="card-actions d-flex gap-2">
-            <input type="text"
-                   id="searchInput"
-                   class="form-control"
-                   placeholder="Search question..."
-                   style="width:220px;">
-
-            <select class="form-select"
-                    id="filterType"
-                    style="width:180px;">
-                <option value="">All Types</option>
-                <option value="Interest">Interest</option>
-                <option value="Skill">Skill</option>
-                <option value="Personality">Personality</option>
-                <option value="Value">Value</option>
-            </select>
-
-            <button class="btn btn-primary"
-                    id="btnAddQuestion"
-                    type="button"
-                    data-bs-toggle="modal"
-                    data-bs-target="#questionModal">
-                Add Question
-            </button>
-        </div>
-    </div>
-
-    <div class="table-responsive">
-        <table class="table card-table table-vcenter">
-            <thead>
-            <tr>
-                <th>Career Test</th>
-                <th>Question</th>
-                <th>Type</th>
-                <th>Options</th>
-                <th>Status</th>
-                <th class="text-end">Actions</th>
-            </tr>
-            </thead>
-
-            <tbody id="questionTableBody">
-            <tr>
-                <td class="question-test">Holland Test</td>
-
-                <td class="question-content">Bạn thích lập trình phần mềm?</td>
-
-                <td class="question-type">Interest</td>
-
-                <td class="question-options"
-                    data-option1="Rất thích"
-                    data-career1="Web Developer"
-                    data-weight1="5"
-                    data-option2="Thích"
-                    data-career2="Web Developer"
-                    data-weight2="4"
-                    data-option3="Bình thường"
-                    data-career3="Data Analyst"
-                    data-weight3="3"
-                    data-option4="Không thích"
-                    data-career4="UI/UX Designer"
-                    data-weight4="1">
-                    4 Options
-                </td>
-
-                <td class="question-status">
-                    <span class="badge bg-green-lt">Active</span>
-                </td>
-
-                <td class="text-end">
-                    <div class="btn-list justify-content-end">
-                        <button class="btn btn-sm btn-outline-primary btn-edit-question" type="button">
-                            Edit
-                        </button>
-
-                        <button class="btn btn-sm btn-outline-danger btn-delete-question" type="button">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
-
-            <tr>
-                <td class="question-test">MBTI Test</td>
-
-                <td class="question-content">Bạn thích phân tích dữ liệu?</td>
-
-                <td class="question-type">Skill</td>
-
-                <td class="question-options"
-                    data-option1="Rất thích"
-                    data-career1="Data Analyst"
-                    data-weight1="5"
-                    data-option2="Thích"
-                    data-career2="Data Analyst"
-                    data-weight2="4"
-                    data-option3="Bình thường"
-                    data-career3="Business Analyst"
-                    data-weight3="3"
-                    data-option4="Không thích"
-                    data-career4="Web Developer"
-                    data-weight4="1">
-                    4 Options
-                </td>
-
-                <td class="question-status">
-                    <span class="badge bg-green-lt">Active</span>
-                </td>
-
-                <td class="text-end">
-                    <div class="btn-list justify-content-end">
-                        <button class="btn btn-sm btn-outline-primary btn-edit-question" type="button">
-                            Edit
-                        </button>
-
-                        <button class="btn btn-sm btn-outline-danger btn-delete-question" type="button">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="modal modal-blur fade"
-     id="questionModal"
-     tabindex="-1"
-     aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Create Question</h5>
-
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close">
-                </button>
-            </div>
-
-            <div class="modal-body">
-
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h3 class="card-title">Question Information</h3>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Career Test</label>
-
-                                <select id="testInput" class="form-select">
-                                    <option value="Holland Test">Holland Test</option>
-                                    <option value="MBTI Test">MBTI Test</option>
-                                    <option value="Skill Assessment">Skill Assessment</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Question Type</label>
-
-                                <select id="groupInput" class="form-select">
-                                    <option value="Interest">Interest</option>
-                                    <option value="Skill">Skill</option>
-                                    <option value="Personality">Personality</option>
-                                    <option value="Value">Value</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Question Content</label>
-
-                            <textarea id="questionInput"
-                                      class="form-control"
-                                      rows="3"
-                                      placeholder="Nhập nội dung câu hỏi"></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Status</label>
-
-                            <select id="statusInput" class="form-select">
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Answer Options</h3>
-                    </div>
-
-                    <div class="card-body">
-
-                        @for (int i = 1; i <= 4; i++)
-                        {
-                            <div class="card mb-3 option-card" data-index="@i">
-                                <div class="card-body">
-                                    <h4 class="mb-3">Option @i</h4>
-
-                                    <div class="row">
-                                        <div class="col-md-5 mb-3">
-                                            <label class="form-label">Answer Content</label>
-
-                                            <input type="text"
-                                                   class="form-control option-input"
-                                                   placeholder="Nội dung đáp án">
-                                        </div>
-
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">Career Path</label>
-
-                                            <select class="form-select career-path-input">
-                                                <option value="">-- Select Career Path --</option>
-                                                <option value="Web Developer">Web Developer</option>
-                                                <option value="Data Analyst">Data Analyst</option>
-                                                <option value="UI/UX Designer">UI/UX Designer</option>
-                                                <option value="Business Analyst">Business Analyst</option>
-                                                <option value="Digital Marketer">Digital Marketer</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Weight</label>
-
-                                            <input type="number"
-                                                   class="form-control weight-input"
-                                                   placeholder="Weight"
-                                                   min="1"
-                                                   max="10">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-link"
-                        type="button"
-                        data-bs-dismiss="modal">
-                    Cancel
-                </button>
-
-                <button class="btn btn-primary"
-                        id="btnSaveQuestion"
-                        type="button">
-                    Save Question
-                </button>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script src="~/js/admin/career-tests.js"></script>
+<p>
+    <a asp-action="CreateTest">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.First().Title)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Title)
+            </td>
+            <td>
+                <a asp-action="EditTest" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="TestDetails" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="DeleteTest" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
 }
+    </tbody>
+</table>

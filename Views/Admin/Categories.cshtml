@@ -1,0 +1,61 @@
+@model IEnumerable<Career_Guidance_Platform.Models.Category>
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Categories";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Management</div>
+            <h2 class="page-title">Categories</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            <a asp-action="CreateCategory" class="btn btn-primary">
+                <i class="ti ti-plus me-1"></i>
+                Add Category
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th class="w-1">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><strong>@item.Name</strong></td>
+                        <td class="text-muted">@item.Description</td>
+                        <td>
+                            @if (item.Status == 1)
+                            {
+                                <span class="badge bg-green-lt">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-red-lt">Inactive</span>
+                            }
+                        </td>
+                        <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td class="table-actions">
+                            <a asp-action="EditCategory" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                            <a asp-action="DeleteCategory" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
