@@ -75,7 +75,7 @@ function renderQuestion() {
     prevBtn.disabled = currentQuestion === 0;
     prevBtn.style.opacity = currentQuestion === 0 ? "0.5" : "1";
 
-    nextBtn.textContent = currentQuestion === questions.length - 1 ? "Xem kết quả" : "Tiếp tục";
+    nextBtn.textContent = currentQuestion === questions.length - 1 ? "Hoàn thành bài test" : "Tiếp tục";
 
     updateProgress();
 }
@@ -89,12 +89,10 @@ function updateProgress() {
 }
 
 function calculateResult() {
-    // optional: compute local result for UI preview
     const scores = {};
     questions.forEach((q, idx) => {
         const ans = answers[idx];
         if (!ans) return;
-        // no "type" available here; you can map option->career clientside if you want
         scores[ans] = (scores[ans] || 0) + 1;
     });
 
@@ -103,35 +101,47 @@ function calculateResult() {
 }
 
 function renderResult() {
-    const results = calculateResult();
-
     questionCard.classList.add("hidden");
     resultBox.classList.remove("hidden");
 
+    // Hide result grid
     resultGrid.innerHTML = "";
+    resultGrid.style.display = "none";
 
-    if (results.length === 0) {
-        resultGrid.innerHTML = "<p>Không có kết quả (chưa chọn đáp án).</p>";
-    } else {
-        results.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "result-card";
-            card.innerHTML = `<h4>Đáp án ${item.id}</h4><p>Điểm: ${item.score}</p>`;
-            resultGrid.appendChild(card);
-        });
+    // Set title and description
+    const sectionTitle = resultBox.querySelector('.section-title');
+    if (sectionTitle) {
+        sectionTitle.querySelector('span').textContent = "📝 Hoàn thành bài đánh giá";
+        sectionTitle.querySelector('h3').textContent = "Chúc mừng bạn đã hoàn thành!";
     }
 
-    // Show a server submit button (if not exists)
-    if (!document.getElementById('serverSubmitBtn')) {
+    // Set description to prompt submission
+    const desc = resultBox.querySelector('.question-desc') || document.createElement('p');
+    desc.className = 'question-desc';
+    desc.style.textAlign = 'center';
+    desc.style.marginBottom = '24px';
+    desc.style.color = '#64748b';
+    desc.textContent = "Bạn đã hoàn thành 20 câu hỏi hướng nghiệp. Hãy nhấn nút 'Nộp bài' bên dưới để hệ thống xử lý và phân tích lộ trình sự nghiệp phù hợp nhất cho bạn.";
+    if (!resultBox.querySelector('.question-desc')) {
+        resultBox.insertBefore(desc, resultBox.querySelector('.result-actions') || resultGrid);
+    }
+
+    // Replace action buttons to display ONLY "Nộp bài"
+    const resultActions = resultBox.querySelector('.result-actions');
+    if (resultActions) {
+        resultActions.innerHTML = "";
+        
         const submitBtn = document.createElement('button');
         submitBtn.id = 'serverSubmitBtn';
         submitBtn.className = 'primary-btn';
         submitBtn.type = 'button';
+        submitBtn.style.padding = '14px 48px';
+        submitBtn.style.fontSize = '16px';
+        submitBtn.style.fontWeight = '700';
         submitBtn.textContent = 'Nộp bài';
         submitBtn.addEventListener('click', submitAnswersToServer);
-
-        const resultActions = document.querySelector('.result-actions') || resultBox.querySelector('.result-actions') || resultBox;
-        resultActions.insertBefore(submitBtn, resultActions.firstChild);
+        
+        resultActions.appendChild(submitBtn);
     }
 
     updateProgress();

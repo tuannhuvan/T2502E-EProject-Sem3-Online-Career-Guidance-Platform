@@ -138,8 +138,24 @@ namespace Career_Guidance_Platform.Data
                     Status = 1
                 };
                 context.Tests.Add(baseTest);
-                await context.SaveChangesAsync();
             }
+            else
+            {
+                baseTest.Status = 1;
+                context.Tests.Update(baseTest);
+            }
+            await context.SaveChangesAsync();
+
+            // Deactivate all other active tests to ensure only the 20-question Base Test is used
+            var otherTests = await context.Tests
+                .Where(t => t.Id != baseTest.Id && t.Status == 1)
+                .ToListAsync();
+            foreach (var ot in otherTests)
+            {
+                ot.Status = 0;
+                context.Tests.Update(ot);
+            }
+            await context.SaveChangesAsync();
 
             var existingQuestionsCount = await context.QuestionTests.CountAsync(q => q.TestId == baseTest.Id);
             if (existingQuestionsCount != 20)
@@ -508,6 +524,41 @@ namespace Career_Guidance_Platform.Data
                 };
                 context.CommunityPosts.AddRange(posts);
                 await context.SaveChangesAsync();
+            }
+
+            // 12. Seed Learning Resources
+            if (!await context.Resources.AnyAsync())
+            {
+                var dbCareerPaths = await context.CareerPaths.OrderBy(c => c.Id).ToListAsync();
+                if (dbCareerPaths.Count >= 7)
+                {
+                    var resources = new List<Resource>
+                    {
+                        // Software Engineer (PathIdx 0)
+                        new Resource { PathId = dbCareerPaths[0].Id, ResourceType = "PDF", Title = "C# & .NET Core Developer Handbook", Url = "https://example.com/books/csharp-handbook.pdf" },
+                        new Resource { PathId = dbCareerPaths[0].Id, ResourceType = "Video", Title = "Mastering Clean Architecture in ASP.NET Core", Url = "https://example.com/videos/clean-architecture" },
+                        // Network & Security (PathIdx 1)
+                        new Resource { PathId = dbCareerPaths[1].Id, ResourceType = "Doc", Title = "Cisco CCNA Networking Lab Guide", Url = "https://example.com/docs/ccna-networking-guide" },
+                        new Resource { PathId = dbCareerPaths[1].Id, ResourceType = "PDF", Title = "Introduction to Cyber Security Standards 2026", Url = "https://example.com/books/cybersecurity-standards.pdf" },
+                        // Data Scientist (PathIdx 2)
+                        new Resource { PathId = dbCareerPaths[2].Id, ResourceType = "Video", Title = "Python for Data Analysis and Visualization", Url = "https://example.com/videos/python-data-science" },
+                        new Resource { PathId = dbCareerPaths[2].Id, ResourceType = "PDF", Title = "Practical Machine Learning Guide", Url = "https://example.com/books/machine-learning-guide.pdf" },
+                        // UI/UX Designer (PathIdx 3)
+                        new Resource { PathId = dbCareerPaths[3].Id, ResourceType = "Doc", Title = "Figma Design System Component Standards", Url = "https://example.com/docs/figma-design-system" },
+                        new Resource { PathId = dbCareerPaths[3].Id, ResourceType = "Video", Title = "User Experience (UX) Research Methodology", Url = "https://example.com/videos/ux-research" },
+                        // HR Specialist (PathIdx 4)
+                        new Resource { PathId = dbCareerPaths[4].Id, ResourceType = "PDF", Title = "Modern Human Resources Management Guide", Url = "https://example.com/books/modern-hr-management.pdf" },
+                        new Resource { PathId = dbCareerPaths[4].Id, ResourceType = "Doc", Title = "KPI & Performance Review Template", Url = "https://example.com/docs/kpi-performance-review" },
+                        // Business Manager (PathIdx 5)
+                        new Resource { PathId = dbCareerPaths[5].Id, ResourceType = "Video", Title = "Strategic Thinking & Project Management", Url = "https://example.com/videos/strategic-thinking" },
+                        new Resource { PathId = dbCareerPaths[5].Id, ResourceType = "PDF", Title = "Startup Business Model Planning Handbook", Url = "https://example.com/books/business-model-planning.pdf" },
+                        // Accountant/Auditor (PathIdx 6)
+                        new Resource { PathId = dbCareerPaths[6].Id, ResourceType = "Doc", Title = "Vietnamese Accounting Standards (VAS) Cheat Sheet", Url = "https://example.com/docs/vas-cheat-sheet" },
+                        new Resource { PathId = dbCareerPaths[6].Id, ResourceType = "PDF", Title = "Corporate Taxation & Auditing Principles", Url = "https://example.com/books/corporate-taxation-principles.pdf" }
+                    };
+                    context.Resources.AddRange(resources);
+                    await context.SaveChangesAsync();
+                }
             }
         }
     }

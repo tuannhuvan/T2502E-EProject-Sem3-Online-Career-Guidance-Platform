@@ -1,48 +1,148 @@
-﻿@{
-    ViewData["Title"] = "Đào tạo";
+@model IEnumerable<Career_Guidance_Platform.Models.Resource>
+@{
+    ViewData["Title"] = "Đào tạo & Nâng cấp nghề nghiệp";
+    var selectedPath = ViewBag.SelectedPath as Career_Guidance_Platform.Models.CareerPath;
 }
 
-<section class="page-hero">
-
-    <span class="page-badge">📚 Training</span>
-
-    <h1>Tài nguyên đào tạo</h1>
-
-    <p>
-        Học tập thông qua các khóa học,
-        sách và tài liệu chất lượng.
-    </p>
-
+<section class="page-hero" style="background: radial-gradient(circle at top right, #ecfeff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
+    <span class="page-badge">📚 Phân hệ LMS & Đào tạo</span>
+    
+    @if (selectedPath != null)
+    {
+        <h1>Bồi dưỡng kiến thức: @selectedPath.Title</h1>
+        <p>Hệ thống học tập định hướng giúp bạn củng cố kiến thức và khắc phục các lỗ hổng chuyên môn để đạt chuẩn kết nối doanh nghiệp.</p>
+    }
+    else
+    {
+        <h1>Kho tài liệu đào tạo nghề nghiệp</h1>
+        <p>Học tập thông qua các khóa học, sách điện tử và tài liệu thực hành chất lượng cao từ các chuyên gia.</p>
+    }
 </section>
 
-<section class="content-section">
+<section class="content-section" style="max-width: 1100px;">
+    
+    @if (selectedPath != null)
+    {
+        <div class="info-card" style="margin-bottom: 40px; background: #e0f2fe; border: 1px solid #bae6fd; display: flex; gap: 20px; align-items: center; border-left: 6px solid #0284c7;">
+            <div style="font-size: 32px;">💡</div>
+            <div>
+                <strong style="color: #0369a1; font-size: 16px; display: block;">Mục tiêu học tập</strong>
+                <span style="color: #0c4a6e; font-size: 14px; line-height: 1.5;">Hoàn thành các tài liệu bồi dưỡng bên dưới, sau đó thực hiện <strong>Bài test nâng cấp (Upgrade Test)</strong> để đạt điều kiện điểm số vượt mức 80%!</span>
+            </div>
+        </div>
+    }
 
-    <div class="pricing-grid">
-
-        <div class="pricing-card">
-            <h3>Frontend Developer</h3>
-
-            <p>
-                HTML, CSS, JavaScript, React.
-            </p>
+    <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 40px; align-items: start;">
+        
+        <!-- Left Column: Documents list -->
+        <div>
+            <h2 style="font-size: 22px; color: #020617; margin-top: 0; margin-bottom: 20px;">📖 Tài nguyên bồi dưỡng kiến thức</h2>
+            
+            @if (Model.Any())
+            {
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    @foreach (var res in Model)
+                    {
+                        <div class="info-card" style="display: flex; gap: 20px; padding: 20px; align-items: center; transition: 0.25s;">
+                            <!-- File Icon -->
+                            <div style="width: 60px; height: 60px; border-radius: 12px; background: #f1f5f9; display: flex; flex-shrink: 0; align-items: center; justify-content: center; font-size: 24px;">
+                                @if (res.ResourceType == "PDF") { <span>📕</span> }
+                                else if (res.ResourceType == "Video") { <span>🎥</span> }
+                                else { <span>📄</span> }
+                            </div>
+                            <div style="flex-grow: 1;">
+                                <span style="font-size: 11px; font-weight: 700; color: #4f46e5; text-transform: uppercase; background: #e0e7ff; padding: 2px 8px; border-radius: 6px;">@res.ResourceType</span>
+                                <h3 style="font-size: 18px; color: #020617; margin: 6px 0 4px;">@res.Title</h3>
+                                <small style="color: #94a3b8;">Lộ trình: @(res.CareerPath?.Title ?? "Chung")</small>
+                            </div>
+                            <a href="@res.Url" target="_blank" class="btn secondary-btn" style="border-radius: 8px; font-size: 13px; font-weight: 600; padding: 8px 16px;">Tải / Xem ngay</a>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p style="font-style: italic; color: #64748b;">Chưa có tài nguyên bồi dưỡng cụ thể cho lộ trình này. Ban điều phối sẽ cập nhật sớm nhất.</p>
+            }
         </div>
 
-        <div class="pricing-card">
-            <h3>Backend Developer</h3>
-
-            <p>
-                C#, ASP.NET Core, SQL Server.
-            </p>
-        </div>
-
-        <div class="pricing-card">
-            <h3>Data Analyst</h3>
-
-            <p>
-                Python, SQL, Power BI.
-            </p>
+        <!-- Right Column: Upgrade Test Area -->
+        <div>
+            <div class="info-card" style="border: 2px solid #4f46e5; background: #ffffff; padding: 24px; position: sticky; top: 100px;">
+                <span style="font-size: 12px; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.5px; background: #e0e7ff; padding: 4px 10px; border-radius: 999px;">Đánh giá tiến độ</span>
+                <h3 style="font-size: 20px; color: #020617; margin: 12px 0 8px;">📝 Bài test nâng cấp (Upgrade Test)</h3>
+                <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 0 0 20px;">Bài kiểm tra này giúp đánh giá lại kỹ năng của bạn sau quá trình tự bồi dưỡng kiến thức. Đạt điểm số trên 80% để mở khóa kết nối nhà tuyển dụng.</p>
+                
+                @if (selectedPath != null)
+                {
+                    <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 13px; color: #4b5563; line-height: 1.5;">
+                        <div>• Lộ trình: <strong>@selectedPath.Title</strong></div>
+                        <div>• Số lượng: <strong>10 câu hỏi nghiệp vụ</strong></div>
+                        <div>• Thời gian: <strong>15 phút</strong></div>
+                    </div>
+                    
+                    <button class="btn primary-btn" style="width: 100%; border-radius: 10px; font-weight: 700; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: none; cursor: pointer;" onclick="startUpgradeTest()">Bắt đầu Upgrade Test</button>
+                }
+                else
+                {
+                    <p style="font-size: 13px; color: #94a3b8; font-style: italic;">Vui lòng chọn một lộ trình sự nghiệp cụ thể để được phân bổ bài kiểm tra nâng cấp tương ứng.</p>
+                    <a asp-controller="Home" asp-action="CareerTest" class="btn secondary-btn" style="width: 100%; text-align: center; border-radius: 10px; font-weight: 700; display: block; padding-top: 10px; box-sizing: border-box; height: 44px;">Làm bài Test định hướng</a>
+                }
+            </div>
         </div>
 
     </div>
-
 </section>
+
+<!-- Mock Upgrade Test Modal -->
+<div id="upgradeTestModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="info-card" style="width: 500px; max-width: 90%; background: #ffffff; border-radius: 24px; padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.15); border: none; position: relative;">
+        <h3 style="font-size: 22px; color: #020617; margin-top: 0; margin-bottom: 12px;">Thực hiện bài Test nâng cấp</h3>
+        <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">Bạn đang thực hiện bài kiểm tra bồi dưỡng kiến thức cấp độ 1 cho lộ trình sự nghiệp của mình. Vui lòng trả lời câu hỏi chuyên môn dưới đây:</p>
+        
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-bottom: 24px;">
+            <strong style="color: #020617; font-size: 16px; display: block; margin-bottom: 12px;">Câu hỏi 1: Lợi ích chính của việc sử dụng một hệ thống quản lý mã nguồn (e.g. Git) trong phát triển phần mềm là gì?</strong>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="display: flex; gap: 10px; align-items: center; font-size: 14px; color: #4b5563; cursor: pointer; padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <input type="radio" name="mockQ" value="A"> A. Làm code chạy nhanh hơn.
+                </label>
+                <label style="display: flex; gap: 10px; align-items: center; font-size: 14px; color: #4b5563; cursor: pointer; padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <input type="radio" name="mockQ" value="B"> B. Quản lý lịch sử thay đổi, hỗ trợ làm việc nhóm và khôi phục mã nguồn cũ dễ dàng.
+                </label>
+                <label style="display: flex; gap: 10px; align-items: center; font-size: 14px; color: #4b5563; cursor: pointer; padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <input type="radio" name="mockQ" value="C"> C. Tự động tìm kiếm lỗi cú pháp.
+                </label>
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn secondary-btn" onclick="closeUpgradeTest()" style="border-radius: 10px; font-weight: 600; padding: 10px 20px; border: none; cursor: pointer;">Hủy bỏ</button>
+            <button class="btn primary-btn" onclick="submitMockUpgradeTest()" style="border-radius: 10px; font-weight: 700; padding: 10px 24px; border: none; cursor: pointer;">Nộp bài</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function startUpgradeTest() {
+        document.getElementById('upgradeTestModal').style.display = 'flex';
+    }
+    
+    function closeUpgradeTest() {
+        document.getElementById('upgradeTestModal').style.display = 'none';
+    }
+    
+    function submitMockUpgradeTest() {
+        const selected = document.querySelector('input[name="mockQ"]:checked');
+        if (!selected) {
+            alert('Vui lòng chọn một đáp án trước khi nộp bài!');
+            return;
+        }
+        
+        if (selected.value === 'B') {
+            alert('🎉 Chúc mừng! Bạn trả lời chính xác và đạt điểm tối đa (100%). Điểm số bồi dưỡng kiến thức của bạn đã được cập nhật thành công vượt mức 80%!');
+        } else {
+            alert('❌ Câu trả lời chưa chính xác. Hãy ôn tập kỹ tài liệu và làm lại bài sau nhé!');
+        }
+        closeUpgradeTest();
+    }
+</script>

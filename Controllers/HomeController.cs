@@ -57,7 +57,27 @@ public class HomeController : Controller
 
     public IActionResult CareerPath() => View();
 
-    public IActionResult Training() => View();
+    public async Task<IActionResult> Training(int? careerPathId)
+    {
+        List<Resource> resources;
+        if (careerPathId.HasValue)
+        {
+            resources = await _context.Resources
+                .Where(r => r.PathId == careerPathId.Value && r.Status == 1)
+                .Include(r => r.CareerPath)
+                .ToListAsync();
+            
+            ViewBag.SelectedPath = await _context.CareerPaths.FindAsync(careerPathId.Value);
+        }
+        else
+        {
+            resources = await _context.Resources
+                .Include(r => r.CareerPath)
+                .Where(r => r.Status == 1)
+                .ToListAsync();
+        }
+        return View(resources);
+    }
 
     public IActionResult Jobs() => View();
 

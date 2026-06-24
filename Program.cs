@@ -27,6 +27,13 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
     await DbSeeder.SeedAsync(dbContext, userManager, roleManager);
+
+    var allTests = dbContext.Tests.Include(t => t.QuestionTests).ToList();
+    Console.WriteLine($"[DEBUG] Total tests in DB: {allTests.Count}");
+    foreach (var t in allTests)
+    {
+        Console.WriteLine($"[DEBUG] Test ID: {t.Id}, Title: '{t.Title}', Status: {t.Status}, Question count: {t.QuestionTests.Count}");
+    }
 }
 
 // Configure the HTTP request pipeline.
