@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Career_Guidance_Platform.Models;
 
 namespace Career_Guidance_Platform.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
         public AppDbContext(DbContextOptions<AppDbContext> opts) : base(opts) { }
 
@@ -14,7 +16,7 @@ namespace Career_Guidance_Platform.Data
         public DbSet<TestAnswer> TestAnswers { get; set; }
         public DbSet<OptionCareerPath> OptionCareerPaths { get; set; }
         public DbSet<CareerPath> CareerPaths { get; set; }
-        public DbSet<User> Users { get; set; }
+        public DbSet<Category> Categories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
