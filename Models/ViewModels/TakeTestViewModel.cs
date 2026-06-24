@@ -6,6 +6,7 @@ namespace Career_Guidance_Platform.Models.ViewModels
     {
         public int TestId { get; set; }
         public List<TakeTestQuestionVm> Questions { get; set; } = new List<TakeTestQuestionVm>();
+        public List<AnswerDto> Answers { get; set; } = new List<AnswerDto>();
     }
 
     public class TakeTestQuestionVm

@@ -1,4 +1,4 @@
-﻿@model Career_Guidance_Platform.Models.ViewModels.TakeTestViewModel
+@model Career_Guidance_Platform.Models.ViewModels.TakeTestViewModel
 @using System.Text.Json
 
 @{
@@ -14,7 +14,17 @@
 
 <section class="content-section">
     <div class="career-test-main-full">
-        <!-- existing structure: progress, question card, result box, etc. -->
+        <!-- Progress Bar -->
+        <div class="test-progress-container" style="margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; color: #4b5563;">
+                <span id="questionCounter">Câu hỏi 0/0</span>
+                <span id="progressText">Hoàn thành 0%</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden;">
+                <div id="progressBar" style="width: 0%; height: 100%; background: #020617; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+
         <div id="questionCard" class="question-card">
             <!-- JS will render question content -->
             <div class="question-header">

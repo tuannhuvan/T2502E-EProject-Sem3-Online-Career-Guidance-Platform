@@ -1,26 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 
 namespace Career_Guidance_Platform.Models;
 
 [Table("users")]
-public class User
+public class User : IdentityUser<int>
 {
-    [Key]
-    [Column("id")]
-    public int Id { get; set; }
-
     [Required]
     [Column("full_name")]
     public string FullName { get; set; } = string.Empty;
-
-    [Required]
-    [Column("email")]
-    public string Email { get; set; } = string.Empty;
-
-    [Required]
-    [Column("password_hash")]
-    public string PasswordHash { get; set; } = string.Empty;
 
     [Column("role")]
     public string Role { get; set; } = "Student";

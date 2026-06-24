@@ -1,4 +1,4 @@
-﻿// career-test.js
+// career-test.js
 // This script supports two modes:
 // - server-driven: serverQuestions + serverTestId injected by Razor
 // - fallback: static local `questions` (your previous array); you already had static data earlier
@@ -9,13 +9,13 @@
 if (typeof serverQuestions !== 'undefined' && Array.isArray(serverQuestions) && serverQuestions.length > 0) {
     // Normalize serverQuestions items to the shape we use below: { group, title, answers: [{ id, text, desc? }] }
     questions = serverQuestions.map(q => ({
-        group: q.group ?? '',
-        title: q.content ?? q.Content ?? q.Content ?? '',
-        questionId: q.questionId ?? q.QuestionId ?? q.QuestionId ?? 0,
-        answers: (q.options || []).map(opt => ({
-            id: opt.optionId ?? opt.OptionId ?? opt.optionId ?? 0,
-            text: opt.content ?? opt.Content ?? opt.Content ?? '',
-            desc: opt.description ?? opt.desc ?? ''
+        group: q.group ?? q.Group ?? '',
+        title: q.content ?? q.Content ?? '',
+        questionId: q.questionId ?? q.QuestionId ?? 0,
+        answers: (q.options ?? q.Options ?? []).map(opt => ({
+            id: opt.optionId ?? opt.OptionId ?? 0,
+            text: opt.content ?? opt.Content ?? '',
+            desc: opt.description ?? opt.Description ?? opt.desc ?? opt.Desc ?? ''
         }))
     }));
 } else {
