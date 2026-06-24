@@ -74,6 +74,7 @@ namespace Career_Guidance_Platform.Data
             }
 
             // 5. Seed Categories & CareerPaths
+            List<CareerPath> careerPaths;
             if (!await context.Categories.AnyAsync())
             {
                 var categories = new List<Category>
@@ -96,7 +97,7 @@ namespace Career_Guidance_Platform.Data
                 var biz = categories[4];
                 var finance = categories[5];
 
-                var careerPaths = new List<CareerPath>
+                careerPaths = new List<CareerPath>
                 {
                     new CareerPath { CategoryId = tech.Id, Title = "Kỹ sư phần mềm (Software Engineer)", Content = "Lập trình, thiết kế, phát triển và bảo trì phần mềm." },
                     new CareerPath { CategoryId = tech.Id, Title = "Chuyên gia mạng & bảo mật (Network & Security)", Content = "Thiết lập hạ tầng mạng và bảo đảm an toàn thông tin hệ thống." },
@@ -120,14 +121,41 @@ namespace Career_Guidance_Platform.Data
                 };
                 context.Set<JobPosting>().AddRange(jobs);
                 await context.SaveChangesAsync();
+            }
+            else
+            {
+                careerPaths = await context.CareerPaths.OrderBy(c => c.Id).ToListAsync();
+            }
 
-                // 6. Seed Base Test
-                var baseTest = new Test
+            // 6. Seed Base Test
+            var baseTest = await context.Tests.FirstOrDefaultAsync(t => t.Title == "Bài đánh giá định hướng nghề nghiệp nền tảng (Base Test)");
+            if (baseTest == null)
+            {
+                baseTest = new Test
                 {
                     Title = "Bài đánh giá định hướng nghề nghiệp nền tảng (Base Test)",
-                    Description = "Khảo sát diện rộng 20 câu hỏi tổng quan giúp phân tích hành vi, tư duy chuyên môn nhằm đề xuất Lộ trình sự nghiệp (Career Path) thích hợp nhất."
+                    Description = "Khảo sát diện rộng 20 câu hỏi tổng quan giúp phân tích hành vi, tư duy chuyên môn nhằm đề xuất Lộ trình sự nghiệp (Career Path) thích hợp nhất.",
+                    Status = 1
                 };
                 context.Tests.Add(baseTest);
+                await context.SaveChangesAsync();
+            }
+
+            var existingQuestionsCount = await context.QuestionTests.CountAsync(q => q.TestId == baseTest.Id);
+            if (existingQuestionsCount != 20)
+            {
+                var existingQuestions = await context.QuestionTests.Where(q => q.TestId == baseTest.Id).ToListAsync();
+                foreach (var q in existingQuestions)
+                {
+                    var options = await context.QuestionOptions.Where(o => o.QuestionId == q.Id).ToListAsync();
+                    foreach (var opt in options)
+                    {
+                        var weights = await context.OptionCareerPaths.Where(oc => oc.OptionId == opt.Id).ToListAsync();
+                        context.OptionCareerPaths.RemoveRange(weights);
+                    }
+                    context.QuestionOptions.RemoveRange(options);
+                }
+                context.QuestionTests.RemoveRange(existingQuestions);
                 await context.SaveChangesAsync();
 
                 // --- SEEDING 20 QUESTIONS FOR BASE TEST ---
@@ -272,6 +300,214 @@ namespace Career_Guidance_Platform.Data
                     }
                     await context.SaveChangesAsync();
                 }
+            }
+
+            // 7. Seed Team Members
+            if (!await context.TeamMembers.AnyAsync())
+            {
+                var teamMembers = new List<TeamMember>
+                {
+                    new TeamMember
+                    {
+                        Name = "Mr Nhu Van Tuan",
+                        Role = "Leader",
+                        AvatarUrl = "",
+                        Bio = "Hơn 10 năm kinh nghiệm quản lý dự án công nghệ, dẫn dắt đội ngũ phát triển các giải pháp hướng nghiệp toàn cầu.",
+                        Email = "tuan.nv@careerpath.vn"
+                    },
+                    new TeamMember
+                    {
+                        Name = "Mr Nguyen Tuan Dung",
+                        Role = "Member BE",
+                        AvatarUrl = "",
+                        Bio = "Chuyên gia phát triển hệ thống backend tối ưu hiệu năng, xây dựng kiến trúc dữ liệu và xử lý thuật toán phân tích.",
+                        Email = "dung.nt@careerpath.vn"
+                    },
+                    new TeamMember
+                    {
+                        Name = "Mr Nguyen Van Linh",
+                        Role = "Member FE & SM",
+                        AvatarUrl = "",
+                        Bio = "Đam mê thiết kế giao diện tinh tế, tối ưu hóa trải nghiệm người dùng Front-End và điều phối dự án theo Agile/Scrum.",
+                        Email = "linh.nv@careerpath.vn"
+                    },
+                    new TeamMember
+                    {
+                        Name = "Mr Nguyen Huu Tri",
+                        Role = "Member Service",
+                        AvatarUrl = "",
+                        Bio = "Trưởng bộ phận dịch vụ khách hàng, kết nối doanh nghiệp và hỗ trợ học sinh định hướng lộ trình học tập hiệu quả.",
+                        Email = "tri.nh@careerpath.vn"
+                    }
+                };
+                context.TeamMembers.AddRange(teamMembers);
+                await context.SaveChangesAsync();
+            }
+
+            // 8. Seed 30 FAQ Items
+            if (!await context.FaqItems.AnyAsync())
+            {
+                var faqs = new List<FaqItem>
+                {
+                    // Category: General
+                    new FaqItem { Category = "General", Question = "CareerPath là gì?", Answer = "CareerPath là nền tảng hướng nghiệp thông minh hỗ trợ người dùng khám phá bản thân, đề xuất lộ trình sự nghiệp phù hợp và kết nối với các doanh nghiệp, mentor." },
+                    new FaqItem { Category = "General", Question = "Làm thế nào để bắt đầu sử dụng CareerPath?", Answer = "Bạn chỉ cần đăng ký một tài khoản, thực hiện bài kiểm tra đánh giá nghề nghiệp nền tảng (Base Test) để nhận được các gợi ý lộ trình nghề nghiệp chi tiết." },
+                    new FaqItem { Category = "General", Question = "Nền tảng này dành cho đối tượng nào?", Answer = "CareerPath được thiết kế đặc biệt cho học sinh trung học, sinh viên đại học và người đi làm muốn chuyển hướng sự nghiệp." },
+                    new FaqItem { Category = "General", Question = "Sử dụng nền tảng CareerPath có mất phí không?", Answer = "Các tính năng cơ bản như làm bài kiểm tra trắc nghiệm, xem lộ trình sơ bộ và tin tuyển dụng là hoàn toàn miễn phí. Các gói Premium hỗ trợ phân tích chuyên sâu chi tiết và đặt lịch Mentor nâng cao." },
+                    new FaqItem { Category = "General", Question = "CareerPath hoạt động trên thiết bị nào?", Answer = "Hệ thống hoạt động mượt mà trên mọi thiết bị có kết nối Internet như máy tính để bàn, laptop, máy tính bảng và điện thoại di động thông qua trình duyệt web." },
+                    new FaqItem { Category = "General", Question = "Tôi có thể liên hệ hỗ trợ kỹ thuật bằng cách nào?", Answer = "Bạn có thể gửi yêu cầu hỗ trợ qua trang Liên hệ trực tuyến hoặc email đến support@careerpath.vn để nhận phản hồi trong vòng 24 giờ." },
+
+                    // Category: Account
+                    new FaqItem { Category = "Account", Question = "Đăng ký tài khoản yêu cầu những thông tin gì?", Answer = "Bạn chỉ cần cung cấp Họ tên, địa chỉ Email hợp lệ và tạo Mật khẩu bảo mật để thiết lập tài khoản cá nhân." },
+                    new FaqItem { Category = "Account", Question = "Tôi có thể thay đổi email đăng ký không?", Answer = "Hiện tại để bảo mật tài khoản, email đăng ký là cố định. Nếu có nhu cầu thay đổi đặc biệt, bạn cần liên hệ admin để hỗ trợ xác minh." },
+                    new FaqItem { Category = "Account", Question = "Làm sao để thay đổi mật khẩu?", Answer = "Bạn truy cập vào trang Quản lý tài khoản cá nhân, chọn mục 'Đổi mật khẩu', nhập mật khẩu hiện tại và mật khẩu mới để cập nhật." },
+                    new FaqItem { Category = "Account", Question = "Tôi có thể đăng nhập bằng các tài khoản mạng xã hội không?", Answer = "Tính năng đăng nhập qua Google và Facebook đang được phát triển và dự kiến sẽ ra mắt trong phiên bản cập nhật sắp tới." },
+                    new FaqItem { Category = "Account", Question = "Làm thế nào để xóa tài khoản cá nhân?", Answer = "Bạn có thể gửi yêu cầu xóa tài khoản cùng lý do qua email hỗ trợ của chúng tôi. Dữ liệu cá nhân của bạn sẽ được gỡ bỏ hoàn toàn khỏi hệ thống sau khi xác nhận." },
+                    new FaqItem { Category = "Account", Question = "Hệ thống bảo vệ mật khẩu của tôi như thế nào?", Answer = "Mật khẩu của bạn được mã hóa một chiều bằng thuật toán Identity PasswordHasher trước khi lưu trữ vào cơ sở dữ liệu." },
+
+                    // Category: Test
+                    new FaqItem { Category = "Test", Question = "Bài kiểm tra trắc nghiệm kéo dài bao lâu?", Answer = "Bài kiểm tra hướng nghiệp nền tảng gồm 20 câu hỏi, thường chỉ mất khoảng 10-15 phút để hoàn thành một cách thoải mái." },
+                    new FaqItem { Category = "Test", Question = "Mô hình khoa học nào đứng sau bài kiểm tra?", Answer = "Thuật toán của bài kiểm tra được thiết kế dựa trên lý thuyết trắc nghiệm tâm lý học hành vi và phân tích xu hướng năng lực kết hợp với trọng số kỹ năng thực tế." },
+                    new FaqItem { Category = "Test", Question = "Kết quả bài kiểm tra có chính xác không?", Answer = "Kết quả dựa trên câu trả lời trung thực của bạn và mang tính chất định hướng, giúp bạn thu hẹp phạm vi lựa chọn nghề nghiệp dựa trên năng lực và sở thích." },
+                    new FaqItem { Category = "Test", Question = "Tôi có thể lưu lại kết quả kiểm tra không?", Answer = "Có. Toàn bộ lịch sử và kết quả bài đánh giá của bạn đều được tự động lưu trữ và hiển thị trực quan trong hồ sơ cá nhân." },
+                    new FaqItem { Category = "Test", Question = "Tại sao kết quả của tôi chỉ gợi ý một số ngành nhất định?", Answer = "Thuật toán tính điểm ưu tiên các ngành nghề có trọng số tương thích cao nhất với câu trả lời của bạn để tránh làm bạn bị phân tâm bởi quá nhiều lựa chọn." },
+                    new FaqItem { Category = "Test", Question = "Tôi có thể làm bài kiểm tra lại từ đầu không?", Answer = "Hoàn toàn được. Bạn có thể nhấn nút làm lại bài kiểm tra bất cứ lúc nào để làm mới các gợi ý lộ trình nghề nghiệp." },
+
+                    // Category: Mentor
+                    new FaqItem { Category = "Mentor", Question = "Mentor trên CareerPath là ai?", Answer = "Đội ngũ Mentor là các chuyên gia có nhiều năm kinh nghiệm thực chiến trong các lĩnh vực như Kỹ nghệ phần mềm, Thiết kế UI/UX, Quản trị nhân sự và Tài chính." },
+                    new FaqItem { Category = "Mentor", Question = "Làm sao để đặt lịch hẹn với Mentor?", Answer = "Sau khi có kết quả bài kiểm tra, hệ thống sẽ tiến cử các Mentor phù hợp. Bạn chọn hồ sơ Mentor mong muốn, chọn lịch trống và điền lý do cần tư vấn để gửi yêu cầu." },
+                    new FaqItem { Category = "Mentor", Question = "Đặt lịch Mentor có tốn phí không?", Answer = "Đặt lịch hỗ trợ giải đáp nhanh thường miễn phí hoặc được bao gồm trong gói Premium. Một số Mentor đặc biệt có thể có mức phí tư vấn chuyên sâu riêng." },
+                    new FaqItem { Category = "Mentor", Question = "Tôi có thể hủy lịch hẹn đã đặt không?", Answer = "Có, bạn có thể hủy lịch trước ít nhất 12 giờ diễn ra cuộc hẹn thông qua bảng quản lý lịch trình cá nhân." },
+                    new FaqItem { Category = "Mentor", Question = "Buổi gặp mặt Mentor diễn ra ở đâu?", Answer = "Các buổi tư vấn chủ yếu diễn ra trực tuyến thông qua cuộc gọi video tích hợp sẵn trên nền tảng (Zoom hoặc Google Meet)." },
+                    new FaqItem { Category = "Mentor", Question = "Làm thế nào để trở thành Mentor trên hệ thống?", Answer = "Nếu bạn có trên 3 năm kinh nghiệm làm việc và mong muốn chia sẻ, hãy gửi hồ sơ đăng ký qua trang Hợp tác Mentor để ban quản trị phê duyệt." },
+
+                    // Category: Community
+                    new FaqItem { Category = "Community", Question = "Không gian Cộng đồng hoạt động thế nào?", Answer = "Cộng đồng là nơi người dùng chia sẻ kinh nghiệm học tập, đặt câu hỏi về ngành nghề và thảo luận các chủ đề nóng về tuyển dụng." },
+                    new FaqItem { Category = "Community", Question = "Tôi có được đăng bài viết tự do không?", Answer = "Có, bạn có thể đăng các bài viết thảo luận. Tuy nhiên, bài viết cần tuân thủ tiêu chuẩn cộng đồng và sẽ được kiểm duyệt để tránh spam." },
+                    new FaqItem { Category = "Community", Question = "Làm sao để báo cáo bài viết vi phạm?", Answer = "Bên cạnh mỗi bài đăng đều có nút 'Báo cáo vi phạm'. Ban quản trị sẽ rà soát và xử lý bài viết vi phạm trong vòng 2 giờ." },
+                    new FaqItem { Category = "Community", Question = "Các sự kiện nghề nghiệp diễn ra khi nào?", Answer = "Lịch sự kiện nghề nghiệp được cập nhật liên tục hàng tuần trên mục 'Tin tức & Sự kiện', bao gồm các buổi tọa đàm trực tuyến và ngày hội việc làm." },
+                    new FaqItem { Category = "Community", Question = "Làm thế nào để đăng ký tham gia sự kiện?", Answer = "Bạn nhấp vào sự kiện quan tâm trên giao diện, nhấn nút 'Đăng ký tham gia' để nhận liên kết Zoom và lịch nhắc qua email." },
+                    new FaqItem { Category = "Community", Question = "Lợi ích khi tham gia các sự kiện của CareerPath?", Answer = "Bạn sẽ được giao lưu trực tiếp với các nhà tuyển dụng, nhận tài liệu độc quyền và có cơ hội nhận voucher học bổng từ các đối tác đào tạo." }
+                };
+                context.FaqItems.AddRange(faqs);
+                await context.SaveChangesAsync();
+            }
+
+            // 9. Seed NewsArticles
+            if (!await context.NewsArticles.AnyAsync())
+            {
+                var news = new List<NewsArticle>
+                {
+                    new NewsArticle
+                    {
+                        Title = "Xu hướng tuyển dụng ngành Công nghệ thông tin năm 2026",
+                        Summary = "Khám phá những kỹ năng cốt lõi và các vị trí lập trình viên được săn đón nhất trong kỷ nguyên trí tuệ nhân tạo phát triển vượt bậc.",
+                        Content = "Ngành Công nghệ thông tin trong năm 2026 đang chứng kiến sự chuyển dịch mạnh mẽ. Sự phát triển của AI tạo sinh không làm giảm nhu cầu tuyển dụng mà trái lại đặt ra bài toán về việc lập trình viên phải trang bị thêm kỹ năng sử dụng công cụ AI để tối ưu năng suất. Các vị trí như Kỹ sư đám mây, Chuyên gia bảo mật thông tin và Kỹ sư AI/Machine Learning tiếp tục là những điểm nóng thu hút nhân tài với mức đãi ngộ cực kỳ hấp dẫn...",
+                        Author = "Mr Nguyen Tuan Dung",
+                        PublishedDate = DateTime.Now.AddDays(-5),
+                        Category = "Xu hướng nghề nghiệp",
+                        ImageUrl = ""
+                    },
+                    new NewsArticle
+                    {
+                        Title = "Kỹ năng giao tiếp và làm việc nhóm: Chìa khóa vàng cho sinh viên mới ra trường",
+                        Summary = "Tại sao kiến thức chuyên môn là chưa đủ để bạn bứt phá trong môi trường doanh nghiệp hiện đại? Đọc ngay cẩm nang nâng cấp soft-skills.",
+                        Content = "Nhiều khảo sát từ các tập đoàn lớn cho thấy trên 70% lý do nhân viên mới gặp khó khăn trong việc hòa nhập không nằm ở kiến thức kỹ thuật mà ở các kỹ năng mềm. Kỹ năng giao tiếp hiệu quả, trình bày ý tưởng rõ ràng và lắng nghe đồng nghiệp giúp tối ưu hóa hiệu suất làm việc nhóm. Bài viết này hướng dẫn bạn cách vượt qua rào cản tâm lý khi giao tiếp và làm việc nhóm hiệu quả...",
+                        Author = "Mr Nhu Van Tuan",
+                        PublishedDate = DateTime.Now.AddDays(-10),
+                        Category = "Kỹ năng mềm",
+                        ImageUrl = ""
+                    },
+                    new NewsArticle
+                    {
+                        Title = "Cẩm nang chuẩn bị CV ấn tượng thu hút nhà tuyển dụng ngay từ cái nhìn đầu tiên",
+                        Summary = "Chi tiết các bước thiết kế CV chuẩn ATS giúp tăng cơ hội được gọi phỏng vấn lên gấp 3 lần dành cho sinh viên.",
+                        Content = "Hệ thống lọc hồ sơ tự động (ATS) hiện được sử dụng bởi hầu hết các công ty lớn. Để CV của bạn không bị loại từ 'vòng gửi xe', việc tối ưu hóa từ khóa chuyên ngành, cấu trúc CV đơn giản, khoa học và làm nổi bật các dự án thực tế là cực kỳ quan trọng. Tránh viết CV quá dài hoặc sử dụng quá nhiều biểu đồ cột đánh giá kỹ năng không rõ ràng...",
+                        Author = "Mr Nguyen Van Linh",
+                        PublishedDate = DateTime.Now.AddDays(-15),
+                        Category = "Cẩm nang xin việc",
+                        ImageUrl = ""
+                    }
+                };
+                context.NewsArticles.AddRange(news);
+                await context.SaveChangesAsync();
+            }
+
+            // 10. Seed CareerEvents
+            if (!await context.CareerEvents.AnyAsync())
+            {
+                var events = new List<CareerEvent>
+                {
+                    new CareerEvent
+                    {
+                        Title = "Webinar: Định hình lộ trình sự nghiệp ngành Software Engineer",
+                        Description = "Buổi chia sẻ chuyên sâu từ Mentor Nguyễn Tuấn Dũng về các công nghệ cốt lõi cần học và cách xây dựng dự án cá nhân nổi bật.",
+                        EventDate = DateTime.Now.AddDays(3).Date.AddHours(19).AddMinutes(30),
+                        Location = "Trực tuyến qua Zoom",
+                        Speaker = "Mr Nguyen Tuan Dung (Member BE)",
+                        RegistrationUrl = "https://zoom.us/webinar/register/123"
+                    },
+                    new CareerEvent
+                    {
+                        Title = "Hội thảo: Xu hướng UI/UX Designer và trải nghiệm sản phẩm số",
+                        Description = "Giao lưu trực tiếp cùng chuyên gia thiết kế Nguyễn Văn Linh về tư duy thiết kế lấy người dùng làm trung tâm trong kỷ nguyên mới.",
+                        EventDate = DateTime.Now.AddDays(7).Date.AddHours(14).AddMinutes(0),
+                        Location = "Hội trường tầng 3, CareerPath Office, Hà Nội",
+                        Speaker = "Mr Nguyen Van Linh (Member FE & SM)",
+                        RegistrationUrl = "https://careerpath.vn/events/register/456"
+                    },
+                    new CareerEvent
+                    {
+                        Title = "Talkshow: Định hướng nghề nghiệp bản thân cùng Top Leader",
+                        Description = "Lắng nghe chia sẻ của anh Nhữ Văn Tuấn về cách thấu hiểu bản thân để đưa ra những quyết định thay đổi cuộc đời.",
+                        EventDate = DateTime.Now.AddDays(12).Date.AddHours(9).AddMinutes(30),
+                        Location = "Trực tuyến qua Microsoft Teams",
+                        Speaker = "Mr Nhu Van Tuan (Leader)",
+                        RegistrationUrl = "https://teams.live.com/register/789"
+                    }
+                };
+                context.CareerEvents.AddRange(events);
+                await context.SaveChangesAsync();
+            }
+
+            // 11. Seed CommunityPosts
+            if (!await context.CommunityPosts.AnyAsync())
+            {
+                var posts = new List<CommunityPost>
+                {
+                    new CommunityPost
+                    {
+                        Title = "Nên học ASP.NET Core hay Node.js cho Backend Web Developer?",
+                        Content = "Chào mọi người, mình đang là sinh viên năm 2 ngành CNTT. Mình đang phân vân giữa việc theo đuổi C# ASP.NET Core hay JavaScript/Node.js để phát triển Backend. Mong các anh chị đi trước cho lời khuyên về cơ hội việc làm và mức lương của 2 hướng này ạ.",
+                        AuthorName = "Trần Minh Hoàng",
+                        CreatedAt = DateTime.Now.AddHours(-4),
+                        LikesCount = 28,
+                        RepliesCount = 12,
+                        Category = "Hỏi đáp"
+                    },
+                    new CommunityPost
+                    {
+                        Title = "Trải nghiệm lần đầu tiên đi phỏng vấn vị trí UI/UX Designer Intern",
+                        Content = "Vừa qua mình có tham gia phỏng vấn thực tập sinh UI/UX tại một công ty công nghệ lớn ở HN. Mình muốn chia sẻ lại bộ câu hỏi phỏng vấn thực tế và một số lưu ý chuẩn bị portfolio giúp các bạn có cùng định hướng chuẩn bị tốt hơn...",
+                        AuthorName = "Lê Thị Thu Hà",
+                        CreatedAt = DateTime.Now.AddDays(-1),
+                        LikesCount = 45,
+                        RepliesCount = 8,
+                        Category = "Góc chia sẻ"
+                    },
+                    new CommunityPost
+                    {
+                        Title = "Chia sẻ tài liệu tự học kỹ năng lập trình hướng đối tượng (OOP) cực kỳ dễ hiểu",
+                        Content = "Mình sưu tầm được một bộ slide bài giảng trực quan hóa và các bài tập thực hành OOP bằng C++ và C# từ một trường đại học hàng đầu Mỹ. Tài liệu rất thích hợp cho những bạn bắt đầu học lập trình hoặc muốn củng cố lại tư duy thiết kế phần mềm...",
+                        AuthorName = "Phạm Hữu Nam",
+                        CreatedAt = DateTime.Now.AddDays(-3),
+                        LikesCount = 62,
+                        RepliesCount = 15,
+                        Category = "Tài nguyên học tập"
+                    }
+                };
+                context.CommunityPosts.AddRange(posts);
+                await context.SaveChangesAsync();
             }
         }
     }

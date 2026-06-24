@@ -61,17 +61,47 @@ public class HomeController : Controller
 
     public IActionResult Jobs() => View();
 
-    public IActionResult Community() => View();
+    public async Task<IActionResult> Community()
+    {
+        var posts = await _context.CommunityPosts.OrderByDescending(p => p.CreatedAt).ToListAsync();
+        return View(posts);
+    }
 
-    public IActionResult About() => View();
+    public async Task<IActionResult> About()
+    {
+        var team = await _context.TeamMembers.ToListAsync();
+        return View(team);
+    }
 
-    public IActionResult Contact() => View();
+    public IActionResult Contact()
+    {
+        return View();
+    }
 
-    public IActionResult FAQ() => View();
+    [HttpPost]
+    public IActionResult Contact(string name, string email, string subject, string message)
+    {
+        TempData["ContactSuccess"] = "Cảm ơn bạn đã gửi tin nhắn! Đội ngũ hỗ trợ của CareerPath đã nhận được thông tin và sẽ phản hồi bạn qua email trong vòng 24 giờ tới.";
+        return RedirectToAction("Contact");
+    }
+
+    public async Task<IActionResult> FAQ()
+    {
+        var faqs = await _context.FaqItems.ToListAsync();
+        return View(faqs);
+    }
 
     public IActionResult Pricing() => View();
 
-    public IActionResult News() => View();
+    public async Task<IActionResult> News()
+    {
+        var model = new NewsViewModel
+        {
+            Articles = await _context.NewsArticles.OrderByDescending(a => a.PublishedDate).ToListAsync(),
+            Events = await _context.CareerEvents.OrderBy(e => e.EventDate).ToListAsync()
+        };
+        return View(model);
+    }
 
     public IActionResult Policy() => View();
 

@@ -1,54 +1,85 @@
-﻿@{
-    ViewData["Title"] = "Cộng đồng";
+@model IEnumerable<Career_Guidance_Platform.Models.CommunityPost>
+@{
+    ViewData["Title"] = "Cộng đồng hướng nghiệp";
 }
 
 <section class="page-hero">
-
-    <span class="page-badge">👥 Community</span>
-
-    <h1>Cộng đồng CareerPath</h1>
-
-    <p>
-        Kết nối với mentor, chuyên gia
-        và những người cùng định hướng nghề nghiệp.
-    </p>
-
+    <span class="page-badge">👥 Cộng đồng CareerPath</span>
+    <h1>Kết nối & Chia sẻ kinh nghiệm</h1>
+    <p>Không gian giao lưu thảo luận, chia sẻ tài nguyên học tập và kinh nghiệm phỏng vấn cùng hàng ngàn thành viên và chuyên gia hướng nghiệp.</p>
 </section>
 
 <section class="content-section">
-
-    <div class="pricing-grid">
-
-        <div class="pricing-card">
-
-            <h3>Mentor Công Nghệ</h3>
-
-            <p>
-                25 Mentor
-            </p>
-
+    <!-- Community Top Stats & Actions -->
+    <div class="info-card" style="display: flex; justify-content: space-between; align-items: center; padding: 24px 32px; margin-bottom: 32px; flex-wrap: wrap; gap: 20px;">
+        <div style="display: flex; gap: 40px;">
+            <div>
+                <strong style="font-size: 24px; color: #020617; display: block;">15,240+</strong>
+                <span style="font-size: 13px; color: #64748b;">Thành viên hoạt động</span>
+            </div>
+            <div style="border-right: 1px solid #e5e7eb; height: 40px; align-self: center;"></div>
+            <div>
+                <strong style="font-size: 24px; color: #020617; display: block;">3,850+</strong>
+                <span style="font-size: 13px; color: #64748b;">Chủ đề thảo luận</span>
+            </div>
+            <div style="border-right: 1px solid #e5e7eb; height: 40px; align-self: center;"></div>
+            <div>
+                <strong style="font-size: 24px; color: #020617; display: block;">98%</strong>
+                <span style="font-size: 13px; color: #64748b;">Tỷ lệ phản hồi từ Mentor</span>
+            </div>
         </div>
-
-        <div class="pricing-card">
-
-            <h3>Mentor Marketing</h3>
-
-            <p>
-                18 Mentor
-            </p>
-
-        </div>
-
-        <div class="pricing-card">
-
-            <h3>Mentor Kinh Doanh</h3>
-
-            <p>
-                15 Mentor
-            </p>
-
-        </div>
-
+        <button class="btn primary-btn" onclick="alert('Tính năng tạo bài viết đang được phát triển. Vui lòng đăng nhập để sử dụng.')" style="border-radius: 12px; font-weight: 700; height: 48px; border: none; padding: 0 24px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+            <span>✍️</span> Tạo thảo luận mới
+        </button>
     </div>
 
+    <!-- Forum Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: start;">
+        <!-- Left: Forum Posts List -->
+        <div style="display: flex; flex-direction: column; gap: 18px;">
+            @foreach (var post in Model)
+            {
+                <div class="info-card" style="padding: 24px; transition: 0.25s;" onmouseover="this.style.borderColor='#020617'" onmouseout="this.style.borderColor='#e5e7eb'">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <span style="font-size: 12px; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.5px; background: #e0e7ff; padding: 4px 10px; border-radius: 999px;">@post.Category</span>
+                        <span style="font-size: 12px; color: #94a3b8;">📅 @post.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    
+                    <h3 style="font-size: 20px; color: #020617; margin: 0 0 10px; line-height: 1.4;">
+                        <a href="#" onclick="alert('Chi tiết bài đăng đang tải...')" style="color: inherit; text-decoration: none; font-weight: 700;">@post.Title</a>
+                    </h3>
+                    
+                    <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">@post.Content</p>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 16px; font-size: 13px;">
+                        <div style="display: flex; align-items: center; gap: 12px; color: #64748b;">
+                            <span>👤 Đăng bởi: <strong>@post.AuthorName</strong></span>
+                        </div>
+                        <div style="display: flex; gap: 20px; color: #64748b;">
+                            <span style="display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="alert('Đã thích bài viết!')">👍 @post.LikesCount</span>
+                            <span style="display: flex; align-items: center; gap: 4px; cursor: pointer;">💬 @post.RepliesCount Phản hồi</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Right: Community Sidebar -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="info-card">
+                <h3 style="font-size: 18px; color: #020617; margin-bottom: 15px;">🔥 Chủ đề hot tuần này</h3>
+                <ul style="padding-left: 15px; margin: 0; color: #64748b; font-size: 13px; line-height: 1.8;">
+                    <li style="margin-bottom: 10px;"><a href="#" style="color: inherit; text-decoration: none; font-weight: 500;">Cách Deal lương thử việc cho Dev Intern</a></li>
+                    <li style="margin-bottom: 10px;"><a href="#" style="color: inherit; text-decoration: none; font-weight: 500;">Review phỏng vấn Kế toán tại BIG4</a></li>
+                    <li style="margin-bottom: 10px;"><a href="#" style="color: inherit; text-decoration: none; font-weight: 500;">Tài liệu tự học Figma cơ bản cho UI/UX</a></li>
+                </ul>
+            </div>
+            
+            <div class="info-card" style="background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%); color: #ffffff; border: none;">
+                <h3 style="color: #ffffff; font-size: 18px; margin-bottom: 10px;">🌟 Trở thành Mentor cộng đồng</h3>
+                <p style="font-size: 13px; line-height: 1.6; color: #e0e7ff; margin-bottom: 20px;">Bạn muốn chia sẻ kinh nghiệm sự nghiệp và dẫn dắt các thế hệ đàn em?</p>
+                <button onclick="alert('Đang chuyển hướng tới form ứng tuyển Mentor...')" style="width: 100%; height: 42px; border-radius: 10px; background: #ffffff; color: #4f46e5; border: none; font-weight: 700; cursor: pointer; transition: 0.2s;">Đăng ký Mentor ngay</button>
+            </div>
+        </div>
+    </div>
 </section>
