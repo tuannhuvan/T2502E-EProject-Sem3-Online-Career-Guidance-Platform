@@ -1,12 +1,12 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
 <head>
     <meta charset="utf-8"/>
     <title>@ViewData["Title"] - CareerPath Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-    <link href="https://cdn.jsdelivr.net/npm/@@tabler/core@1.4.0/dist/css/tabler.min.css" rel="stylesheet"/>
-    <link href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet"/>
+    <link href="@("https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css")" rel="stylesheet"/>
+    <link href="@("https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css")" rel="stylesheet"/>
 
     <style>
         .navbar-brand { font-weight: 800; }
@@ -55,6 +55,12 @@
                         <a class="nav-link" asp-controller="Admin" asp-action="CareerTests">
                             <span class="nav-link-icon"><i class="ti ti-clipboard-check"></i></span>
                             <span class="nav-link-title">Career Tests</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="Categories">
+                            <span class="nav-link-icon"><i class="ti ti-category"></i></span>
+                            <span class="nav-link-title">Categories</span>
                         </a>
                     </li>
 
@@ -138,10 +144,9 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+<script src="@("https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js")"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-@RenderSection("Scripts", required: false)
-
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
-</html> 
+</html>
