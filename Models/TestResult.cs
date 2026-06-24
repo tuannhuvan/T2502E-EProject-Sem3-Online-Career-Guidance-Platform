@@ -22,6 +22,9 @@ public class TestResult
     [Column("compatibility_score", TypeName = "decimal(5,2)")]
     public decimal? CompatibilityScore { get; set; }
 
+    [Column("attempt_number")]
+    public int AttemptNumber { get; set; } = 1;
+
     [Column("date_taken")]
     public DateTime DateTaken { get; set; } = DateTime.Now;
 

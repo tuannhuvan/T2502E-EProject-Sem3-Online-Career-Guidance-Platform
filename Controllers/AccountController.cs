@@ -3,6 +3,7 @@ using Career_Guidance_Platform.Models;
 using Career_Guidance_Platform.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -43,6 +44,8 @@ namespace Career_Guidance_Platform.Controllers
                         if (testResult != null)
                         {
                             testResult.UserId = user.Id;
+                            var existingCount = await _context.TestResults.CountAsync(tr => tr.UserId == user.Id && tr.TestId == testResult.TestId);
+                            testResult.AttemptNumber = existingCount + 1;
                             await _context.SaveChangesAsync();
                             HttpContext.Session.Remove("TestResultId");
                             return RedirectToAction("GetResultDetail", "CareerTest", new { id = testResult.Id });
@@ -81,6 +84,8 @@ namespace Career_Guidance_Platform.Controllers
                         if (testResult != null)
                         {
                             testResult.UserId = user.Id;
+                            var existingCount = await _context.TestResults.CountAsync(tr => tr.UserId == user.Id && tr.TestId == testResult.TestId);
+                            testResult.AttemptNumber = existingCount + 1;
                             await _context.SaveChangesAsync();
                             HttpContext.Session.Remove("TestResultId");
                             return RedirectToAction("GetResultDetail", "CareerTest", new { id = testResult.Id });

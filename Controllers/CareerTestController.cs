@@ -29,10 +29,18 @@ namespace Career_Guidance_Platform.Controllers
                 var userIdStr = _userManager.GetUserId(User);
                 int? userId = string.IsNullOrEmpty(userIdStr) ? (int?)null : int.Parse(userIdStr);
 
+                int attemptNumber = 1;
+                if (userId.HasValue)
+                {
+                    var existingCount = await _context.TestResults.CountAsync(tr => tr.UserId == userId.Value && tr.TestId == model.TestId);
+                    attemptNumber = existingCount + 1;
+                }
+
                 var testResult = new TestResult
                 {
                     TestId = model.TestId,
                     UserId = userId,
+                    AttemptNumber = attemptNumber,
                     DateTaken = System.DateTime.Now,
                     CreatedAt = System.DateTime.Now,
                     CreatedBy = User.Identity?.Name ?? "Anonymous"
@@ -100,10 +108,20 @@ namespace Career_Guidance_Platform.Controllers
             if (ModelState.IsValid)
             {
                 var userId = _userManager.GetUserId(User);
+                int? parsedUserId = string.IsNullOrEmpty(userId) ? (int?)null : int.Parse(userId);
+
+                int attemptNumber = 1;
+                if (parsedUserId.HasValue)
+                {
+                    var existingCount = await _context.TestResults.CountAsync(tr => tr.UserId == parsedUserId.Value && tr.TestId == model.TestId);
+                    attemptNumber = existingCount + 1;
+                }
+
                 var testResult = new TestResult
                 {
                     TestId = model.TestId,
-                    UserId = string.IsNullOrEmpty(userId) ? (int?)null : int.Parse(userId),
+                    UserId = parsedUserId,
+                    AttemptNumber = attemptNumber,
                     DateTaken = System.DateTime.Now
                 };
 
