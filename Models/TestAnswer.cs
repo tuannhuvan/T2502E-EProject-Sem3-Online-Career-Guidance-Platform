@@ -1,4 +1,3 @@
-
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -10,14 +9,14 @@ public class TestAnswer
     [Column("id")]
     public int Id { get; set; }
 
-    [Column("result_id")]
-    public int ResultId { get; set; }
+    [Column("test_result_id")]
+    public int TestResultId { get; set; }
 
     [Column("question_id")]
     public int QuestionId { get; set; }
 
-    [Column("option_id")]
-    public int OptionId { get; set; }
+    [Column("question_option_id")]
+    public int QuestionOptionId { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -34,12 +33,12 @@ public class TestAnswer
     [Column("status")]
     public int Status { get; set; } = 1;
 
-    [ForeignKey("ResultId")]
+    [ForeignKey("TestResultId")]
     public TestResult? TestResult { get; set; }
 
     [ForeignKey("QuestionId")]
     public QuestionTest? QuestionTest { get; set; }
 
-    [ForeignKey("OptionId")]
+    [ForeignKey("QuestionOptionId")]
     public QuestionOption? QuestionOption { get; set; }
 }

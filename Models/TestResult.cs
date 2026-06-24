@@ -1,4 +1,3 @@
-
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -11,8 +10,8 @@ public class TestResult
     [Column("id")]
     public int Id { get; set; }
 
-    [Column("student_id")]
-    public int StudentId { get; set; }
+    [Column("user_id")]
+    public int? UserId { get; set; }
 
     [Column("test_id")]
     public int TestId { get; set; }
@@ -22,6 +21,9 @@ public class TestResult
 
     [Column("compatibility_score", TypeName = "decimal(5,2)")]
     public decimal? CompatibilityScore { get; set; }
+
+    [Column("date_taken")]
+    public DateTime DateTaken { get; set; } = DateTime.Now;
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -38,8 +40,8 @@ public class TestResult
     [Column("status")]
     public int Status { get; set; } = 1;
 
-    [ForeignKey("StudentId")]
-    public User? Student { get; set; }
+    [ForeignKey("UserId")]
+    public User? User { get; set; }
 
     [ForeignKey("TestId")]
     public Test? Test { get; set; }

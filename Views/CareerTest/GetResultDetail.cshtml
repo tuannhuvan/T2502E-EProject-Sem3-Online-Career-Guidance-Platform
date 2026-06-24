@@ -44,17 +44,42 @@
 
                 <div class="meta" style="margin-top:0.6rem">
                     <small>Ngày làm: @Model.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small><br />
-                    <small>Người làm: @Model.Student?.FullName ?? Model.StudentId.ToString()</small>
+                    <small>Người làm: @Model.User?.FullName ?? Model.UserId.ToString()</small>
                 </div>
 
-                <div class="result-actions" style="margin-top:1rem;">
+                <div class="result-actions" style="margin-top:1rem; margin-bottom: 1.5rem;">
                     @if (Model.RecommendedCareerPath != null)
                     {
                         <a asp-controller="CareerPath" asp-action="Details" asp-route-id="@Model.RecommendedCareerPath.Id" class="btn primary-btn">Xem lộ trình nghề nghiệp</a>
                     }
-                    <a asp-controller="CareerTest" asp-action="TakeTest" class="btn secondary-btn">Làm lại bài test</a>
+                    <a asp-controller="Home" asp-action="CareerTest" class="btn secondary-btn">Làm lại bài test</a>
                     <a asp-controller="Home" asp-action="Index" class="btn">Trang chủ</a>
                 </div>
+
+                @if (ViewBag.Jobs != null && ((IEnumerable<Career_Guidance_Platform.Models.JobPosting>)ViewBag.Jobs).Any())
+                {
+                    <div class="recommended-jobs" style="margin-top: 2rem; padding: 1.5rem; border-top: 4px solid #10b981; border-radius: 16px; background: #f0fdf4; border: 1px solid #d1fae5; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);">
+                        <h3 style="color: #065f46; margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🏢</span> Kết nối Doanh nghiệp - Việc làm đề xuất
+                        </h3>
+                        <p style="font-size: 0.9rem; color: #047857; margin-bottom: 1.25rem; line-height: 1.5;">Dựa trên kết quả định hướng của bạn, các doanh nghiệp sau đang tuyển dụng vị trí phù hợp:</p>
+                        <div class="jobs-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                            @foreach (var job in (IEnumerable<Career_Guidance_Platform.Models.JobPosting>)ViewBag.Jobs)
+                            {
+                                <div class="job-item" style="background: #ffffff; padding: 1.25rem; border: 1px solid #e6f4ea; border-radius: 12px; transition: all 0.2s;">
+                                    <h4 style="margin: 0; color: #065f46; font-size: 1.05rem; font-weight: 700;">@job.Title</h4>
+                                    <div style="font-size: 0.9rem; color: #047857; font-weight: 600; margin: 0.35rem 0;">💼 @job.CompanyName</div>
+                                    @if (job.Salary > 0)
+                                    {
+                                        <div style="font-size: 0.9rem; color: #10b981; font-weight: 700;">💰 Mức lương: @job.Salary.ToString("N0") VNĐ</div>
+                                    }
+                                    <p style="margin: 0.75rem 0; font-size: 0.9rem; color: #4b5563; line-height: 1.5;">@job.Description</p>
+                                    <button class="btn btn-sm" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem;" onclick="alert('Đã gửi thông tin định hướng của bạn đến doanh nghiệp!')">Ứng tuyển & Kết nối</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
 
             <div class="result-right">
@@ -84,7 +109,7 @@
                                         }
                                         else
                                         {
-                                            <em>Không tìm thấy đáp án (id: @ans.OptionId)</em>
+                                            <em>Không tìm thấy đáp án (id: @ans.QuestionOptionId)</em>
                                         }
                                     </div>
                                 </div>
@@ -100,4 +125,3 @@
         </div>
     </div>
 </section>
-

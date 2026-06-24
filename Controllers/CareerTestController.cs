@@ -1,207 +1,202 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Career_Guidance_Platform.Data;
 using Career_Guidance_Platform.Models;
 using Career_Guidance_Platform.Models.ViewModels;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Career_Guidance_Platform.Controllers
 {
     public class CareerTestController : Controller
     {
-        private readonly AppDbContext _db;
+        private readonly AppDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public CareerTestController(AppDbContext db)
+        public CareerTestController(AppDbContext context, UserManager<User> userManager)
         {
-            _db = db;
+            _context = context;
+            _userManager = userManager;
         }
 
-        // GET /CareerTest/TakeTest/{id}
-        [HttpGet]
-        public async Task<IActionResult> TakeTest(int id = 1)
-        {
-            var questions = await _db.QuestionTests
-                .Where(q => q.TestId == id && q.Status == 1)
-                .Include(q => q.QuestionOptions)
-                .OrderBy(q => q.Id)
-                .ToListAsync();
-
-            var vm = new TakeTestViewModel
-            {
-                TestId = id,
-                Questions = questions.Select(q => new TakeTestQuestionVm
-                {
-                    QuestionId = q.Id,
-                    Group = q.QuestionType?.Name ?? string.Empty,
-                    Content = q.Content,
-                    Options = q.QuestionOptions.OrderBy(o => o.Id).Select(o => new TakeTestOptionVm
-                    {
-                        OptionId = o.Id,
-                        Content = o.Content
-                    }).ToList()
-                }).ToList()
-            };
-
-            return View("~/Views/Home/CareerTest.cshtml", vm);
-        }
-
-        // POST /CareerTest/SubmitAnswers
         [HttpPost]
-        [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SubmitAnswers(UserSubmissionsModel model)
+        public async Task<IActionResult> SubmitAnswers(TakeTestViewModel model)
         {
-            if (model == null || model.Answers == null || model.Answers.Count == 0)
+            if (ModelState.IsValid)
             {
-                ModelState.AddModelError("", "No answers submitted.");
-                return RedirectToAction("TakeTest", new { id = model?.TestId ?? 1 });
-            }
+                var userIdStr = _userManager.GetUserId(User);
+                int? userId = string.IsNullOrEmpty(userIdStr) ? (int?)null : int.Parse(userIdStr);
 
-            // Basic server-side validation: ensure each question has an answer
-            var questionIds = model.Answers.Select(a => a.QuestionId).Distinct().ToList();
-            var questionCount = await _db.QuestionTests.CountAsync(q => q.TestId == model.TestId && q.Status == 1);
-            if (questionIds.Count != questionCount)
-            {
-                // incomplete or tampered submission
-                ModelState.AddModelError("", "Incomplete or invalid submission.");
-                return RedirectToAction("TakeTest", new { id = model.TestId });
-            }
-
-            // Validate OptionId belongs to each QuestionId
-            foreach (var ans in model.Answers)
-            {
-                var opt = await _db.QuestionOptions.FirstOrDefaultAsync(o => o.Id == ans.OptionId && o.QuestionId == ans.QuestionId && o.Status == 1);
-                if (opt == null)
+                var testResult = new TestResult
                 {
-                    ModelState.AddModelError("", "Invalid option for question.");
-                    return RedirectToAction("TakeTest", new { id = model.TestId });
-                }
-            }
+                    TestId = model.TestId,
+                    UserId = userId,
+                    DateTaken = System.DateTime.Now,
+                    CreatedAt = System.DateTime.Now,
+                    CreatedBy = User.Identity?.Name ?? "Anonymous"
+                };
 
-            // Get current user id (make sure authentication populates ClaimTypes.NameIdentifier)
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdClaim, out var studentId))
-            {
-                // user id missing: require authentication
-                return Forbid();
-            }
+                _context.TestResults.Add(testResult);
+                await _context.SaveChangesAsync();
 
-            // Create TestResult
-            var result = new TestResult
-            {
-                StudentId = studentId,
-                TestId = model.TestId,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = User.Identity?.Name ?? userIdClaim ?? "system"
-            };
-
-            _db.TestResults.Add(result);
-            await _db.SaveChangesAsync(); // generates result.Id
-
-            // Save TestAnswers
-            var answersToAdd = model.Answers.Select(a => new TestAnswer
-            {
-                ResultId = result.Id,
-                QuestionId = a.QuestionId,
-                OptionId = a.OptionId,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = User.Identity?.Name ?? userIdClaim ?? "system"
-            }).ToList();
-
-            _db.TestAnswers.AddRange(answersToAdd);
-            await _db.SaveChangesAsync();
-
-            // Compute recommended career path using OptionCareerPath weights
-            var selectedOptionIds = model.Answers.Select(a => a.OptionId).ToList();
-
-            var scoreByCareer = await _db.OptionCareerPaths
-                .Where(ocp => selectedOptionIds.Contains(ocp.OptionId) && ocp.Status == 1)
-                .GroupBy(ocp => ocp.CareerPathId)
-                .Select(g => new { CareerPathId = g.Key, WeightSum = g.Sum(x => x.Weight) })
-                .OrderByDescending(x => x.WeightSum)
-                .ToListAsync();
-
-            int? recommendedCareerPathId = null;
-            decimal? compatibilityScore = null;
-
-            if (scoreByCareer.Any())
-            {
-                var top = scoreByCareer.First();
-                recommendedCareerPathId = top.CareerPathId;
-                var topWeight = top.WeightSum;
-
-                // Compute max possible for chosen career path: sum of best weight per question (for that career)
-                var questionIdsList = model.Answers.Select(a => a.QuestionId).Distinct().ToList();
-                decimal maxPossible = 0;
-
-                foreach (var qId in questionIdsList)
+                foreach (var answer in model.Answers)
                 {
-                    // For this question, find the maximum weight among its options for the chosen career
-                    var maxWeight = await _db.OptionCareerPaths
-                        .Where(ocp => ocp.CareerPathId == recommendedCareerPathId && ocp.Status == 1)
-                        .Join(_db.QuestionOptions,
-                              ocp => ocp.OptionId,
-                              opt => opt.Id,
-                              (ocp, opt) => new { ocp, opt })
-                        .Where(x => x.opt.QuestionId == qId)
-                        .Select(x => (int?)x.ocp.Weight)
-                        .MaxAsync();
-
-                    if (maxWeight.HasValue)
-                        maxPossible += maxWeight.Value;
-                    else
+                    var testAnswer = new TestAnswer
                     {
-                        // If no OptionCareerPath entries for this career/question, assume 1 as default
-                        maxPossible += 1;
-                    }
+                        TestResultId = testResult.Id,
+                        QuestionId = answer.QuestionId,
+                        QuestionOptionId = answer.OptionId,
+                        CreatedAt = System.DateTime.Now,
+                        CreatedBy = User.Identity?.Name ?? "Anonymous"
+                    };
+                    _context.TestAnswers.Add(testAnswer);
+                }
+                await _context.SaveChangesAsync();
+
+                // Compute the recommended career path based on Holland scores (weights mapping options to career paths)
+                var optionIds = model.Answers.Select(a => a.OptionId).ToList();
+                var pathScores = await _context.OptionCareerPaths
+                    .Where(ocp => optionIds.Contains(ocp.OptionId))
+                    .GroupBy(ocp => ocp.CareerPathId)
+                    .Select(g => new { CareerPathId = g.Key, Score = g.Sum(ocp => ocp.Weight) })
+                    .OrderByDescending(x => x.Score)
+                    .ToListAsync();
+
+                if (pathScores.Any())
+                {
+                    var best = pathScores.First();
+                    testResult.RecommendedCareerPathId = best.CareerPathId;
+
+                    var totalWeight = pathScores.Sum(x => x.Score);
+                    testResult.CompatibilityScore = totalWeight > 0 
+                        ? (decimal)System.Math.Round((double)best.Score / totalWeight * 100, 2) 
+                        : 100;
+
+                    await _context.SaveChangesAsync();
                 }
 
-                if (maxPossible > 0)
+                // Store the result ID in session
+                HttpContext.Session.SetInt32("TestResultId", testResult.Id);
+
+                // If not logged in, redirect to register with a notice message
+                if (!userId.HasValue)
                 {
-                    compatibilityScore = Math.Round((decimal)topWeight / maxPossible * 100M, 2);
+                    TempData["RequireAuthForTestResult"] = "Vui lòng đăng nhập hoặc đăng ký tài khoản để xem kết quả đánh giá nghề nghiệp của bạn.";
+                    return RedirectToAction("Register", "Account");
                 }
-                else
-                {
-                    compatibilityScore = 100M;
-                }
+
+                // If logged in, redirect to result detail page
+                return RedirectToAction("GetResultDetail", new { id = testResult.Id });
             }
 
-            // Update result
-            result.RecommendedCareerPathId = recommendedCareerPathId;
-            result.CompatibilityScore = compatibilityScore;
-            result.UpdatedAt = DateTime.UtcNow;
-            result.UpdatedBy = User.Identity?.Name ?? userIdClaim ?? "system";
-
-            _db.TestResults.Update(result);
-            await _db.SaveChangesAsync();
-
-            // Redirect to view result detail
-            return RedirectToAction("GetResultDetail", new { resultId = result.Id });
+            return RedirectToAction("CareerTest", "Home");
         }
 
-        [Authorize]
-        public async Task<IActionResult> GetResultDetail(int resultId)
+        [HttpPost]
+        public async Task<IActionResult> SubmitTest([FromBody] TakeTestViewModel model)
         {
-            var result = await _db.TestResults
-                .Include(r => r.TestAnswers)
-                .ThenInclude(ta => ta.QuestionOption)
-                .Include(r => r.TestAnswers)
-                .ThenInclude(ta => ta.QuestionTest)
-                .Include(r => r.RecommendedCareerPath)
-                .Include(r => r.Student)
-                .FirstOrDefaultAsync(r => r.Id == resultId);
-
-            if (result == null) return NotFound();
-
-            // Ownership check: only the student who created result (or role "Admin") can view
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!User.IsInRole("Admin") && (userIdClaim == null || result.StudentId.ToString() != userIdClaim))
+            if (ModelState.IsValid)
             {
-                return Forbid();
+                var userId = _userManager.GetUserId(User);
+                var testResult = new TestResult
+                {
+                    TestId = model.TestId,
+                    UserId = string.IsNullOrEmpty(userId) ? (int?)null : int.Parse(userId),
+                    DateTaken = System.DateTime.Now
+                };
+
+                _context.TestResults.Add(testResult);
+                await _context.SaveChangesAsync();
+
+                foreach (var answer in model.Answers)
+                {
+                    var testAnswer = new TestAnswer
+                    {
+                        TestResultId = testResult.Id,
+                        QuestionId = answer.QuestionId,
+                        QuestionOptionId = answer.OptionId
+                    };
+                    _context.TestAnswers.Add(testAnswer);
+                }
+                await _context.SaveChangesAsync();
+
+                // Compute scores
+                var optionIds = model.Answers.Select(a => a.OptionId).ToList();
+                var pathScores = await _context.OptionCareerPaths
+                    .Where(ocp => optionIds.Contains(ocp.OptionId))
+                    .GroupBy(ocp => ocp.CareerPathId)
+                    .Select(g => new { CareerPathId = g.Key, Score = g.Sum(ocp => ocp.Weight) })
+                    .OrderByDescending(x => x.Score)
+                    .ToListAsync();
+
+                if (pathScores.Any())
+                {
+                    var best = pathScores.First();
+                    testResult.RecommendedCareerPathId = best.CareerPathId;
+
+                    var totalWeight = pathScores.Sum(x => x.Score);
+                    testResult.CompatibilityScore = totalWeight > 0 
+                        ? (decimal)System.Math.Round((double)best.Score / totalWeight * 100, 2) 
+                        : 100;
+
+                    await _context.SaveChangesAsync();
+                }
+
+                // Store the result ID in the session and redirect to login/register
+                HttpContext.Session.SetInt32("TestResultId", testResult.Id);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { redirectTo = Url.Action("Register", "Account") });
+                }
+
+                return Json(new { redirectTo = Url.Action("GetResultDetail", new { id = testResult.Id }) });
             }
 
-            return View(result);
+            return BadRequest(ModelState);
+        }
+
+        public async Task<IActionResult> GetResultDetail(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                TempData["RequireAuthForTestResult"] = "Vui lòng đăng nhập hoặc đăng ký tài khoản để xem kết quả đánh giá nghề nghiệp của bạn.";
+                return RedirectToAction("Register", "Account");
+            }
+
+            var testResult = await _context.TestResults
+                .Include(tr => tr.Test)
+                .Include(tr => tr.RecommendedCareerPath)
+                .Include(tr => tr.User)
+                .Include(tr => tr.TestAnswers)
+                    .ThenInclude(ta => ta.QuestionTest)
+                .Include(tr => tr.TestAnswers)
+                    .ThenInclude(ta => ta.QuestionOption)
+                        .ThenInclude(qo => qo.OptionCareerPaths)
+                            .ThenInclude(ocp => ocp.CareerPath)
+                .FirstOrDefaultAsync(tr => tr.Id == id && tr.UserId == int.Parse(userId));
+
+            if (testResult == null)
+            {
+                return NotFound();
+            }
+
+            // Retrieve matching JobPostings
+            if (testResult.RecommendedCareerPathId.HasValue)
+            {
+                ViewBag.Jobs = await _context.Set<JobPosting>()
+                    .Where(jp => jp.CareerPathId == testResult.RecommendedCareerPathId.Value && jp.Status == 1)
+                    .ToListAsync();
+            }
+            else
+            {
+                ViewBag.Jobs = new List<JobPosting>();
+            }
+
+            return View(testResult);
         }
     }
 }
