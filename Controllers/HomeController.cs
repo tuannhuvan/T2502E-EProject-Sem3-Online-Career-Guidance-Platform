@@ -4,6 +4,7 @@ using Career_Guidance_Platform.Models;
 using Career_Guidance_Platform.Data;
 using Career_Guidance_Platform.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
 using System.Linq;
 
@@ -13,11 +14,13 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly AppDbContext _context;
+    private readonly UserManager<User> _userManager;
 
-    public HomeController(ILogger<HomeController> logger, AppDbContext context)
+    public HomeController(ILogger<HomeController> logger, AppDbContext context, UserManager<User> userManager)
     {
         _logger = logger;
         _context = context;
+        _userManager = userManager;
     }
 
     public IActionResult Index() => View();
@@ -126,6 +129,31 @@ public class HomeController : Controller
     public IActionResult Policy() => View();
 
     public IActionResult Terms() => View();
+
+    public async Task<IActionResult> ResumeBuilder(int? id)
+    {
+        if (id.HasValue)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
+
+            var resume = await _context.Resumes
+                .FirstOrDefaultAsync(r => r.Id == id.Value && r.UserId == int.Parse(userId));
+
+            if (resume == null)
+            {
+                return NotFound("Không tìm thấy CV hoặc bạn không có quyền chỉnh sửa.");
+            }
+
+            return View(resume);
+        }
+
+        return View();
+    }
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
