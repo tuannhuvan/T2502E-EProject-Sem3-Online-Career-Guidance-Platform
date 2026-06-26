@@ -6,6 +6,8 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
 
 namespace Career_Guidance_Platform.Controllers;
 
@@ -33,7 +35,6 @@ public class AdminController : Controller
         return View(tests);
     }
     public IActionResult Jobs() => View();
-    public IActionResult Resources() => View();
     public IActionResult Reports() => View();
     public IActionResult Settings() => View();
     public IActionResult Terms() => View();
@@ -271,5 +272,341 @@ public class AdminController : Controller
             await _context.SaveChangesAsync();
         }
         return RedirectToAction(nameof(Categories));
+    }
+    
+        // GET: /Admin/Courses
+    public async Task<IActionResult> Courses()
+    {
+        var courses = await _context.CareerPathCourses
+            .Include(c => c.CareerPath)
+            .OrderBy(c => c.CareerPathId)
+            .ThenBy(c => c.SortOrder)
+            .ToListAsync();
+
+        return View(courses);
+    }
+
+    // GET: /Admin/CreateCourse
+    public async Task<IActionResult> CreateCourse()
+    {
+        ViewBag.CareerPaths = new SelectList(
+            await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+            "Id",
+            "Title"
+        );
+
+        return View();
+    }
+
+    // POST: /Admin/CreateCourse
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateCourse(CareerPathCourse course)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewBag.CareerPaths = new SelectList(
+                await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+                "Id",
+                "Title",
+                course.CareerPathId
+            );
+
+            return View(course);
+        }
+
+        course.Status = 1;
+        _context.CareerPathCourses.Add(course);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Courses));
+    }
+
+    // GET: /Admin/EditCourse/1
+    public async Task<IActionResult> EditCourse(int id)
+    {
+        var course = await _context.CareerPathCourses.FindAsync(id);
+
+        if (course == null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.CareerPaths = new SelectList(
+            await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+            "Id",
+            "Title",
+            course.CareerPathId
+        );
+
+        return View(course);
+    }
+
+    // POST: /Admin/EditCourse/1
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditCourse(int id, CareerPathCourse course)
+    {
+        if (id != course.Id)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.CareerPaths = new SelectList(
+                await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+                "Id",
+                "Title",
+                course.CareerPathId
+            );
+
+            return View(course);
+        }
+
+        _context.CareerPathCourses.Update(course);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Courses));
+    }
+
+    // POST: /Admin/DeleteCourse/1
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteCourse(int id)
+    {
+        var course = await _context.CareerPathCourses.FindAsync(id);
+
+        if (course == null)
+        {
+            return NotFound();
+        }
+
+        _context.CareerPathCourses.Remove(course);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Courses));
+    }
+    
+    //CRUD CAREPATH
+    public async Task<IActionResult> CareerPaths()
+    {
+        var careerPaths = await _context.CareerPaths
+            .Include(c => c.Category)
+            .OrderByDescending(c => c.Id)
+            .ToListAsync();
+
+        return View(careerPaths);
+    }
+
+    public async Task<IActionResult> CreateCareerPath()
+    {
+        ViewBag.Categories = new SelectList(
+            await _context.Categories.Where(c => c.Status == 1).ToListAsync(),
+            "Id",
+            "Name"
+        );
+
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateCareerPath(CareerPath careerPath)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Categories = new SelectList(
+                await _context.Categories.Where(c => c.Status == 1).ToListAsync(),
+                "Id",
+                "Name",
+                careerPath.CategoryId
+            );
+
+            return View(careerPath);
+        }
+
+        careerPath.Status = 1;
+        careerPath.CreatedAt = DateTime.Now;
+        careerPath.CreatedBy = "Admin";
+
+        _context.CareerPaths.Add(careerPath);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(CareerPaths));
+    }
+
+    public async Task<IActionResult> EditCareerPath(int id)
+    {
+        var careerPath = await _context.CareerPaths.FindAsync(id);
+
+        if (careerPath == null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.Categories = new SelectList(
+            await _context.Categories.Where(c => c.Status == 1).ToListAsync(),
+            "Id",
+            "Name",
+            careerPath.CategoryId
+        );
+
+        return View(careerPath);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditCareerPath(int id, CareerPath careerPath)
+    {
+        if (id != careerPath.Id)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Categories = new SelectList(
+                await _context.Categories.Where(c => c.Status == 1).ToListAsync(),
+                "Id",
+                "Name",
+                careerPath.CategoryId
+            );
+
+            return View(careerPath);
+        }
+
+        careerPath.UpdatedAt = DateTime.Now;
+        careerPath.UpdatedBy = "Admin";
+
+        _context.CareerPaths.Update(careerPath);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(CareerPaths));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteCareerPath(int id)
+    {
+        var careerPath = await _context.CareerPaths.FindAsync(id);
+
+        if (careerPath == null)
+        {
+            return NotFound();
+        }
+
+        _context.CareerPaths.Remove(careerPath);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(CareerPaths));
+    }
+    
+    // crud resources
+    public async Task<IActionResult> Resources()
+    {
+        var resources = await _context.Resources
+            .Include(r => r.CareerPath)
+            .OrderByDescending(r => r.Id)
+            .ToListAsync();
+
+        return View(resources);
+    }
+
+    public async Task<IActionResult> CreateResource()
+    {
+        ViewBag.CareerPaths = new SelectList(
+            await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+            "Id",
+            "Title"
+        );
+
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateResource(Resource resource)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewBag.CareerPaths = new SelectList(
+                await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+                "Id",
+                "Title",
+                resource.PathId
+            );
+
+            return View(resource);
+        }
+
+        resource.Status = 1;
+        _context.Resources.Add(resource);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Resources));
+    }
+
+    public async Task<IActionResult> EditResource(int id)
+    {
+        var resource = await _context.Resources.FindAsync(id);
+
+        if (resource == null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.CareerPaths = new SelectList(
+            await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+            "Id",
+            "Title",
+            resource.PathId
+        );
+
+        return View(resource);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditResource(int id, Resource resource)
+    {
+        if (id != resource.Id)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.CareerPaths = new SelectList(
+                await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+                "Id",
+                "Title",
+                resource.PathId
+            );
+
+            return View(resource);
+        }
+
+        _context.Resources.Update(resource);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Resources));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteResource(int id)
+    {
+        var resource = await _context.Resources.FindAsync(id);
+
+        if (resource == null)
+        {
+            return NotFound();
+        }
+
+        _context.Resources.Remove(resource);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Resources));
     }
 }

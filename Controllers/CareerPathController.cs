@@ -2,8 +2,6 @@ using Career_Guidance_Platform.Data;
 using Career_Guidance_Platform.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
-using System.Linq;
 
 namespace Career_Guidance_Platform.Controllers
 {
@@ -16,21 +14,43 @@ namespace Career_Guidance_Platform.Controllers
             _context = context;
         }
 
+        // Trang chi tiết Career Path
         public async Task<IActionResult> Details(int id)
         {
             var careerPath = await _context.CareerPaths
-                .Include(cp => cp.Category)
-                .FirstOrDefaultAsync(cp => cp.Id == id);
+                .Include(c => c.Category)
+                .FirstOrDefaultAsync(c => c.Id == id && c.Status == 1);
 
             if (careerPath == null)
             {
-                return NotFound("Không tìm thấy lộ trình nghề nghiệp yêu cầu.");
+                return NotFound();
             }
 
-            // Retrieve partner jobs / businesses
-            ViewBag.Jobs = await _context.Set<JobPosting>()
-                .Where(jp => jp.CareerPathId == id && jp.Status == 1)
+            ViewBag.Jobs = await _context.JobPostings
+                .Where(j => j.CareerPathId == id && j.Status == 1)
                 .ToListAsync();
+
+            return View(careerPath);
+        }
+
+        // Trang Roadmap
+        public async Task<IActionResult> Roadmap(int id)
+        {
+            var careerPath = await _context.CareerPaths
+                .Include(c => c.Category)
+                .FirstOrDefaultAsync(c => c.Id == id && c.Status == 1);
+
+            if (careerPath == null)
+            {
+                return NotFound();
+            }
+
+            var courses = await _context.CareerPathCourses
+                .Where(c => c.CareerPathId == id && c.Status == 1)
+                .OrderBy(c => c.SortOrder)
+                .ToListAsync();
+
+            ViewBag.Courses = courses;
 
             return View(careerPath);
         }

@@ -1,0 +1,84 @@
+@model IEnumerable<Career_Guidance_Platform.Models.CareerPathCourse>
+
+@{
+    ViewData["Title"] = "Quản lý Course";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-xl py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Quản lý Course</h2>
+            <p class="text-muted mb-0">Danh sách khóa học thuộc từng Career Path</p>
+        </div>
+
+        <a asp-controller="Admin"
+           asp-action="CreateCourse"
+           class="btn btn-primary">
+            + Thêm Course
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Career Path</th>
+                    <th>Course</th>
+                    <th>Số ngày</th>
+                    <th>Thứ tự</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Id</td>
+                        <td>@item.CareerPath?.Title</td>
+                        <td>
+                            <strong>@item.Title</strong>
+                            <div class="text-muted small">@item.Description</div>
+                        </td>
+                        <td>@item.EstimatedDays ngày</td>
+                        <td>@item.SortOrder</td>
+                        <td>
+                            @if (item.Status == 1)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-controller="Admin"
+                               asp-action="EditCourse"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
+
+                            <form asp-controller="Admin"
+                                  asp-action="DeleteCourse"
+                                  asp-route-id="@item.Id"
+                                  method="post"
+                                  style="display:inline;"
+                                  onsubmit="return confirm('Bạn có chắc muốn xóa course này?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
