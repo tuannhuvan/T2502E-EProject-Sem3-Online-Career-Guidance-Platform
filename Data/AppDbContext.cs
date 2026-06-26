@@ -23,6 +23,7 @@ namespace Career_Guidance_Platform.Data
         public DbSet<CareerEvent> CareerEvents { get; set; }
         public DbSet<CommunityPost> CommunityPosts { get; set; }
         public DbSet<Resource> Resources { get; set; }
+        public DbSet<Resume> Resumes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
