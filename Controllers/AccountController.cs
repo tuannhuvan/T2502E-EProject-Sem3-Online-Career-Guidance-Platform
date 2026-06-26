@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace Career_Guidance_Platform.Controllers
 {
@@ -14,12 +15,13 @@ namespace Career_Guidance_Platform.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly AppDbContext _context;
-
-        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, AppDbContext context)
+        private readonly IEmailSender _emailSender;
+        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, AppDbContext context,IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
+            _emailSender = emailSender;
         }
 
         public IActionResult Login()
@@ -109,5 +111,66 @@ namespace Career_Guidance_Platform.Controllers
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
+        
+   
+        /// /////////////////
+        /*
+        EMail
+        */
+        
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                // Không lộ email có tồn tại hay không
+                return View("ForgotPasswordConfirmation");
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var resetLink = Url.Action(
+                "ResetPassword",
+                "Account",
+                new { email = user.Email, token },
+                Request.Scheme);
+
+            await _emailSender.SendEmailAsync(
+                email,
+                "Reset mật khẩu",
+                $"Click vào link để đổi mật khẩu: {resetLink}");
+
+            return View("ForgotPasswordConfirmation");
+        }
+        [HttpGet]
+        public IActionResult ResetPassword(string token, string email)
+        {
+            ViewBag.Token = token;
+            ViewBag.Email = email;
+            return View();
+        }
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(string email, string token, string password)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+                return RedirectToAction("Login");
+
+            var result = await _userManager.ResetPasswordAsync(user, token, password);
+
+            if (result.Succeeded)
+                return RedirectToAction("Login");
+
+            return View();
+        }
     }
+    
 }

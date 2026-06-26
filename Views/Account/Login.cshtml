@@ -37,7 +37,9 @@
                     <input asp-for="RememberMe" />
                     @Html.DisplayNameFor(m => m.RememberMe)
                 </label>
-                <a href="#">Quên mật khẩu?</a>
+                <a asp-controller="Account" asp-action="ForgotPassword">
+                    Quên mật khẩu?
+                </a>
             </div>
 
             <button type="submit" class="auth-btn">Đăng nhập</button>
