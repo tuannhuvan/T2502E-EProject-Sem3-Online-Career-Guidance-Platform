@@ -23,10 +23,18 @@ namespace Career_Guidance_Platform.Data
         public DbSet<CareerEvent> CareerEvents { get; set; }
         public DbSet<CommunityPost> CommunityPosts { get; set; }
         public DbSet<Resource> Resources { get; set; }
+        
+        public DbSet<JobPosting> JobPostings { get; set; }
+        
+        public DbSet<CareerPathCourse> CareerPathCourses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<CareerPathCourse>()
+                .HasOne(c => c.CareerPath)
+                .WithMany()
+                .HasForeignKey(c => c.CareerPathId);
             // Entities already have [Table]/[Column] attributes; add extra mapping if needed here.
         }
     }

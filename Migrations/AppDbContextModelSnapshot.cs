@@ -119,6 +119,47 @@ namespace Career_Guidance_Platform.Migrations
                     b.ToTable("career_paths");
                 });
 
+            modelBuilder.Entity("Career_Guidance_Platform.Models.CareerPathCourse", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CareerPathId")
+                        .HasColumnType("int")
+                        .HasColumnName("career_path_id");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext")
+                        .HasColumnName("description");
+
+                    b.Property<int>("EstimatedDays")
+                        .HasColumnType("int")
+                        .HasColumnName("estimated_days");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CareerPathId");
+
+                    b.ToTable("career_path_courses");
+                });
+
             modelBuilder.Entity("Career_Guidance_Platform.Models.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -1102,6 +1143,17 @@ namespace Career_Guidance_Platform.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Career_Guidance_Platform.Models.CareerPathCourse", b =>
+                {
+                    b.HasOne("Career_Guidance_Platform.Models.CareerPath", "CareerPath")
+                        .WithMany()
+                        .HasForeignKey("CareerPathId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CareerPath");
                 });
 
             modelBuilder.Entity("Career_Guidance_Platform.Models.Goal", b =>

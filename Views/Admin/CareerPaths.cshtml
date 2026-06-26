@@ -1,20 +1,20 @@
-﻿@model IEnumerable<Career_Guidance_Platform.Models.Resource>
+@model IEnumerable<Career_Guidance_Platform.Models.CareerPath>
 
 @{
-    ViewData["Title"] = "Quản lý Resources";
+    ViewData["Title"] = "Quản lý Career Paths";
     Layout = "_AdminLayout";
 }
 
 <div class="page-header d-print-none">
     <div class="row align-items-center">
         <div class="col">
-            <h2 class="page-title">Quản lý Resources</h2>
-            <div class="text-muted mt-1">Tài liệu học tập theo Career Path</div>
+            <h2 class="page-title">Quản lý Career Paths</h2>
+            <div class="text-muted mt-1">Danh sách lộ trình nghề nghiệp trong hệ thống</div>
         </div>
         <div class="col-auto">
-            <a asp-controller="Admin" asp-action="CreateResource" class="btn btn-primary">
+            <a asp-controller="Admin" asp-action="CreateCareerPath" class="btn btn-primary">
                 <i class="ti ti-plus me-1"></i>
-                Thêm Resource
+                Thêm Career Path
             </a>
         </div>
     </div>
@@ -27,9 +27,7 @@
             <tr>
                 <th>ID</th>
                 <th>Career Path</th>
-                <th>Resource</th>
-                <th>Type</th>
-                <th>URL</th>
+                <th>Category</th>
                 <th>Status</th>
                 <th class="text-end">Actions</th>
             </tr>
@@ -39,26 +37,13 @@
             {
                 <tr>
                     <td>@item.Id</td>
-
-                    <td>@item.CareerPath?.Title</td>
-
                     <td>
                         <strong>@item.Title</strong>
+                        <div class="text-muted small">
+                            @(item.Content?.Length > 120 ? item.Content.Substring(0, 120) + "..." : item.Content)
+                        </div>
                     </td>
-
-                    <td>
-                        <span class="badge bg-blue-lt">@item.ResourceType</span>
-                    </td>
-
-                    <td>
-                        @if (!string.IsNullOrEmpty(item.Url))
-                        {
-                            <a href="@item.Url" target="_blank" class="text-primary">
-                                Open
-                            </a>
-                        }
-                    </td>
-
+                    <td>@item.Category?.Name</td>
                     <td>
                         @if (item.Status == 1)
                         {
@@ -69,21 +54,27 @@
                             <span class="badge bg-secondary">Inactive</span>
                         }
                     </td>
-
                     <td class="text-end">
+                        <a asp-controller="CareerPath"
+                           asp-action="Details"
+                           asp-route-id="@item.Id"
+                           class="btn btn-sm btn-info">
+                            View
+                        </a>
+
                         <a asp-controller="Admin"
-                           asp-action="EditResource"
+                           asp-action="EditCareerPath"
                            asp-route-id="@item.Id"
                            class="btn btn-sm btn-warning">
                             Edit
                         </a>
 
                         <form asp-controller="Admin"
-                              asp-action="DeleteResource"
+                              asp-action="DeleteCareerPath"
                               asp-route-id="@item.Id"
                               method="post"
                               style="display:inline;"
-                              onsubmit="return confirm('Bạn có chắc muốn xóa tài liệu này?');">
+                              onsubmit="return confirm('Bạn có chắc muốn xóa Career Path này?');">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-sm btn-danger">
                                 Delete

@@ -1,0 +1,78 @@
+@model Career_Guidance_Platform.Models.Resource
+
+@{
+    ViewData["Title"] = "Thêm Resource";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Thêm Resource</h2>
+            <div class="text-muted mt-1">Tạo tài liệu học tập mới</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <form asp-controller="Admin" asp-action="CreateResource" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label">Career Path</label>
+                <select asp-for="PathId" asp-items="ViewBag.CareerPaths" class="form-select">
+                    <option value="">-- Chọn Career Path --</option>
+                </select>
+                <span asp-validation-for="PathId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Tên tài liệu</label>
+                <input asp-for="Title" class="form-control" placeholder="Ví dụ: C# & .NET Core Handbook" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Loại tài liệu</label>
+                <select asp-for="ResourceType" class="form-select">
+                    <option value="PDF">PDF</option>
+                    <option value="Video">Video</option>
+                    <option value="Article">Article</option>
+                    <option value="Doc">Doc</option>
+                    <option value="Ebook">Ebook</option>
+                </select>
+                <span asp-validation-for="ResourceType" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">URL</label>
+                <input asp-for="Url" class="form-control" placeholder="https://..." />
+                <span asp-validation-for="Url" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Status</label>
+                <select asp-for="Status" class="form-select">
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
+                </select>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ti ti-device-floppy me-1"></i>
+                    Lưu
+                </button>
+
+                <a asp-controller="Admin" asp-action="Resources" class="btn btn-secondary">
+                    Quay lại
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

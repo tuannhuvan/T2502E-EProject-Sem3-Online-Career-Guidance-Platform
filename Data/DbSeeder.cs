@@ -126,7 +126,57 @@ namespace Career_Guidance_Platform.Data
             {
                 careerPaths = await context.CareerPaths.OrderBy(c => c.Id).ToListAsync();
             }
+            
+            // Seed CareerPathCourses
+            if (!await context.CareerPathCourses.AnyAsync())
+            {
+                var softwareEngineer = await context.CareerPaths
+                    .FirstOrDefaultAsync(c => c.Title.Contains("Software Engineer"));
 
+                if (softwareEngineer != null)
+                {
+                    context.CareerPathCourses.AddRange(
+                        new CareerPathCourse
+                        {
+                            CareerPathId = softwareEngineer.Id,
+                            Title = "C# Fundamentals",
+                            Description = "Học cú pháp C#, biến, kiểu dữ liệu, điều kiện, vòng lặp.",
+                            EstimatedDays = 7,
+                            SortOrder = 1,
+                            Status = 1
+                        },
+                        new CareerPathCourse
+                        {
+                            CareerPathId = softwareEngineer.Id,
+                            Title = "Object Oriented Programming",
+                            Description = "Lập trình hướng đối tượng với C#.",
+                            EstimatedDays = 7,
+                            SortOrder = 2,
+                            Status = 1
+                        },
+                        new CareerPathCourse
+                        {
+                            CareerPathId = softwareEngineer.Id,
+                            Title = "SQL Server",
+                            Description = "Thiết kế cơ sở dữ liệu và truy vấn SQL.",
+                            EstimatedDays = 5,
+                            SortOrder = 3,
+                            Status = 1
+                        },
+                        new CareerPathCourse
+                        {
+                            CareerPathId = softwareEngineer.Id,
+                            Title = "ASP.NET Core MVC",
+                            Description = "Xây dựng ứng dụng web bằng ASP.NET Core MVC.",
+                            EstimatedDays = 10,
+                            SortOrder = 4,
+                            Status = 1
+                        }
+                    );
+
+                    await context.SaveChangesAsync();
+                }
+            }
             // 6. Seed Base Test
             var baseTest = await context.Tests.FirstOrDefaultAsync(t => t.Title == "Bài đánh giá định hướng nghề nghiệp nền tảng (Base Test)");
             if (baseTest == null)
