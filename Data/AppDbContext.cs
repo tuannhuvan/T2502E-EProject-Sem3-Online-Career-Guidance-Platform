@@ -27,6 +27,7 @@ namespace Career_Guidance_Platform.Data
         public DbSet<JobPosting> JobPostings { get; set; }
         
         public DbSet<CareerPathCourse> CareerPathCourses { get; set; }
+        public DbSet<Resume> Resumes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

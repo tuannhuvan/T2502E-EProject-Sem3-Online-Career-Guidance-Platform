@@ -4,6 +4,7 @@ using Career_Guidance_Platform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Career_Guidance_Platform.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624194048_AddTestResultDetails")]
+    partial class AddTestResultDetails
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,47 +120,6 @@ namespace Career_Guidance_Platform.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("career_paths");
-                });
-
-            modelBuilder.Entity("Career_Guidance_Platform.Models.CareerPathCourse", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CareerPathId")
-                        .HasColumnType("int")
-                        .HasColumnName("career_path_id");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext")
-                        .HasColumnName("description");
-
-                    b.Property<int>("EstimatedDays")
-                        .HasColumnType("int")
-                        .HasColumnName("estimated_days");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int")
-                        .HasColumnName("status");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("title");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CareerPathId");
-
-                    b.ToTable("career_path_courses");
                 });
 
             modelBuilder.Entity("Career_Guidance_Platform.Models.Category", b =>
@@ -699,45 +661,6 @@ namespace Career_Guidance_Platform.Migrations
                     b.ToTable("resources");
                 });
 
-            modelBuilder.Entity("Career_Guidance_Platform.Models.Resume", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ContentJson")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("content_json");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)")
-                        .HasColumnName("title");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("updated_at");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("resumes");
-                });
-
             modelBuilder.Entity("Career_Guidance_Platform.Models.TeamMember", b =>
                 {
                     b.Property<int>("Id")
@@ -1184,17 +1107,6 @@ namespace Career_Guidance_Platform.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Career_Guidance_Platform.Models.CareerPathCourse", b =>
-                {
-                    b.HasOne("Career_Guidance_Platform.Models.CareerPath", "CareerPath")
-                        .WithMany()
-                        .HasForeignKey("CareerPathId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CareerPath");
-                });
-
             modelBuilder.Entity("Career_Guidance_Platform.Models.Goal", b =>
                 {
                     b.HasOne("Career_Guidance_Platform.Models.CareerPath", "CareerPath")
@@ -1279,17 +1191,6 @@ namespace Career_Guidance_Platform.Migrations
                         .IsRequired();
 
                     b.Navigation("CareerPath");
-                });
-
-            modelBuilder.Entity("Career_Guidance_Platform.Models.Resume", b =>
-                {
-                    b.HasOne("Career_Guidance_Platform.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Career_Guidance_Platform.Models.TestAnswer", b =>

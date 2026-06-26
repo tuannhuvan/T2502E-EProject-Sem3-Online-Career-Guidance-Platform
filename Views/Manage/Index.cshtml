@@ -1,19 +1,218 @@
-﻿@{
-    ViewData["Title"] = "Manage your account";
+@model Career_Guidance_Platform.Models.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Trang cá nhân của bạn";
 }
 
-<h2>@ViewData["Title"].</h2>
-<p class="text-success">@ViewData["StatusMessage"]</p>
+<section class="page-hero">
+    <span class="page-badge">👤 Trang cá nhân</span>
+    <h1>Bảng điều khiển của bạn</h1>
+    <p>Quản lý hồ sơ cá nhân, xem lại lịch sử các bài trắc nghiệm và danh sách các CV chuyên nghiệp đã lưu của bạn.</p>
+</section>
 
-<div>
-    <h4>Change your account settings</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>Password:</dt>
-        <dd>
-            [
-            <a asp-controller="Manage" asp-action="ChangePassword">Change</a>
-            ]
-        </dd>
-    </dl>
-</div>
+<section class="content-section" style="padding-top: 10px;">
+    <div class="profile-dashboard-layout">
+        
+        <!-- Left Pane: User Card Info -->
+        <div class="profile-sidebar-card info-card">
+            <div class="user-avatar-badge">
+                <span class="avatar-emoji">🎓</span>
+            </div>
+            
+            <h2 class="user-fullname">@Model.User.FullName</h2>
+            <div class="user-role-label">@Model.User.Role</div>
+            
+            <div class="user-meta-details">
+                <div class="meta-item">
+                    <span class="meta-label">Tài khoản:</span>
+                    <span class="meta-val">@Model.User.UserName</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Email:</span>
+                    <span class="meta-val">@Model.User.Email</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Ngày tham gia:</span>
+                    <span class="meta-val">@Model.User.CreatedAt.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Trạng thái:</span>
+                    <span class="meta-val text-success">Hoạt động</span>
+                </div>
+            </div>
+            
+            <hr class="profile-hr" />
+            
+            <div class="profile-sidebar-actions">
+                <a class="btn secondary-btn w-100" asp-controller="Manage" asp-action="ChangePassword">
+                    🔑 Đổi mật khẩu
+                </a>
+            </div>
+        </div>
+
+        <!-- Right Pane: Tabs and Details -->
+        <div class="profile-main-content">
+            <!-- Navigation Tabs -->
+            <div class="profile-tabs">
+                <button type="button" class="profile-tab-btn active" data-target="tab-tests">
+                    📊 Lịch sử đánh giá (@Model.TestResults.Count)
+                </button>
+                <button type="button" class="profile-tab-btn" data-target="tab-resumes">
+                    📄 CV đã lưu (@Model.Resumes.Count)
+                </button>
+            </div>
+
+            <!-- Tab Content: Test Results -->
+            <div class="profile-tab-pane active" id="tab-tests">
+                <div class="info-card">
+                    <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #020617;">Lịch sử trắc nghiệm sự nghiệp</h3>
+                    
+                    @if (Model.TestResults.Count == 0)
+                    {
+                        <div class="empty-state-panel">
+                            <span class="empty-icon">🧭</span>
+                            <h4>Bạn chưa thực hiện bài trắc nghiệm hướng nghiệp nào</h4>
+                            <p>Hãy làm bài đánh giá Holland & MBTI để tìm lộ trình nghề nghiệp tương thích nhất với năng lực bản thân.</p>
+                            <a class="btn primary-btn" asp-controller="Home" asp-action="CareerTest" style="margin-top: 10px;">
+                                Bắt đầu làm trắc nghiệm →
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Lần làm</th>
+                                        <th>Ngày thực hiện</th>
+                                        <th>Nghề gợi ý</th>
+                                        <th>Độ tương thích</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var result in Model.TestResults)
+                                    {
+                                        <tr>
+                                            <td><strong>Lần #@result.AttemptNumber</strong></td>
+                                            <td>@result.DateTaken.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                <span class="recommendation-badge">
+                                                    @(result.RecommendedCareerPath?.Title ?? "Đang phân tích...")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div class="progress-bar-mini">
+                                                        <div class="progress-fill" style="width: @(result.CompatibilityScore ?? 0)%"></div>
+                                                    </div>
+                                                    <strong>@(result.CompatibilityScore?.ToString("0.#"))%</strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a class="btn secondary-btn" asp-controller="CareerTest" asp-action="GetResultDetail" asp-route-id="@result.Id" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px;">
+                                                    🔍 Xem chi tiết
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Tab Content: Saved Resumes -->
+            <div class="profile-tab-pane" id="tab-resumes">
+                <div class="info-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin: 0; font-size: 18px; color: #020617;">Danh sách CV của bạn</h3>
+                        <a class="btn primary-btn" asp-controller="Home" asp-action="ResumeBuilder" style="min-height: auto; padding: 8px 16px; font-size: 13px; border-radius: 8px;">
+                            ➕ Tạo CV mới
+                        </a>
+                    </div>
+                    
+                    @if (Model.Resumes.Count == 0)
+                    {
+                        <div class="empty-state-panel">
+                            <span class="empty-icon">📄</span>
+                            <h4>Bạn chưa lưu CV nào vào tài khoản</h4>
+                            <p>Tạo CV chuyên nghiệp từ các mẫu chuẩn A4 có sẵn và lưu lại để dễ dàng chỉnh sửa sau này.</p>
+                            <a class="btn primary-btn" asp-controller="Home" asp-action="ResumeBuilder" style="margin-top: 10px;">
+                                Tạo CV đầu tiên ngay →
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tên CV</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Cập nhật cuối</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var resume in Model.Resumes)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 10px;">
+                                                    <span style="font-size: 22px;">📄</span>
+                                                    <div>
+                                                        <strong style="color: #020617; font-size: 14.5px;">@resume.Title</strong>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@resume.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>@(resume.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật")</td>
+                                            <td>
+                                                <div style="display: flex; gap: 8px;">
+                                                    <a class="btn secondary-btn" asp-controller="Home" asp-action="ResumeBuilder" asp-route-id="@resume.Id" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px;">
+                                                        ✏️ Sửa
+                                                    </a>
+                                                    <form asp-controller="Manage" asp-action="DeleteResume" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa CV này?');" style="margin: 0; display: inline-block;">
+                                                        <input type="hidden" name="id" value="@resume.Id" />
+                                                        <button type="submit" class="btn secondary-btn danger" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px;">
+                                                            🗑️ Xóa
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- Dashboard Interaction Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabBtns = document.querySelectorAll(".profile-tab-btn");
+        const tabPanes = document.querySelectorAll(".profile-tab-pane");
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const target = btn.getAttribute("data-target");
+
+                tabBtns.forEach(b => b.classList.remove("active"));
+                tabPanes.forEach(p => p.classList.remove("active"));
+
+                btn.classList.add("active");
+                document.getElementById(target).classList.add("active");
+            });
+        });
+    });
+</script>

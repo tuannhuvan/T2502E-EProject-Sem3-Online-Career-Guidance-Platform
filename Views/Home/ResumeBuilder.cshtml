@@ -1,0 +1,973 @@
+@model Career_Guidance_Platform.Models.Resume
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+
+@{
+    ViewData["Title"] = "Công cụ tạo CV Tương tác";
+}
+
+<section class="page-hero">
+    <span class="page-badge">📄 CV Builder</span>
+    <h1>Công cụ tạo CV Tương tác</h1>
+    <p>Thiết kế CV chuyên nghiệp, tùy chỉnh linh hoạt và tải xuống bản in tiêu chuẩn chỉ trong vài phút.</p>
+</section>
+
+<section class="content-section" style="padding-top: 10px;">
+    <!-- Controls Bar -->
+    <div class="resume-controls">
+        <div class="template-selector">
+            <label for="templateSelect">Mẫu thiết kế:</label>
+            <select id="templateSelect" class="form-select">
+                <option value="modern" selected>Modern Indigo (Hiện đại)</option>
+                <option value="minimalist">Minimalist Classic (Tối giản)</option>
+                <option value="professional">Professional Sidebar (Chuyên nghiệp)</option>
+            </select>
+        </div>
+        <div class="action-buttons">
+            <button type="button" class="btn secondary-btn" id="btnLoadDemo">✨ Tải dữ liệu mẫu</button>
+            <button type="button" class="btn secondary-btn danger" id="btnClearForm">🗑️ Xóa thông tin</button>
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <button type="button" class="btn primary-btn" id="btnSaveResume" style="background: #10b981; border-color: #10b981; color: white;">💾 Lưu vào tài khoản</button>
+            }
+            <button type="button" class="btn primary-btn" id="btnExportPdf">🖨️ Xuất bản in / PDF</button>
+        </div>
+    </div>
+
+    <!-- Editor Workspace -->
+    <div class="resume-workspace">
+        
+        <!-- Left Pane: Inputs Form -->
+        <div class="resume-form-container info-card">
+            <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 20px; color: #020617; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <span>✍️</span> Biên tập nội dung
+            </h3>
+            
+            <!-- Tab Controls -->
+            <div class="form-tabs">
+                <button type="button" class="tab-btn active" data-tab="tab-personal">Cá nhân</button>
+                <button type="button" class="tab-btn" data-tab="tab-experience">Kinh nghiệm</button>
+                <button type="button" class="tab-btn" data-tab="tab-education">Học vấn</button>
+                <button type="button" class="tab-btn" data-tab="tab-skills-projects">Kỹ năng & Dự án</button>
+            </div>
+
+            <!-- Form Content -->
+            <form id="cvForm" onsubmit="event.preventDefault();">
+                
+                <!-- TAB 1: Personal Info -->
+                <div class="tab-content active" id="tab-personal">
+                    <div class="form-group">
+                        <label for="inputFullName">Họ và tên</label>
+                        <input type="text" id="inputFullName" class="form-control" placeholder="Nguyễn Văn A" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inputTitle">Vị trí ứng tuyển</label>
+                        <input type="text" id="inputTitle" class="form-control" placeholder="Software Engineer / Kế toán viên / UI-UX Designer" />
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="inputEmail">Email</label>
+                            <input type="email" id="inputEmail" class="form-control" placeholder="nguyenvana@gmail.com" />
+                        </div>
+                        <div class="form-group">
+                            <label for="inputPhone">Số điện thoại</label>
+                            <input type="text" id="inputPhone" class="form-control" placeholder="0901 234 567" />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="inputAddress">Địa chỉ</label>
+                            <input type="text" id="inputAddress" class="form-control" placeholder="Quận Cầu Giấy, Hà Nội" />
+                        </div>
+                        <div class="form-group">
+                            <label for="inputWebsite">Website / LinkedIn</label>
+                            <input type="text" id="inputWebsite" class="form-control" placeholder="github.com/nguyenvana" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputSummary">Giới thiệu bản thân</label>
+                        <textarea id="inputSummary" class="form-control" rows="5" placeholder="Tóm tắt ngắn gọn về kinh nghiệm làm việc, kỹ năng nổi trội và mục tiêu phát triển sự nghiệp của bạn..."></textarea>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Experience -->
+                <div class="tab-content" id="tab-experience">
+                    <div id="experienceList" class="dynamic-list">
+                        <!-- Experience inputs added here -->
+                    </div>
+                    <button type="button" class="btn secondary-btn" id="btnAddExperience" style="width: 100%; border-style: dashed; border-color: #cbd5e1; font-weight: 500; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <span>➕</span> Thêm kinh nghiệm làm việc
+                    </button>
+                </div>
+
+                <!-- TAB 3: Education -->
+                <div class="tab-content" id="tab-education">
+                    <div id="educationList" class="dynamic-list">
+                        <!-- Education inputs added here -->
+                    </div>
+                    <button type="button" class="btn secondary-btn" id="btnAddEducation" style="width: 100%; border-style: dashed; border-color: #cbd5e1; font-weight: 500; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <span>➕</span> Thêm học vấn
+                    </button>
+                </div>
+
+                <!-- TAB 4: Skills & Projects -->
+                <div class="tab-content" id="tab-skills-projects">
+                    <div class="form-group">
+                        <label for="inputSkills">Kỹ năng (Phân tách bằng dấu phẩy)</label>
+                        <textarea id="inputSkills" class="form-control" rows="4" placeholder="C#, ASP.NET Core, JavaScript, SQL Server, HTML/CSS, Git, Docker, Kỹ năng thuyết trình..."></textarea>
+                        <small style="color: #64748b; font-size: 12px; margin-top: 4px; display: block;">Mỗi kỹ năng sẽ được hiển thị dưới dạng một nhãn (badge) riêng biệt.</small>
+                    </div>
+
+                    <h4 style="margin: 25px 0 12px; font-size: 16px; color: #020617; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">Dự án tiêu biểu</h4>
+                    <div id="projectList" class="dynamic-list">
+                        <!-- Project inputs added here -->
+                    </div>
+                    <button type="button" class="btn secondary-btn" id="btnAddProject" style="width: 100%; border-style: dashed; border-color: #cbd5e1; font-weight: 500; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <span>➕</span> Thêm dự án
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Right Pane: Live CV Preview -->
+        <div class="resume-preview-container">
+            <div id="cvPreview" class="cv-preview modern">
+                <!-- Javascript will render the templates here dynamically -->
+            </div>
+        </div>
+
+    </div>
+</section>
+
+@if (Model != null)
+{
+    <script id="savedCvJson" type="application/json">@Html.Raw(Model.ContentJson)</script>
+}
+
+<!-- Styles are loaded from page.css -->
+
+<!-- JavaScript logic for Form Tabs, Dynamic Entries, Real-time rendering -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Tab switching
+        const tabBtns = document.querySelectorAll(".tab-btn");
+        const tabContents = document.querySelectorAll(".tab-content");
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const targetTab = btn.getAttribute("data-tab");
+                
+                tabBtns.forEach(b => b.classList.remove("active"));
+                tabContents.forEach(c => c.classList.remove("active"));
+
+                btn.classList.add("active");
+                document.getElementById(targetTab).classList.add("active");
+            });
+        });
+
+        // CV Data State
+        let cvId = @(Model != null ? Model.Id : 0);
+        let cvTitle = "@Html.Raw(Model != null ? Model.Title.Replace("\"", "\\\"") : "CV mới")";
+
+        let cvData = {
+            fullName: "",
+            title: "",
+            email: "",
+            phone: "",
+            address: "",
+            website: "",
+            summary: "",
+            skills: "",
+            experiences: [],
+            educations: [],
+            projects: []
+        };
+
+        // Form elements refs
+        const inputFullName = document.getElementById("inputFullName");
+        const inputTitle = document.getElementById("inputTitle");
+        const inputEmail = document.getElementById("inputEmail");
+        const inputPhone = document.getElementById("inputPhone");
+        const inputAddress = document.getElementById("inputAddress");
+        const inputWebsite = document.getElementById("inputWebsite");
+        const inputSummary = document.getElementById("inputSummary");
+        const inputSkills = document.getElementById("inputSkills");
+
+        const experienceList = document.getElementById("experienceList");
+        const educationList = document.getElementById("educationList");
+        const projectList = document.getElementById("projectList");
+
+        const templateSelect = document.getElementById("templateSelect");
+        const cvPreview = document.getElementById("cvPreview");
+
+        // Sync main inputs to state and render
+        const updateStateAndRender = () => {
+            cvData.fullName = inputFullName.value;
+            cvData.title = inputTitle.value;
+            cvData.email = inputEmail.value;
+            cvData.phone = inputPhone.value;
+            cvData.address = inputAddress.value;
+            cvData.website = inputWebsite.value;
+            cvData.summary = inputSummary.value;
+            cvData.skills = inputSkills.value;
+            
+            renderCV();
+        };
+
+        // Event listeners for static text inputs
+        [inputFullName, inputTitle, inputEmail, inputPhone, inputAddress, inputWebsite, inputSummary, inputSkills].forEach(input => {
+            input.addEventListener("input", updateStateAndRender);
+        });
+
+        // Dynamic Experience items management
+        document.getElementById("btnAddExperience").addEventListener("click", () => {
+            const id = Date.now();
+            cvData.experiences.push({
+                id: id,
+                title: "",
+                company: "",
+                period: "",
+                desc: ""
+            });
+            renderExperienceFormItems();
+            renderCV();
+        });
+
+        function renderExperienceFormItems() {
+            experienceList.innerHTML = "";
+            cvData.experiences.forEach((exp, index) => {
+                const card = document.createElement("div");
+                card.className = "dynamic-item-card";
+                card.innerHTML = `
+                    <button type="button" class="btn-remove-item" data-id="${exp.id}">&times;</button>
+                    <h5 style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #334155;">Kinh nghiệm #${index + 1}</h5>
+                    <div class="form-group">
+                        <label>Vị trí / Chức danh</label>
+                        <input type="text" class="form-control exp-title" placeholder="Kỹ sư phần mềm" value="${exp.title}" data-id="${exp.id}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Tên công ty</label>
+                        <input type="text" class="form-control exp-company" placeholder="Công ty ABC" value="${exp.company}" data-id="${exp.id}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Thời gian (Tháng/Năm - Tháng/Năm)</label>
+                        <input type="text" class="form-control exp-period" placeholder="06/2023 - Hiện tại" value="${exp.period}" data-id="${exp.id}" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Mô tả công việc</label>
+                        <textarea class="form-control exp-desc" rows="3" placeholder="- Phát triển sản phẩm...\n- Tối ưu hóa hiệu năng..." data-id="${exp.id}">${exp.desc}</textarea>
+                    </div>
+                `;
+                experienceList.appendChild(card);
+            });
+
+            // Bind listeners for dynamic inputs
+            document.querySelectorAll(".exp-title").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.experiences.find(x => x.id === id);
+                    if (item) item.title = e.target.value;
+                    renderCV();
+                });
+            });
+            document.querySelectorAll(".exp-company").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.experiences.find(x => x.id === id);
+                    if (item) item.company = e.target.value;
+                    renderCV();
+                });
+            });
+            document.querySelectorAll(".exp-period").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.experiences.find(x => x.id === id);
+                    if (item) item.period = e.target.value;
+                    renderCV();
+                });
+            });
+            document.querySelectorAll(".exp-desc").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.experiences.find(x => x.id === id);
+                    if (item) item.desc = e.target.value;
+                    renderCV();
+                });
+            });
+
+            // Remove button logic
+            document.querySelectorAll("#experienceList .btn-remove-item").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const id = parseInt(btn.dataset.id);
+                    cvData.experiences = cvData.experiences.filter(x => x.id !== id);
+                    renderExperienceFormItems();
+                    renderCV();
+                });
+            });
+        }
+
+        // Dynamic Education items management
+        document.getElementById("btnAddEducation").addEventListener("click", () => {
+            const id = Date.now();
+            cvData.educations.push({
+                id: id,
+                degree: "",
+                school: "",
+                period: "",
+                desc: ""
+            });
+            renderEducationFormItems();
+            renderCV();
+        });
+
+        function renderEducationFormItems() {
+            educationList.innerHTML = "";
+            cvData.educations.forEach((edu, index) => {
+                const card = document.createElement("div");
+                card.className = "dynamic-item-card";
+                card.innerHTML = `
+                    <button type="button" class="btn-remove-item" data-id="${edu.id}">&times;</button>
+                    <h5 style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #334155;">Học vấn #${index + 1}</h5>
+                    <div class="form-group">
+                        <label>Ngành học / Bằng cấp</label>
+                        <input type="text" class="form-control edu-degree" placeholder="Cử nhân Công nghệ Thông tin" value="${edu.degree}" data-id="${edu.id}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Trường đào tạo</label>
+                        <input type="text" class="form-control edu-school" placeholder="Đại học Công nghệ" value="${edu.school}" data-id="${edu.id}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Thời gian học (Năm - Năm)</label>
+                        <input type="text" class="form-control edu-period" placeholder="2020 - 2024" value="${edu.period}" data-id="${edu.id}" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Mô tả / Thành tích nổi bật</label>
+                        <textarea class="form-control edu-desc" rows="2" placeholder="GPA: 3.5/4.0, Hoạt động ngoại khóa..." data-id="${edu.id}">${edu.desc}</textarea>
+                    </div>
+                `;
+                educationList.appendChild(card);
+            });
+
+            // Bind listeners for education inputs
+            document.querySelectorAll(".edu-degree").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.educations.find(x => x.id === id);
+                    if (item) item.degree = e.target.value;
+                    renderCV();
+                });
+            });
+            document.querySelectorAll(".edu-school").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.educations.find(x => x.id === id);
+                    if (item) item.school = e.target.value;
+                    renderCV();
+                });
+            });
+            document.querySelectorAll(".edu-period").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.educations.find(x => x.id === id);
+                    if (item) item.period = e.target.value;
+                    renderCV();
+                });
+            });
+            document.querySelectorAll(".edu-desc").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.educations.find(x => x.id === id);
+                    if (item) item.desc = e.target.value;
+                    renderCV();
+                });
+            });
+
+            // Remove button logic
+            document.querySelectorAll("#educationList .btn-remove-item").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const id = parseInt(btn.dataset.id);
+                    cvData.educations = cvData.educations.filter(x => x.id !== id);
+                    renderEducationFormItems();
+                    renderCV();
+                });
+            });
+        }
+
+        // Dynamic Projects management
+        document.getElementById("btnAddProject").addEventListener("click", () => {
+            const id = Date.now();
+            cvData.projects.push({
+                id: id,
+                name: "",
+                link: "",
+                desc: ""
+            });
+            renderProjectFormItems();
+            renderCV();
+        });
+
+        function renderProjectFormItems() {
+            projectList.innerHTML = "";
+            cvData.projects.forEach((proj, index) => {
+                const card = document.createElement("div");
+                card.className = "dynamic-item-card";
+                card.innerHTML = `
+                    <button type="button" class="btn-remove-item" data-id="${proj.id}">&times;</button>
+                    <h5 style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #334155;">Dự án #${index + 1}</h5>
+                    <div class="form-group">
+                        <label>Tên dự án</label>
+                        <input type="text" class="form-control proj-name" placeholder="Website Thương mại điện tử" value="${proj.name}" data-id="${proj.id}" />
+                    </div>
+                    <div class="form-group">
+                        <label>Liên kết dự án (Github / Live link)</label>
+                        <input type="text" class="form-control proj-link" placeholder="github.com/myusername/project" value="${proj.link}" data-id="${proj.id}" />
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Mô tả chi tiết dự án</label>
+                        <textarea class="form-control proj-desc" rows="3" placeholder="- Công nghệ sử dụng: ASP.NET Core, React...\n- Đóng góp: Thiết kế database, tối ưu API..." data-id="${proj.id}">${proj.desc}</textarea>
+                    </div>
+                `;
+                projectList.appendChild(card);
+            });
+
+            // Bind listeners for project inputs
+            document.querySelectorAll(".proj-name").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.projects.find(x => x.id === id);
+                    if (item) item.name = e.target.value;
+                    renderCV();
+                });
+            });
+            document.querySelectorAll(".proj-link").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.projects.find(x => x.id === id);
+                    if (item) item.link = e.target.value;
+                    renderCV();
+                });
+            });
+            document.querySelectorAll(".proj-desc").forEach(el => {
+                el.addEventListener("input", (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const item = cvData.projects.find(x => x.id === id);
+                    if (item) item.desc = e.target.value;
+                    renderCV();
+                });
+            });
+
+            // Remove button logic
+            document.querySelectorAll("#projectList .btn-remove-item").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const id = parseInt(btn.dataset.id);
+                    cvData.projects = cvData.projects.filter(x => x.id !== id);
+                    renderProjectFormItems();
+                    renderCV();
+                });
+            });
+        }
+
+        // Change template select handler
+        templateSelect.addEventListener("change", (e) => {
+            const template = e.target.value;
+            cvPreview.className = "cv-preview " + template;
+            renderCV();
+        });
+
+        // Load Demo Data
+        document.getElementById("btnLoadDemo").addEventListener("click", () => {
+            cvData = {
+                fullName: "Nguyễn Văn Hướng Nghiệp",
+                title: "Kỹ sư Phát triển Phần mềm (Full-Stack)",
+                email: "nguyen.huongnghiep@careerpath.vn",
+                phone: "0912 345 678",
+                address: "Cầu Giấy, Hà Nội",
+                website: "github.com/huongnghiep-developer",
+                summary: "Một kỹ sư phần mềm đầy nhiệt huyết với hơn 3 năm kinh nghiệm thực chiến trong phát triển ứng dụng Web sử dụng C#, ASP.NET Core và React. Đam mê thiết kế các hệ thống tin cậy, tối ưu hóa cơ sở dữ liệu và xây dựng những giao diện tuyệt đẹp đáp ứng hàng ngàn lượt truy cập đồng thời.",
+                skills: "C#, ASP.NET Core, ReactJS, Entity Framework Core, SQL Server, Git, Docker, RESTful API, Microservices, CI/CD (GitHub Actions), Kỹ năng giải quyết vấn đề",
+                experiences: [
+                    {
+                        id: 101,
+                        title: "Kỹ sư Full-Stack Web Developer",
+                        company: "Công ty Công nghệ Toàn Cầu TechNext",
+                        period: "10/2023 - Hiện tại",
+                        desc: "- Thiết kế, phát triển và triển khai hệ thống quản lý giao dịch xử lý hơn 50.000 lượt yêu cầu/ngày sử dụng .NET 8 và PostgreSQL.\n- Tái cấu trúc API phía Backend, giúp giảm thời gian phản hồi trung bình từ 450ms xuống 180ms.\n- Phối hợp với team Frontend thiết kế giao diện động Dashboard với React và TailwindCSS, tối ưu hóa trải nghiệm người dùng."
+                    },
+                    {
+                        id: 102,
+                        title: "Lập trình viên Backend (Junior)",
+                        company: "Công ty Cổ phần Phần mềm VinaApp",
+                        period: "06/2021 - 09/2023",
+                        desc: "- Xây dựng các API Endpoint và chức năng tích hợp thanh toán (Momo, VNPay) cho ứng dụng thương mại điện tử.\n- Thiết lập và duy trì hệ thống kiểm thử tự động (Unit Test) đạt độ bao phủ (coverage) trên 80%.\n- Quản lý các phiên bản mã nguồn, điều phối merge code định kỳ qua Git và Github."
+                    }
+                ],
+                educations: [
+                    {
+                        id: 201,
+                        degree: "Cử nhân Công nghệ Thông tin (Hệ chất lượng cao)",
+                        school: "Đại học Bách Khoa Hà Nội",
+                        period: "2017 - 2021",
+                        desc: "Tốt nghiệp loại Giỏi - Điểm trung bình tích lũy GPA: 3.55/4.0.\nĐề tài tốt nghiệp xuất sắc: Ứng dụng AI trong gợi ý lộ trình nghề nghiệp cho sinh viên."
+                    }
+                ],
+                projects: [
+                    {
+                        id: 301,
+                        name: "Interactive Resume Builder Webapp",
+                        link: "github.com/huongnghiep/resume-builder",
+                        desc: "Ứng dụng web cho phép người dùng biên tập thông tin CV, chọn mẫu thiết kế và xem kết quả trực tiếp. Tải xuống file PDF chất lượng cao. Phát triển bằng JavaScript thuần và CSS3 chuẩn A4."
+                    },
+                    {
+                        id: 302,
+                        name: "Smart Career Platform API",
+                        link: "github.com/huongnghiep/career-platform-api",
+                        desc: "Hệ thống Backend hướng nghiệp thông minh gồm các phân hệ: trắc nghiệm Holland/MBTI, đánh giá năng lực và kết nối việc làm. Phát triển bằng Web API ASP.NET Core kết hợp Entity Framework Core."
+                    }
+                ]
+            };
+
+            // Set inputs values
+            inputFullName.value = cvData.fullName;
+            inputTitle.value = cvData.title;
+            inputEmail.value = cvData.email;
+            inputPhone.value = cvData.phone;
+            inputAddress.value = cvData.address;
+            inputWebsite.value = cvData.website;
+            inputSummary.value = cvData.summary;
+            inputSkills.value = cvData.skills;
+
+            renderExperienceFormItems();
+            renderEducationFormItems();
+            renderProjectFormItems();
+            renderCV();
+        });
+
+        // Clear Form
+        document.getElementById("btnClearForm").addEventListener("click", () => {
+            if (confirm("Bạn có chắc chắn muốn xóa toàn bộ thông tin đã nhập?")) {
+                cvData = {
+                    fullName: "",
+                    title: "",
+                    email: "",
+                    phone: "",
+                    address: "",
+                    website: "",
+                    summary: "",
+                    skills: "",
+                    experiences: [],
+                    educations: [],
+                    projects: []
+                };
+
+                inputFullName.value = "";
+                inputTitle.value = "";
+                inputEmail.value = "";
+                inputPhone.value = "";
+                inputAddress.value = "";
+                inputWebsite.value = "";
+                inputSummary.value = "";
+                inputSkills.value = "";
+
+                renderExperienceFormItems();
+                renderEducationFormItems();
+                renderProjectFormItems();
+                renderCV();
+            }
+        });
+
+        // Export PDF / Print
+        document.getElementById("btnExportPdf").addEventListener("click", () => {
+            window.print();
+        });
+
+        // Render CV HTML based on selected template
+        function renderCV() {
+            const template = templateSelect.value;
+            let html = "";
+
+            const safeText = (val) => val ? val.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+            const safeParagraph = (val) => val ? safeText(val).replace(/\n/g, "<br/>") : "";
+
+            const skillsArray = cvData.skills ? cvData.skills.split(",").map(s => s.trim()).filter(s => s.length > 0) : [];
+
+            if (template === "modern") {
+                // Template 1: Modern Indigo
+                html = `
+                    <div style="border-bottom: 3px solid #4f46e5; padding-bottom: 24px; margin-bottom: 24px;">
+                        <h1 style="font-size: 32px; font-weight: 800; color: #020617; margin: 0 0 6px 0; letter-spacing: -1px; text-transform: uppercase;">${safeText(cvData.fullName) || "CHƯA NHẬP HỌ TÊN"}</h1>
+                        <h2 style="font-size: 16px; font-weight: 700; color: #4f46e5; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 1px;">${safeText(cvData.title) || "Chức danh ứng tuyển"}</h2>
+                        
+                        <div style="display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #64748b; font-weight: 500;">
+                            ${cvData.email ? `<span>✉ ${safeText(cvData.email)}</span>` : ""}
+                            ${cvData.phone ? `<span>📞 ${safeText(cvData.phone)}</span>` : ""}
+                            ${cvData.address ? `<span>📍 ${safeText(cvData.address)}</span>` : ""}
+                            ${cvData.website ? `<span>🌐 ${safeText(cvData.website)}</span>` : ""}
+                        </div>
+                    </div>
+
+                    ${cvData.summary ? `
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 10px 0; letter-spacing: 0.5px;">Tóm tắt bản thân</h3>
+                        <p style="margin: 0; font-size: 13.5px; color: #475569; line-height: 1.6; text-align: justify;">${safeParagraph(cvData.summary)}</p>
+                    </div>
+                    ` : ""}
+
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
+                        
+                        <!-- Experience section -->
+                        ${cvData.experiences.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 16px 0; letter-spacing: 0.5px;">Kinh nghiệm làm việc</h3>
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                ${cvData.experiences.map(exp => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                            <strong style="font-size: 14.5px; color: #020617;">${safeText(exp.title) || "Chưa nhập vị trí"}</strong>
+                                            <span style="font-size: 12px; color: #64748b; font-weight: 600; background: #f1f5f9; padding: 2px 8px; border-radius: 99px;">${safeText(exp.period)}</span>
+                                        </div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #4f46e5; margin-bottom: 8px;">${safeText(exp.company) || "Chưa nhập công ty"}</div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6; padding-left: 4px;">${safeParagraph(exp.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Education section -->
+                        ${cvData.educations.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 16px 0; letter-spacing: 0.5px;">Học vấn</h3>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                ${cvData.educations.map(edu => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                            <strong style="font-size: 14.5px; color: #020617;">${safeText(edu.degree) || "Chưa nhập ngành học"}</strong>
+                                            <span style="font-size: 12px; color: #64748b; font-weight: 600;">${safeText(edu.period)}</span>
+                                        </div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #4f46e5; margin-bottom: 6px;">${safeText(edu.school) || "Chưa nhập trường học"}</div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6; padding-left: 4px;">${safeParagraph(edu.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Skills section -->
+                        ${skillsArray.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 14px 0; letter-spacing: 0.5px;">Kỹ năng chuyên môn</h3>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${skillsArray.map(skill => `
+                                    <span style="background: #e0e7ff; color: #4338ca; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">${safeText(skill)}</span>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Projects section -->
+                        ${cvData.projects.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 16px 0; letter-spacing: 0.5px;">Dự án tiêu biểu</h3>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                ${cvData.projects.map(proj => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                            <strong style="font-size: 14.5px; color: #020617;">${safeText(proj.name) || "Chưa nhập tên dự án"}</strong>
+                                            ${proj.link ? `<span style="font-size: 12px; color: #4f46e5; font-weight: 600;">🌐 ${safeText(proj.link)}</span>` : ""}
+                                        </div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6; padding-left: 4px;">${safeParagraph(proj.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                    </div>
+                `;
+            } else if (template === "minimalist") {
+                // Template 2: Minimalist Classic (centered header, elegant font family)
+                html = `
+                    <div style="text-align: center; margin-bottom: 30px; font-family: Georgia, serif;">
+                        <h1 style="font-size: 34px; font-weight: 400; color: #1e293b; margin: 0 0 6px 0; font-family: Georgia, serif; text-transform: uppercase; letter-spacing: 2px;">${safeText(cvData.fullName) || "CHƯA NHẬP HỌ TÊN"}</h1>
+                        <h2 style="font-size: 14px; font-weight: 600; color: #64748b; margin: 0 0 18px 0; text-transform: uppercase; letter-spacing: 2px;">${safeText(cvData.title) || "Chức danh ứng tuyển"}</h2>
+                        
+                        <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; font-size: 12px; color: #475569; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; padding: 8px 0;">
+                            ${cvData.email ? `<span>✉ ${safeText(cvData.email)}</span>` : ""}
+                            ${cvData.phone ? `<span>📞 ${safeText(cvData.phone)}</span>` : ""}
+                            ${cvData.address ? `<span>📍 ${safeText(cvData.address)}</span>` : ""}
+                            ${cvData.website ? `<span>🌐 ${safeText(cvData.website)}</span>` : ""}
+                        </div>
+                    </div>
+
+                    ${cvData.summary ? `
+                    <div style="margin-bottom: 24px; text-align: center;">
+                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6; font-style: italic; max-width: 650px; margin: 0 auto;">"${safeText(cvData.summary)}"</p>
+                    </div>
+                    ` : ""}
+
+                    <div style="display: flex; flex-direction: column; gap: 24px;">
+                        
+                        <!-- Experience section -->
+                        ${cvData.experiences.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; text-transform: uppercase; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 1px;">Kinh nghiệm thực tế</h3>
+                            <div style="display: flex; flex-direction: column; gap: 18px;">
+                                ${cvData.experiences.map(exp => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                            <span>
+                                                <strong style="font-size: 13.5px; color: #1e293b;">${safeText(exp.title) || "Chưa nhập vị trí"}</strong>
+                                                <span style="color: #64748b; font-size: 13px;"> - ${safeText(exp.company) || "Chưa nhập công ty"}</span>
+                                            </span>
+                                            <span style="font-size: 12px; color: #64748b; font-style: italic;">${safeText(exp.period)}</span>
+                                        </div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">${safeParagraph(exp.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Education section -->
+                        ${cvData.educations.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; text-transform: uppercase; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 1px;">Học trình</h3>
+                            <div style="display: flex; flex-direction: column; gap: 14px;">
+                                ${cvData.educations.map(edu => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                            <span>
+                                                <strong style="font-size: 13.5px; color: #1e293b;">${safeText(edu.degree) || "Chưa nhập ngành học"}</strong>
+                                                <span style="color: #64748b; font-size: 13px;"> - ${safeText(edu.school) || "Chưa nhập trường"}</span>
+                                            </span>
+                                            <span style="font-size: 12px; color: #64748b; font-style: italic;">${safeText(edu.period)}</span>
+                                        </div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">${safeParagraph(edu.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Skills section -->
+                        ${skillsArray.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; text-transform: uppercase; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin: 0 0 12px 0; letter-spacing: 1px;">Kỹ năng chính</h3>
+                            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.7;">
+                                ${skillsArray.join(" &bull; ")}
+                            </p>
+                        </div>
+                        ` : ""}
+
+                        <!-- Projects section -->
+                        ${cvData.projects.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; text-transform: uppercase; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 1px;">Dự án phát triển</h3>
+                            <div style="display: flex; flex-direction: column; gap: 14px;">
+                                ${cvData.projects.map(proj => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                            <strong style="font-size: 13.5px; color: #1e293b;">${safeText(proj.name) || "Chưa nhập tên dự án"}</strong>
+                                            ${proj.link ? `<span style="font-size: 12px; color: #64748b; font-style: italic;">${safeText(proj.link)}</span>` : ""}
+                                        </div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">${safeParagraph(proj.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                    </div>
+                `;
+            } else if (template === "professional") {
+                // Template 3: Professional Sidebar Layout (split grid in preview)
+                html = `
+                    <div style="display: grid; grid-template-columns: 220px 1fr; gap: 30px; min-height: 1020px;">
+                        
+                        <!-- Sidebar Left (Shaded background) -->
+                        <div style="background: #f8fafc; border-right: 1px solid #e2e8f0; margin: -50px 0 -50px -50px; padding: 50px 25px 50px 30px; font-size: 13px;">
+                            <div style="margin-bottom: 30px;">
+                                <h1 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0; line-height: 1.1; text-transform: uppercase;">${safeText(cvData.fullName) || "CHƯA NHẬP HỌ TÊN"}</h1>
+                                <div style="font-size: 13px; font-weight: 700; color: #0284c7; text-transform: uppercase;">${safeText(cvData.title) || "Chức danh"}</div>
+                            </div>
+
+                            <!-- Contact info -->
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="font-size: 13px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin: 0 0 12px 0; letter-spacing: 0.5px;">Liên hệ</h3>
+                                <div style="display: flex; flex-direction: column; gap: 10px; color: #475569; word-break: break-word;">
+                                    ${cvData.email ? `<div><strong>✉ Email:</strong><br/>${safeText(cvData.email)}</div>` : ""}
+                                    ${cvData.phone ? `<div><strong>📞 ĐT:</strong><br/>${safeText(cvData.phone)}</div>` : ""}
+                                    ${cvData.address ? `<div><strong>📍 Địa chỉ:</strong><br/>${safeText(cvData.address)}</div>` : ""}
+                                    ${cvData.website ? `<div><strong>🌐 Web:</strong><br/>${safeText(cvData.website)}</div>` : ""}
+                                </div>
+                            </div>
+
+                            <!-- Skills info -->
+                            ${skillsArray.length > 0 ? `
+                            <div>
+                                <h3 style="font-size: 13px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin: 0 0 12px 0; letter-spacing: 0.5px;">Kỹ năng</h3>
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    ${skillsArray.map(skill => `
+                                        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 6px; font-weight: 600; color: #334155; font-size: 12px;">${safeText(skill)}</div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                            ` : ""}
+                        </div>
+
+                        <!-- Main Right Content -->
+                        <div style="padding-top: 10px;">
+                            ${cvData.summary ? `
+                            <div style="margin-bottom: 28px;">
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin: 0 0 10px 0; letter-spacing: 0.5px;">Giới thiệu</h3>
+                                <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.6; text-align: justify;">${safeParagraph(cvData.summary)}</p>
+                            </div>
+                            ` : ""}
+
+                            <!-- Experience section -->
+                            ${cvData.experiences.length > 0 ? `
+                            <div style="margin-bottom: 28px;">
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 0.5px;">Kinh nghiệm làm việc</h3>
+                                <div style="display: flex; flex-direction: column; gap: 18px;">
+                                    ${cvData.experiences.map(exp => `
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                                <strong style="font-size: 14px; color: #0f172a;">${safeText(exp.title) || "Chưa nhập vị trí"}</strong>
+                                                <span style="font-size: 12px; color: #64748b; font-weight: 600;">${safeText(exp.period)}</span>
+                                            </div>
+                                            <div style="font-size: 12.5px; font-weight: 700; color: #0284c7; margin-bottom: 6px;">${safeText(exp.company) || "Chưa nhập công ty"}</div>
+                                            <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.6; padding-left: 2px;">${safeParagraph(exp.desc)}</p>
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                            ` : ""}
+
+                            <!-- Education section -->
+                            ${cvData.educations.length > 0 ? `
+                            <div style="margin-bottom: 28px;">
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 0.5px;">Học vấn</h3>
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    ${cvData.educations.map(edu => `
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                                <strong style="font-size: 14px; color: #0f172a;">${safeText(edu.degree) || "Chưa nhập bằng cấp"}</strong>
+                                                <span style="font-size: 12px; color: #64748b; font-weight: 600;">${safeText(edu.period)}</span>
+                                            </div>
+                                            <div style="font-size: 12.5px; font-weight: 700; color: #0284c7; margin-bottom: 4px;">${safeText(edu.school) || "Chưa nhập trường"}</div>
+                                            <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.5; padding-left: 2px;">${safeParagraph(edu.desc)}</p>
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                            ` : ""}
+
+                            <!-- Projects section -->
+                            ${cvData.projects.length > 0 ? `
+                            <div>
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 0.5px;">Dự án</h3>
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    ${cvData.projects.map(proj => `
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                                <strong style="font-size: 14px; color: #0f172a;">${safeText(proj.name) || "Chưa nhập tên dự án"}</strong>
+                                                ${proj.link ? `<span style="font-size: 12px; color: #0284c7; font-weight: 600;">${safeText(proj.link)}</span>` : ""}
+                                            </div>
+                                            <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.6; padding-left: 2px;">${safeParagraph(proj.desc)}</p>
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                            ` : ""}
+
+                        </div>
+
+                    </div>
+                `;
+            }
+
+            cvPreview.innerHTML = html;
+        }
+
+        // If there is saved CV data, load it
+        const savedCvElement = document.getElementById("savedCvJson");
+        if (savedCvElement) {
+            try {
+                cvData = JSON.parse(savedCvElement.textContent);
+                inputFullName.value = cvData.fullName || "";
+                inputTitle.value = cvData.title || "";
+                inputEmail.value = cvData.email || "";
+                inputPhone.value = cvData.phone || "";
+                inputAddress.value = cvData.address || "";
+                inputWebsite.value = cvData.website || "";
+                inputSummary.value = cvData.summary || "";
+                inputSkills.value = cvData.skills || "";
+                
+                renderExperienceFormItems();
+                renderEducationFormItems();
+                renderProjectFormItems();
+            } catch (e) {
+                console.error("Lỗi nạp dữ liệu CV cũ:", e);
+            }
+        }
+
+        // Save Resume to Account Action (if authenticated)
+        const btnSaveResume = document.getElementById("btnSaveResume");
+        if (btnSaveResume) {
+            btnSaveResume.addEventListener("click", function() {
+                const title = prompt("Nhập tiêu đề cho CV của bạn:", cvTitle);
+                if (title === null) return; // user cancelled
+                
+                if (title.trim() === "") {
+                    alert("Tiêu đề không được để trống!");
+                    return;
+                }
+                
+                cvTitle = title;
+                
+                // Show saving indicator
+                const originalText = btnSaveResume.innerHTML;
+                btnSaveResume.innerHTML = "⏳ Đang lưu...";
+                btnSaveResume.disabled = true;
+                
+                fetch("/Manage/SaveResume", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        id: cvId,
+                        title: cvTitle,
+                        contentJson: JSON.stringify(cvData)
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        cvId = data.id;
+                        alert("Lưu CV thành công!");
+                    } else {
+                        alert("Lưu thất bại: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi lưu CV:", err);
+                    alert("Có lỗi xảy ra trong quá trình lưu CV. Vui lòng thử lại.");
+                })
+                .finally(() => {
+                    btnSaveResume.innerHTML = originalText;
+                    btnSaveResume.disabled = false;
+                });
+            });
+        }
+
+        // Initialize with default state rendering
+        updateStateAndRender();
+    });
+</script>
