@@ -1,0 +1,205 @@
+@model Career_Guidance_Platform.Models.CareerPathCourse
+@using Career_Guidance_Platform.Models
+
+@{
+    ViewData["Title"] = "Khóa học - " + Model.Title;
+    var resources = ViewBag.Resources as List<Resource>;
+    var progress = ViewBag.Progress as UserCourseProgress;
+}
+
+<section class="page-hero">
+    <span class="page-badge">📘 Khóa học</span>
+    <h1>@Model.Title</h1>
+    <p>@Model.Description</p>
+</section>
+
+<section class="content-section" style="max-width:1100px;">
+
+    <div class="info-card" style="padding:30px;margin-bottom:30px;">
+        <h2>Thông tin khóa học</h2>
+
+        <p>
+            <strong>Career Path:</strong>
+            @Model.CareerPath?.Title
+        </p>
+
+        <p>
+            <strong>Thời gian học:</strong>
+            @Model.EstimatedDays ngày
+        </p>
+
+        @if (progress == null)
+        {
+            <div style="margin-top:24px;padding:24px;border-radius:18px;background:#eef2ff;border:1px solid #c7d2fe;">
+                <h3 style="margin-top:0;color:#3730a3;">Bạn chưa bắt đầu khóa học này</h3>
+                <p style="color:#4338ca;margin-bottom:18px;">
+                    Khi bấm bắt đầu, hệ thống sẽ tạo thời hạn học dựa trên số ngày của khóa học.
+                    Bạn cần hoàn thành bài test trước khi thời gian đếm ngược về 0.
+                </p>
+
+                <a asp-controller="Course"
+                   asp-action="Start"
+                   asp-route-id="@Model.Id"
+                   class="btn"
+                   style="background:#4f46e5;color:white;padding:12px 24px;border-radius:12px;font-weight:700;text-decoration:none;">
+                    🚀 Bắt đầu học
+                </a>
+            </div>
+        }
+        else
+        {
+            <div style="margin-top:24px;padding:24px;border-radius:18px;background:#f8fafc;border:1px solid #e5e7eb;">
+                <h3 style="margin-top:0;">Tiến độ học tập</h3>
+
+                <p>
+                    <strong>Bắt đầu:</strong>
+                    @progress.StartDate.ToString("dd/MM/yyyy HH:mm")
+                </p>
+
+                <p>
+                    <strong>Hạn hoàn thành:</strong>
+                    @progress.DeadlineDate.ToString("dd/MM/yyyy HH:mm")
+                </p>
+
+                <p>
+                    <strong>Trạng thái:</strong>
+
+                    @if (progress.Status == "Learning")
+                    {
+                        <span style="background:#dbeafe;color:#1d4ed8;padding:5px 10px;border-radius:999px;font-weight:700;">
+                            Đang học
+                        </span>
+                    }
+                    else if (progress.Status == "Completed")
+                    {
+                        <span style="background:#dcfce7;color:#15803d;padding:5px 10px;border-radius:999px;font-weight:700;">
+                            Hoàn thành
+                        </span>
+                    }
+                    else if (progress.Status == "Expired")
+                    {
+                        <span style="background:#fee2e2;color:#b91c1c;padding:5px 10px;border-radius:999px;font-weight:700;">
+                            Hết hạn
+                        </span>
+                    }
+                    else
+                    {
+                        <span>@progress.Status</span>
+                    }
+                </p>
+
+                <div style="margin-top:18px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <strong>Progress</strong>
+                        <span>@progress.ProgressPercent%</span>
+                    </div>
+
+                    <div style="height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;">
+                        <div style="height:100%;width:@progress.ProgressPercent%;background:#4f46e5;border-radius:999px;"></div>
+                    </div>
+                </div>
+
+                @if (progress.Status == "Learning")
+                {
+                    <div style="margin-top:24px;padding:20px;border-radius:16px;background:#fff7ed;border:1px solid #fed7aa;">
+                        <h3 style="margin-top:0;color:#c2410c;">⏳ Thời gian còn lại</h3>
+
+                        <div id="countdown"
+                             data-deadline="@progress.DeadlineDate.ToString("yyyy-MM-ddTHH:mm:ss")"
+                             style="font-size:28px;font-weight:800;color:#ea580c;">
+                            Đang tải...
+                        </div>
+
+                        <p style="color:#9a3412;margin-top:10px;margin-bottom:0;">
+                            Trước khi thời gian về 0, bạn bắt buộc phải làm bài test của khóa học.
+                        </p>
+                    </div>
+
+                    <div style="margin-top:24px;">
+                        <a href="#resources"
+                           class="btn"
+                           style="background:#0ea5e9;color:white;padding:10px 20px;border-radius:10px;font-weight:700;text-decoration:none;">
+                            📚 Xem tài liệu học
+                        </a>
+
+                        <a asp-controller="Course"
+                           asp-action="Test"
+                           asp-route-id="@Model.Id"
+                           class="btn"
+                           style="background:#10b981;color:white;padding:10px 20px;border-radius:10px;font-weight:700;text-decoration:none;margin-left:8px;">
+                            📝 Làm bài test
+                        </a>
+                    </div>
+                }
+                else if (progress.Status == "Expired")
+                {
+                    <div style="margin-top:24px;padding:20px;border-radius:16px;background:#fef2f2;border:1px solid #fecaca;">
+                        <h3 style="margin-top:0;color:#b91c1c;">⚠️ Khóa học đã hết thời gian</h3>
+                        <p style="color:#991b1b;margin-bottom:0;">
+                            Bạn chưa hoàn thành bài test trước hạn. Bước tiếp theo sẽ làm chức năng gia hạn thời gian học.
+                        </p>
+                    </div>
+                }
+                else if (progress.Status == "Completed")
+                {
+                    <div style="margin-top:24px;padding:20px;border-radius:16px;background:#f0fdf4;border:1px solid #bbf7d0;">
+                        <h3 style="margin-top:0;color:#15803d;">✅ Bạn đã hoàn thành khóa học</h3>
+                        <p style="color:#166534;margin-bottom:0;">
+                            Điểm test: @progress.TestScore
+                        </p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div id="resources" class="info-card" style="padding:30px;">
+        <h2>📚 Tài liệu học tập</h2>
+        <p class="text-muted">
+            Hãy đọc tài liệu trước khi làm bài test cuối khóa.
+        </p>
+
+        @if (resources != null && resources.Any())
+        {
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:20px;">
+                @foreach (var item in resources)
+                {
+                    <div style="border:1px solid #e5e7eb;border-radius:16px;padding:20px;background:#fff;">
+                        <span style="font-size:13px;font-weight:700;color:#4f46e5;background:#eef2ff;padding:5px 10px;border-radius:999px;">
+                            @item.ResourceType
+                        </span>
+
+                        <h3 style="font-size:18px;margin-top:14px;">
+                            @item.Title
+                        </h3>
+
+                        <a href="@item.Url"
+                           target="_blank"
+                           class="btn"
+                           style="background:#4f46e5;color:white;padding:8px 16px;border-radius:10px;text-decoration:none;">
+                            Mở tài liệu
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p>Chưa có tài liệu học tập cho khóa học này.</p>
+        }
+    </div>
+
+    <div style="margin-top:30px;text-align:center;">
+        <a asp-controller="CareerPath"
+           asp-action="Roadmap"
+           asp-route-id="@Model.CareerPathId"
+           class="btn secondary-btn">
+            ⬅ Quay lại lộ trình
+        </a>
+    </div>
+</section>
+
+
+@section Scripts{
+    <script src="~/js/course-detail.js"></script>
+}
