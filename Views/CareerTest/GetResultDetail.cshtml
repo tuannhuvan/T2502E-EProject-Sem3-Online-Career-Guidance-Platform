@@ -48,6 +48,15 @@
                     <small>Người làm: @(Model.User?.FullName ?? "Học viên")</small>
                 </div>
 
+                <div class="chart-container" style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 1.25rem; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                    <h4 style="margin: 0 0 1rem 0; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                        <span>📊</span> Biểu đồ tương thích ngành nghề
+                    </h4>
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="compatibilityChart"></canvas>
+                    </div>
+                </div>
+
                 <div class="result-actions" style="margin-top:1.5rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 12px;">
                     @if (Model.RecommendedCareerPathId.HasValue)
                     {
@@ -138,3 +147,139 @@
         </div>
     </div>
 </section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var ctx = document.getElementById('compatibilityChart').getContext('2d');
+        
+        var labels = [];
+        var dataValues = [];
+        
+        @if (Model.TestResultScores != null && Model.TestResultScores.Any())
+        {
+            foreach (var score in Model.TestResultScores.OrderByDescending(s => s.Score))
+            {
+                <text>
+                (function() {
+                    var title = "@Html.Raw(score.CareerPath?.Title ?? "Chưa đặt tên")";
+                    var scoreVal = @score.Score.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                    var parts = title.split(" (");
+                    if (parts.length > 1) {
+                        // Split into Vietnamese title on Line 1, and English title on Line 2
+                        labels.push([parts[0], "(" + parts[1]]);
+                    } else {
+                        labels.push(title);
+                    }
+                    dataValues.push(scoreVal);
+                })();
+                </text>
+            }
+        }
+        
+        if (labels.length === 0) {
+            labels = ["Chưa có dữ liệu"];
+            dataValues = [0];
+        }
+
+        // Custom plugin to draw values at the end of each horizontal bar
+        const chartDataLabelsPlugin = {
+            id: 'chartDataLabels',
+            afterDatasetsDraw(chart, args, pluginOptions) {
+                const { ctx, chartArea: { right }, scales: { y } } = chart;
+                ctx.save();
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillStyle = '#4f46e5';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    meta.data.forEach((bar, index) => {
+                        const val = dataset.data[index];
+                        if (val > 0) {
+                            const xPos = bar.x + 8; // 8px spacing from end of bar
+                            const yPos = bar.y;
+                            ctx.fillText(val + '%', xPos, yPos);
+                        }
+                    });
+                });
+                ctx.restore();
+            }
+        };
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Độ tương thích (%)',
+                    data: dataValues,
+                    backgroundColor: 'rgba(79, 70, 229, 0.85)',
+                    borderColor: 'rgb(79, 70, 229)',
+                    borderWidth: 1.5,
+                    borderRadius: 8,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.8
+                }]
+            },
+            plugins: [chartDataLabelsPlugin],
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 10,
+                        right: 40 // Space for labels at the end of bars
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return ' ' + context.raw + '% tương thích';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: '#f1f5f9',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: { size: 11, weight: '600' },
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#334155',
+                            font: { size: 11, weight: '700' },
+                            autoSkip: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>

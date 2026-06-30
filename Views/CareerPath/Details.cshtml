@@ -19,52 +19,51 @@
     <!-- Timeline of Milestones -->
     <h2 style="font-size: 26px; color: #020617; margin-bottom: 30px; text-align: center;">🗺️ Các cột mốc thời gian & Lộ trình học tập</h2>
     
-    <div style="display: flex; flex-direction: column; gap: 30px; position: relative; margin-bottom: 60px; padding-left: 30px; border-left: 2px solid #e5e7eb;">
-        <!-- Milestone 1 -->
-        <div style="position: relative;">
-            <div style="position: absolute; left: -39px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #4f46e5; border: 4px solid #ffffff; box-shadow: 0 0 0 4px #e0e7ff;"></div>
-            <div class="info-card" style="padding: 24px;">
-                <span style="font-weight: 700; color: #4f46e5; font-size: 14px; text-transform: uppercase;">Tháng 1 - Tháng 3</span>
-                <h3 style="font-size: 20px; color: #020617; margin: 6px 0 10px;">Giai đoạn 1: Nền tảng tư duy & Công cụ cơ bản</h3>
-                <p style="font-size: 14px; line-height: 1.6; color: #64748b; margin-bottom: 15px;">Tập trung nắm vững các lý thuyết nền tảng, làm quen với bộ công cụ chuẩn và xây dựng phương pháp học tập chủ động.</p>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Lý thuyết cơ bản</span>
-                    <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Sử dụng công cụ chính</span>
-                    <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Bài tập thực hành nhỏ</span>
-                </div>
-            </div>
-        </div>
+    @if (ViewBag.Stages != null && ((IEnumerable<Career_Guidance_Platform.Models.CareerStage>)ViewBag.Stages).Any())
+    {
+        <div style="display: flex; flex-direction: column; gap: 30px; position: relative; margin-bottom: 60px; padding-left: 30px; border-left: 2px solid #e5e7eb;">
+            @foreach (var stage in (IEnumerable<Career_Guidance_Platform.Models.CareerStage>)ViewBag.Stages)
+            {
+                var bgColors = new[] { "#4f46e5", "#06b6d4", "#10b981", "#f59e0b" };
+                var shadowColors = new[] { "#e0e7ff", "#cffafe", "#d1fae5", "#fef3c7" };
+                var colorIdx = (stage.SequenceOrder - 1) % bgColors.Length;
+                var color = bgColors[colorIdx];
+                var shadow = shadowColors[colorIdx];
 
-        <!-- Milestone 2 -->
-        <div style="position: relative;">
-            <div style="position: absolute; left: -39px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #06b6d4; border: 4px solid #ffffff; box-shadow: 0 0 0 4px #cffafe;"></div>
-            <div class="info-card" style="padding: 24px;">
-                <span style="font-weight: 700; color: #0891b2; font-size: 14px; text-transform: uppercase;">Tháng 4 - Tháng 6</span>
-                <h3 style="font-size: 20px; color: #020617; margin: 6px 0 10px;">Giai đoạn 2: Phát triển kỹ năng chuyên sâu & Dự án mẫu</h3>
-                <p style="font-size: 14px; line-height: 1.6; color: #64748b; margin-bottom: 15px;">Đi sâu vào kiến thức nghiệp vụ nâng cao, tham gia làm các bài tập lớn mô phỏng dự án thực tế của doanh nghiệp để rèn luyện kỹ năng giải quyết vấn đề.</p>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Nghiệp vụ nâng cao</span>
-                    <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Thực hành dự án (Clone)</span>
-                    <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Tư duy hệ thống</span>
+                <div style="position: relative;">
+                    <div style="position: absolute; left: -39px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: @color; border: 4px solid #ffffff; box-shadow: 0 0 0 4px @shadow;"></div>
+                    <div class="info-card" style="padding: 24px;">
+                        <span style="font-weight: 700; color: @color; font-size: 14px; text-transform: uppercase;">Cấp bậc @stage.SequenceOrder</span>
+                        <h3 style="font-size: 20px; color: #020617; margin: 6px 0 10px;">@stage.Title</h3>
+                        <p style="font-size: 14px; line-height: 1.6; color: #64748b; margin-bottom: 15px;">@stage.Description</p>
+                        
+                        @if (stage.CareerStageSkills != null && stage.CareerStageSkills.Any())
+                        {
+                            <div style="margin-top: 10px;">
+                                <strong style="font-size: 13px; color: #1e293b; display: block; margin-bottom: 8px;">Kỹ năng yêu cầu:</strong>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    @foreach (var css in stage.CareerStageSkills)
+                                    {
+                                        if (css.Skill != null)
+                                        {
+                                            <span style="font-size: 12px; font-weight: 600; color: #0f172a; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
+                                                ⚙️ @css.Skill.Name
+                                                <span style="font-size: 10px; font-weight: 700; color: #4f46e5; background: #e0e7ff; padding: 2px 6px; border-radius: 4px;">@css.ProficiencyRequired</span>
+                                            </span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
-            </div>
+            }
         </div>
-
-        <!-- Milestone 3 -->
-        <div style="position: relative;">
-            <div style="position: absolute; left: -39px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #10b981; border: 4px solid #ffffff; box-shadow: 0 0 0 4px #d1fae5;"></div>
-            <div class="info-card" style="padding: 24px;">
-                <span style="font-weight: 700; color: #059669; font-size: 14px; text-transform: uppercase;">Tháng 7 - Tháng 12</span>
-                <h3 style="font-size: 20px; color: #020617; margin: 6px 0 10px;">Giai đoạn 3: Hoàn thiện Portfolio & Kết nối thực tập</h3>
-                <p style="font-size: 14px; line-height: 1.6; color: #64748b; margin-bottom: 15px;">Xây dựng hồ sơ năng lực (Portfolio) cá nhân ấn tượng. Luyện tập kỹ năng trả lời phỏng vấn và ứng tuyển vào các doanh nghiệp đối tác để bắt đầu kỳ thực tập chính thức.</p>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Xây dựng Portfolio</span>
-                    <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Luyện phỏng vấn</span>
-                    <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Ứng tuyển Intern/Junior</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    }
+    else
+    {
+        <p style="text-align: center; color: #64748b; font-style: italic; margin-bottom: 60px;">Chưa có lộ trình cấp bậc nghề nghiệp được thiết lập cho ngành này.</p>
+    }
     <div style="text-align: center; margin-top: 40px;">
         <a asp-controller="CareerPath"
            asp-action="Roadmap"
