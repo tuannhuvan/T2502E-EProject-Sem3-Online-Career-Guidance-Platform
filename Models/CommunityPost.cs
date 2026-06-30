@@ -25,6 +25,9 @@ namespace Career_Guidance_Platform.Models
         [StringLength(100)]
         public string AuthorName { get; set; } = string.Empty;
 
+        [Column("author_id")]
+        public int? AuthorId { get; set; }
+
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
@@ -38,5 +41,10 @@ namespace Career_Guidance_Platform.Models
         [Column("category")]
         [StringLength(50)]
         public string Category { get; set; } = string.Empty;
+
+        [ForeignKey("AuthorId")]
+        public User? Author { get; set; }
+
+        public ICollection<CommunityComment> Comments { get; set; } = new List<CommunityComment>();
     }
 }

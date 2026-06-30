@@ -53,4 +53,5 @@ public class TestResult
     public CareerPath? RecommendedCareerPath { get; set; }
 
     public ICollection<TestAnswer> TestAnswers { get; set; } = new List<TestAnswer>();
+    public ICollection<TestResultScore> TestResultScores { get; set; } = new List<TestResultScore>();
 }

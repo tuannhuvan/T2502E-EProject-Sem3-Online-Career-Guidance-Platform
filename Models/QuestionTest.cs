@@ -37,6 +37,17 @@ public class QuestionTest
     [Column("status")]
     public int Status { get; set; } = 1;
 
+    [Required]
+    [StringLength(50)]
+    [Column("test_type")]
+    public string TestType { get; set; } = "Interests";
+
+    [Column("skill_id")]
+    public int? SkillId { get; set; }
+
+    [ForeignKey("SkillId")]
+    public Skill? Skill { get; set; }
+
     [ForeignKey("TestId")]
     public Test? Test { get; set; }
 

@@ -28,6 +28,12 @@ public class Resume
     [Column("updated_at")]
     public DateTime? UpdatedAt { get; set; }
 
+    [Column("template_id")]
+    public int? TemplateId { get; set; }
+
     [ForeignKey("UserId")]
     public User? User { get; set; }
+
+    [ForeignKey("TemplateId")]
+    public ResumeTemplate? Template { get; set; }
 }
