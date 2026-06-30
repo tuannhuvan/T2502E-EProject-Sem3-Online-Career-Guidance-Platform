@@ -126,7 +126,300 @@ namespace Career_Guidance_Platform.Data
             {
                 careerPaths = await context.CareerPaths.OrderBy(c => c.Id).ToListAsync();
             }
-            
+
+            // --- SEEDING SKILLS (20 SKILLS) ---
+            List<Skill> skills = new List<Skill>();
+            if (!await context.Skills.AnyAsync())
+            {
+                skills = new List<Skill>
+                {
+                    new Skill { Name = "Lập trình C#", Description = "Ngôn ngữ C# căn bản và nâng cao", SkillType = "Hard Skill" },
+                    new Skill { Name = "Cơ sở dữ liệu SQL Server", Description = "Truy vấn, thiết kế DB và viết Store Procedure", SkillType = "Hard Skill" },
+                    new Skill { Name = "HTML/CSS & Bootstrap", Description = "Cắt web, dựng giao diện responsive", SkillType = "Hard Skill" },
+                    new Skill { Name = "Kiến trúc ASP.NET Core MVC", Description = "Xây dựng ứng dụng web theo mô hình MVC", SkillType = "Hard Skill" },
+                    new Skill { Name = "Git & Version Control", Description = "Quản lý mã nguồn, làm việc nhóm Git", SkillType = "Hard Skill" },
+                    new Skill { Name = "Kỹ năng thuyết trình", Description = "Trình bày ý tưởng rõ ràng trước đám đông", SkillType = "Soft Skill" },
+                    new Skill { Name = "Quản trị thời gian", Description = "Sắp xếp công việc và kiểm soát deadline", SkillType = "Soft Skill" },
+                    new Skill { Name = "Giao tiếp & Làm việc nhóm", Description = "Lắng nghe, phản hồi và kết nối đồng nghiệp", SkillType = "Soft Skill" },
+                    new Skill { Name = "Thiết kế UI trong Figma", Description = "Sử dụng Figma để thiết kế giao diện", SkillType = "Hard Skill" },
+                    new Skill { Name = "Nghiên cứu UX", Description = "Khảo sát người dùng, vẽ User Flow", SkillType = "Hard Skill" },
+                    new Skill { Name = "Cấu trúc dữ liệu & Thuật toán", Description = "Tối ưu hóa giải thuật giải quyết bài toán phức tạp", SkillType = "Hard Skill" },
+                    new Skill { Name = "Lập trình Python", Description = "Ngôn ngữ Python ứng dụng cho Data Science", SkillType = "Hard Skill" },
+                    new Skill { Name = "Phân tích dữ liệu với Pandas", Description = "Xử lý, trực quan hóa dữ liệu thô", SkillType = "Hard Skill" },
+                    new Skill { Name = "Tuyển dụng nhân sự", Description = "Lập kế hoạch và phỏng vấn ứng viên", SkillType = "Hard Skill" },
+                    new Skill { Name = "Quản trị dự án Agile/Scrum", Description = "Quản lý tiến độ theo mô hình linh hoạt", SkillType = "Soft Skill" },
+                    new Skill { Name = "Kế toán tài chính", Description = "Lập báo cáo tài chính doanh nghiệp", SkillType = "Hard Skill" },
+                    new Skill { Name = "Kiểm toán VAS/IFRS", Description = "Kiểm tra số liệu tài chính theo chuẩn", SkillType = "Hard Skill" },
+                    new Skill { Name = "Mạng căn bản CCNA", Description = "Thiết lập định tuyến, cấu hình Switch/Router", SkillType = "Hard Skill" },
+                    new Skill { Name = "Bảo mật hệ thống", Description = "Phòng ngừa tấn công mạng cơ bản", SkillType = "Hard Skill" },
+                    new Skill { Name = "Kỹ năng giải quyết xung đột", Description = "Hòa giải mâu thuẫn trong tập thể", SkillType = "Soft Skill" }
+                };
+                context.Skills.AddRange(skills);
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                skills = await context.Skills.OrderBy(s => s.Id).ToListAsync();
+            }
+
+            // --- SEEDING CAREER STAGES (CAREERMAPS) ---
+            if (!await context.CareerStages.AnyAsync() || (await context.CareerStages.CountAsync()) < 10)
+            {
+                var oldStages = await context.CareerStages.ToListAsync();
+                context.CareerStages.RemoveRange(oldStages);
+                await context.SaveChangesAsync();
+
+                // 1. Software Engineer
+                var softwareEngineer = careerPaths.FirstOrDefault(cp => cp.Title.Contains("Software Engineer"));
+                if (softwareEngineer != null)
+                {
+                    var stages = new List<CareerStage>
+                    {
+                        new CareerStage { CareerPathId = softwareEngineer.Id, Title = "Intern/Freshman", Description = "Tập trung tư duy nền tảng và kỹ năng viết code sạch cơ bản.", SequenceOrder = 1 },
+                        new CareerStage { CareerPathId = softwareEngineer.Id, Title = "Junior Developer", Description = "Thực thi kỹ thuật độc lập, giải quyết các task chi tiết dưới sự hướng dẫn.", SequenceOrder = 2 },
+                        new CareerStage { CareerPathId = softwareEngineer.Id, Title = "Mid-Senior Developer", Description = "Thiết kế giải pháp, làm việc với hệ thống lớn hơn và review code cho đồng nghiệp.", SequenceOrder = 3 },
+                        new CareerStage { CareerPathId = softwareEngineer.Id, Title = "Senior/Lead Developer", Description = "Định hướng kiến trúc hệ thống phức tạp, dẫn dắt đội ngũ kỹ thuật.", SequenceOrder = 4 }
+                    };
+                    context.CareerStages.AddRange(stages);
+                    await context.SaveChangesAsync();
+
+                    if (skills.Count >= 10)
+                    {
+                        context.CareerStageSkills.AddRange(
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[0].Id, ProficiencyRequired = "Basic" }, // C#
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[1].Id, ProficiencyRequired = "Basic" }, // SQL
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[4].Id, ProficiencyRequired = "Basic" }, // Git
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[7].Id, ProficiencyRequired = "Basic" }, // Communication
+                            
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[0].Id, ProficiencyRequired = "Intermediate" }, // C#
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[3].Id, ProficiencyRequired = "Basic" }, // ASP.NET
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[2].Id, ProficiencyRequired = "Intermediate" } // HTML/CSS
+                        );
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                // 2. Network & Security
+                var networkSecurity = careerPaths.FirstOrDefault(cp => cp.Title.Contains("Network & Security") || cp.Title.Contains("Mạng"));
+                if (networkSecurity != null)
+                {
+                    var stages = new List<CareerStage>
+                    {
+                        new CareerStage { CareerPathId = networkSecurity.Id, Title = "Network Support Associate", Description = "Hỗ trợ vận hành mạng cơ bản, tiếp nhận sự cố và kiểm tra dây nối.", SequenceOrder = 1 },
+                        new CareerStage { CareerPathId = networkSecurity.Id, Title = "Network Engineer", Description = "Cấu hình định tuyến Router/Switch, thiết lập mạng LAN/WAN.", SequenceOrder = 2 },
+                        new CareerStage { CareerPathId = networkSecurity.Id, Title = "Network Architect", Description = "Thiết kế kiến trúc hệ thống mạng quy mô lớn cho doanh nghiệp.", SequenceOrder = 3 },
+                        new CareerStage { CareerPathId = networkSecurity.Id, Title = "Information Security Specialist", Description = "Đảm bảo an toàn thông tin hệ thống mạng, rà soát lỗ hổng bảo mật.", SequenceOrder = 4 }
+                    };
+                    context.CareerStages.AddRange(stages);
+                    await context.SaveChangesAsync();
+
+                    if (skills.Count >= 20)
+                    {
+                        context.CareerStageSkills.AddRange(
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[17].Id, ProficiencyRequired = "Basic" }, // CCNA
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[7].Id, ProficiencyRequired = "Basic" },  // Communication
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[17].Id, ProficiencyRequired = "Intermediate" }, // CCNA
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[18].Id, ProficiencyRequired = "Basic" }, // Security
+                            new CareerStageSkill { CareerStageId = stages[2].Id, SkillId = skills[17].Id, ProficiencyRequired = "Advanced" }, // CCNA
+                            new CareerStageSkill { CareerStageId = stages[3].Id, SkillId = skills[18].Id, ProficiencyRequired = "Advanced" } // Security
+                        );
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                // 3. Data Scientist
+                var dataScientist = careerPaths.FirstOrDefault(cp => cp.Title.Contains("Data Scientist") || cp.Title.Contains("Dữ liệu"));
+                if (dataScientist != null)
+                {
+                    var stages = new List<CareerStage>
+                    {
+                        new CareerStage { CareerPathId = dataScientist.Id, Title = "Data Analyst Intern", Description = "Thu thập, làm sạch dữ liệu và thực hiện các báo cáo thống kê cơ bản.", SequenceOrder = 1 },
+                        new CareerStage { CareerPathId = dataScientist.Id, Title = "Data Analyst / Developer", Description = "Viết kịch bản xử lý dữ liệu tự động, xây dựng trực quan hóa dữ liệu.", SequenceOrder = 2 },
+                        new CareerStage { CareerPathId = dataScientist.Id, Title = "Machine Learning Engineer", Description = "Huấn luyện các mô hình học máy phục vụ cho việc dự báo và phân lớp.", SequenceOrder = 3 },
+                        new CareerStage { CareerPathId = dataScientist.Id, Title = "Senior Data Scientist", Description = "Nghiên cứu tối ưu giải thuật AI, đưa ra định hướng khai phá dữ liệu lớn.", SequenceOrder = 4 }
+                    };
+                    context.CareerStages.AddRange(stages);
+                    await context.SaveChangesAsync();
+
+                    if (skills.Count >= 20)
+                    {
+                        context.CareerStageSkills.AddRange(
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[1].Id, ProficiencyRequired = "Basic" }, // SQL
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[11].Id, ProficiencyRequired = "Basic" }, // Python
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[1].Id, ProficiencyRequired = "Intermediate" }, // SQL
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[12].Id, ProficiencyRequired = "Intermediate" }, // Pandas
+                            new CareerStageSkill { CareerStageId = stages[2].Id, SkillId = skills[11].Id, ProficiencyRequired = "Advanced" }, // Python
+                            new CareerStageSkill { CareerStageId = stages[2].Id, SkillId = skills[10].Id, ProficiencyRequired = "Intermediate" } // Algorithms
+                        );
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                // 4. UI/UX Designer
+                var uiuxDesigner = careerPaths.FirstOrDefault(cp => cp.Title.Contains("UI/UX"));
+                if (uiuxDesigner != null)
+                {
+                    var stages = new List<CareerStage>
+                    {
+                        new CareerStage { CareerPathId = uiuxDesigner.Id, Title = "Junior Designer", Description = "Thiết kế các màn hình tĩnh, làm quen với Figma và chuẩn Component.", SequenceOrder = 1 },
+                        new CareerStage { CareerPathId = uiuxDesigner.Id, Title = "Mid Designer", Description = "Thực hiện nghiên cứu UX cơ bản, dựng interactive prototype và test người dùng.", SequenceOrder = 2 },
+                        new CareerStage { CareerPathId = uiuxDesigner.Id, Title = "Senior Designer", Description = "Xây dựng Design System, định hình phong cách mỹ thuật của toàn bộ sản phẩm.", SequenceOrder = 3 }
+                    };
+                    context.CareerStages.AddRange(stages);
+                    await context.SaveChangesAsync();
+
+                    if (skills.Count >= 10)
+                    {
+                        context.CareerStageSkills.AddRange(
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[8].Id, ProficiencyRequired = "Basic" }, // Figma
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[2].Id, ProficiencyRequired = "Basic" }, // HTML/CSS
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[8].Id, ProficiencyRequired = "Intermediate" }, // Figma
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[9].Id, ProficiencyRequired = "Basic" } // UX Research
+                        );
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                // 5. HR Specialist
+                var hrSpecialist = careerPaths.FirstOrDefault(cp => cp.Title.Contains("HR") || cp.Title.Contains("Nhân sự"));
+                if (hrSpecialist != null)
+                {
+                    var stages = new List<CareerStage>
+                    {
+                        new CareerStage { CareerPathId = hrSpecialist.Id, Title = "HR Intern", Description = "Hỗ trợ lọc hồ sơ ứng viên, sắp xếp lịch hẹn phỏng vấn và thực hiện thủ tục cơ bản.", SequenceOrder = 1 },
+                        new CareerStage { CareerPathId = hrSpecialist.Id, Title = "Recruitment Specialist", Description = "Chịu trách nhiệm tuyển dụng nhân sự chất lượng cao cho các phòng ban.", SequenceOrder = 2 },
+                        new CareerStage { CareerPathId = hrSpecialist.Id, Title = "HR Generalist / HRBP", Description = "Giải quyết các quan hệ nhân sự, tổ chức đánh giá hiệu suất và đào tạo nội bộ.", SequenceOrder = 3 },
+                        new CareerStage { CareerPathId = hrSpecialist.Id, Title = "HR Manager", Description = "Xây dựng chiến lược nhân sự, chế độ đãi ngộ và chính sách phát triển tổ chức.", SequenceOrder = 4 }
+                    };
+                    context.CareerStages.AddRange(stages);
+                    await context.SaveChangesAsync();
+
+                    if (skills.Count >= 20)
+                    {
+                        context.CareerStageSkills.AddRange(
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[7].Id, ProficiencyRequired = "Basic" }, // Communication
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[6].Id, ProficiencyRequired = "Basic" }, // Time Management
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[13].Id, ProficiencyRequired = "Intermediate" }, // Recruitment
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[7].Id, ProficiencyRequired = "Intermediate" }, // Communication
+                            new CareerStageSkill { CareerStageId = stages[2].Id, SkillId = skills[19].Id, ProficiencyRequired = "Intermediate" }, // Conflict Resolution
+                            new CareerStageSkill { CareerStageId = stages[3].Id, SkillId = skills[19].Id, ProficiencyRequired = "Advanced" } // Conflict Resolution
+                        );
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                // 6. Business Manager
+                var businessManager = careerPaths.FirstOrDefault(cp => cp.Title.Contains("Business") || cp.Title.Contains("Kinh doanh") || cp.Title.Contains("Quản trị"));
+                if (businessManager != null)
+                {
+                    var stages = new List<CareerStage>
+                    {
+                        new CareerStage { CareerPathId = businessManager.Id, Title = "Business Assistant", Description = "Hỗ trợ chuẩn bị văn bản dự án, phối hợp sắp xếp lịch trình cuộc họp.", SequenceOrder = 1 },
+                        new CareerStage { CareerPathId = businessManager.Id, Title = "Project Coordinator", Description = "Điều phối công việc trong nhóm Agile, theo dõi tiến độ các task chi tiết.", SequenceOrder = 2 },
+                        new CareerStage { CareerPathId = businessManager.Id, Title = "Project Manager", Description = "Chịu trách nhiệm lập kế hoạch, kiểm soát ngân sách và quản lý rủi ro dự án.", SequenceOrder = 3 },
+                        new CareerStage { CareerPathId = businessManager.Id, Title = "Business Unit Manager", Description = "Quản lý hoạt động kinh doanh tổng thể, tối ưu doanh thu và lợi nhuận của chi nhánh.", SequenceOrder = 4 }
+                    };
+                    context.CareerStages.AddRange(stages);
+                    await context.SaveChangesAsync();
+
+                    if (skills.Count >= 20)
+                    {
+                        context.CareerStageSkills.AddRange(
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[6].Id, ProficiencyRequired = "Basic" }, // Time Management
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[7].Id, ProficiencyRequired = "Basic" }, // Communication
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[14].Id, ProficiencyRequired = "Intermediate" }, // Agile/Scrum
+                            new CareerStageSkill { CareerStageId = stages[2].Id, SkillId = skills[14].Id, ProficiencyRequired = "Advanced" }, // Agile/Scrum
+                            new CareerStageSkill { CareerStageId = stages[2].Id, SkillId = skills[5].Id, ProficiencyRequired = "Advanced" }, // Presentation
+                            new CareerStageSkill { CareerStageId = stages[3].Id, SkillId = skills[19].Id, ProficiencyRequired = "Advanced" } // Conflict Resolution
+                        );
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                // 7. Accountant/Auditor
+                var accountantAuditor = careerPaths.FirstOrDefault(cp => cp.Title.Contains("Accountant") || cp.Title.Contains("Kế toán") || cp.Title.Contains("Kiểm toán"));
+                if (accountantAuditor != null)
+                {
+                    var stages = new List<CareerStage>
+                    {
+                        new CareerStage { CareerPathId = accountantAuditor.Id, Title = "Junior Accountant", Description = "Ghi sổ nhật ký chung, đối chiếu chứng từ hóa đơn, kiểm tra quỹ tiền mặt.", SequenceOrder = 1 },
+                        new CareerStage { CareerPathId = accountantAuditor.Id, Title = "General Accountant", Description = "Lập báo cáo thuế giá trị gia tăng, thuế thu nhập, lên bảng cân đối kế toán.", SequenceOrder = 2 },
+                        new CareerStage { CareerPathId = accountantAuditor.Id, Title = "Chief Accountant", Description = "Tổ chức công tác kế toán, kiểm soát tính hợp lý hợp lệ của các chi phí lớn.", SequenceOrder = 3 },
+                        new CareerStage { CareerPathId = accountantAuditor.Id, Title = "Senior Auditor / CFO", Description = "Độc lập kiểm toán tài chính cho doanh nghiệp, tham mưu cấu trúc dòng tiền chiến lược.", SequenceOrder = 4 }
+                    };
+                    context.CareerStages.AddRange(stages);
+                    await context.SaveChangesAsync();
+
+                    if (skills.Count >= 20)
+                    {
+                        context.CareerStageSkills.AddRange(
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[15].Id, ProficiencyRequired = "Basic" }, // Financial Accounting
+                            new CareerStageSkill { CareerStageId = stages[0].Id, SkillId = skills[6].Id, ProficiencyRequired = "Basic" }, // Time Management
+                            new CareerStageSkill { CareerStageId = stages[1].Id, SkillId = skills[15].Id, ProficiencyRequired = "Intermediate" }, // Financial Accounting
+                            new CareerStageSkill { CareerStageId = stages[2].Id, SkillId = skills[15].Id, ProficiencyRequired = "Advanced" }, // Financial Accounting
+                            new CareerStageSkill { CareerStageId = stages[2].Id, SkillId = skills[16].Id, ProficiencyRequired = "Intermediate" }, // Audit
+                            new CareerStageSkill { CareerStageId = stages[3].Id, SkillId = skills[16].Id, ProficiencyRequired = "Advanced" } // Audit
+                        );
+                        await context.SaveChangesAsync();
+                    }
+                }
+            }
+
+            // --- SEEDING GOALS & GOAL MILESTONES ---
+            var student = await userManager.FindByEmailAsync("student@careerpath.vn");
+            if (student != null && (!await context.Goals.AnyAsync() || !await context.GoalMilestones.AnyAsync()) && careerPaths.Count >= 1 && skills.Count >= 5)
+            {
+                var oldGoals = await context.Goals.ToListAsync();
+                context.Goals.RemoveRange(oldGoals);
+                await context.SaveChangesAsync();
+
+                var goal = new Goal
+                {
+                    StudentId = student.Id,
+                    CareerPathId = careerPaths[0].Id,
+                    Title = "Trở thành Junior Software Engineer trong 6 tháng",
+                    GoalType = "ShortTerm",
+                    Progress = 33, // 1 out of 3 completed
+                    TargetDate = DateTime.Now.AddMonths(6),
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = "System",
+                    Status = 1
+                };
+                context.Goals.Add(goal);
+                await context.SaveChangesAsync();
+
+                var milestones = new List<GoalMilestone>
+                {
+                    new GoalMilestone
+                    {
+                        GoalId = goal.Id,
+                        Title = "Hoàn thành kỹ năng Lập trình C# cơ bản",
+                        Status = "Completed",
+                        SequenceOrder = 1,
+                        SkillId = skills[0].Id,
+                        UpdatedAt = DateTime.Now.AddDays(-10)
+                    },
+                    new GoalMilestone
+                    {
+                        GoalId = goal.Id,
+                        Title = "Học xong khóa C# Fullstack trên hệ thống",
+                        Status = "In Progress",
+                        SequenceOrder = 2,
+                        SkillId = skills[0].Id
+                    },
+                    new GoalMilestone
+                    {
+                        GoalId = goal.Id,
+                        Title = "Xây dựng dự án cá nhân Portfolio đạt chuẩn",
+                        Status = "In Progress",
+                        SequenceOrder = 3,
+                        SkillId = skills[4].Id // Git
+                    }
+                };
+                context.GoalMilestones.AddRange(milestones);
+                await context.SaveChangesAsync();
+            }
+
             // Seed CareerPathCourses
             if (!await context.CareerPathCourses.AnyAsync())
             {
@@ -208,7 +501,7 @@ namespace Career_Guidance_Platform.Data
             await context.SaveChangesAsync();
 
             var existingQuestionsCount = await context.QuestionTests.CountAsync(q => q.TestId == baseTest.Id);
-            if (existingQuestionsCount != 20)
+            if (existingQuestionsCount != 100)
             {
                 var existingQuestions = await context.QuestionTests.Where(q => q.TestId == baseTest.Id).ToListAsync();
                 foreach (var q in existingQuestions)
@@ -225,108 +518,200 @@ namespace Career_Guidance_Platform.Data
                 await context.SaveChangesAsync();
 
                 // --- SEEDING 20 QUESTIONS FOR BASE TEST ---
-                var questionsData = new List<(string Content, List<string> Options, List<(int PathIdx, int W)> Weights)>
+                var questionsData = new List<(string Content, string TestType, List<string> Options, List<(int PathIdx, int W)> Weights)>
                 {
                     // Q1
                     ("Bạn thích dành thời gian rảnh của mình để làm việc nào nhất?",
+                     "Interests",
                      new List<string> { "Đọc tài liệu công nghệ hoặc tự mày mò viết code mẫu.", "Gặp gỡ, kết nối và mở rộng mối quan hệ xã hội.", "Vẽ tranh, thiết kế đồ họa hoặc sáng tạo tự do.", "Sắp xếp lại bảng chi tiêu, lên kế hoạch tuần mới cụ thể." },
                      new List<(int, int)> { (0, 5), (4, 5), (3, 5), (6, 5) }),
 
                     // Q2
                     ("Khi đối mặt với một thiết bị công nghệ mới bị hỏng, bạn sẽ làm gì?",
+                     "Skills",
                      new List<string> { "Tự tháo linh kiện ra xem cấu trúc phần cứng bên trong để sửa.", "Lên mạng tìm các bài viết/video phân tích bản chất lỗi kỹ thuật.", "Tìm kiếm sự giúp đỡ từ những người xung quanh hoặc mang ra tiệm.", "Ghi chép lại lỗi này vào file log để theo dõi thiết bị định kỳ." },
                      new List<(int, int)> { (1, 5), (2, 5), (4, 4), (6, 4) }),
 
                     // Q3
                     ("Trong một cuộc thảo luận nhóm, vai trò tự nhiên của bạn thường là gì?",
+                     "Personality",
                      new List<string> { "Đưa ra các ý tưởng cấu trúc, giải pháp đột phá, mới mẻ.", "Lắng nghe, hòa giải mâu thuẫn và kết nối các thành viên.", "Phân tích chuyên sâu tính khả thi và logic của các ý tưởng.", "Thúc giục tiến độ, quản lý thời gian và phân chia nhiệm vụ." },
                      new List<(int, int)> { (3, 5), (4, 5), (2, 5), (5, 5) }),
 
                     // Q4
                     ("Khi một người bạn đồng nghiệp đang gặp áp lực hoặc chuyện buồn, bạn sẽ:",
+                     "Personality",
                      new List<string> { "Tìm các giải pháp thực tế giúp họ xử lý dứt điểm công việc đang nghẽn.", "Lắng nghe một cách đồng cảm, chia sẻ và khích lệ tinh thần.", "Rủ họ tham gia các buổi Workshop kết nối cộng đồng để giải tỏa.", "Giữ khoảng cách tôn trọng giúp họ có không gian riêng để tĩnh tâm." },
                      new List<(int, int)> { (0, 4), (4, 5), (4, 4), (6, 3) }),
 
                     // Q5
                     ("Bạn cảm thấy bị thu hút mạnh mẽ bởi môi trường làm việc nào?",
+                     "Values",
                      new List<string> { "Hạ tầng kỹ thuật phòng Lab hiện đại, quy trình làm việc chuẩn hóa.", "Không gian làm việc mở, tự do sáng tạo cao, linh hoạt thời gian.", "Môi trường sôi nổi, liên tục di chuyển gặp gỡ đối tác ngoại giao.", "Hệ thống văn phòng ổn định, phúc lợi rõ ràng, quản lý chặt chẽ." },
                      new List<(int, int)> { (1, 5), (3, 5), (5, 5), (6, 5) }),
 
                     // Q6
                     ("Khi phải xử lý các bảng số liệu phức tạp hoặc khối dữ liệu thô, bạn thấy:",
+                     "Skills",
                      new List<string> { "Hào hứng tìm kiếm bản chất mô hình toán học ẩn sau chúng.", "Làm theo đúng biểu mẫu tài chính chuyên môn một cách cẩn thận.", "Nhanh chóng thiết kế các biểu đồ trực quan hóa màu sắc cho dễ hiểu.", "Cảm thấy nhàm chán và muốn ủy quyền cho người khác xử lý." },
                      new List<(int, int)> { (2, 5), (6, 5), (3, 4), (4, 3) }),
 
                     // Q7
                     ("Nếu được tài trợ để viết một cuốn sách, bạn sẽ viết về chủ đề nào?",
+                     "Interests",
                      new List<string> { "Chiến lược quản trị và dẫn dắt doanh nghiệp khởi nghiệp.", "Cẩm nang hướng dẫn chuyên sâu về mỹ thuật số nghệ thuật.", "Nghiên cứu cấu trúc tâm lý học và cách quản trị nhân sự.", "Các thuật toán thông minh cải tiến hệ thống cơ sở dữ liệu." },
                      new List<(int, int)> { (5, 5), (3, 5), (4, 5), (0, 5) }),
 
                     // Q8
                     ("Cách bạn đang tự quản lý tài chính cá nhân hàng tháng là gì?",
+                     "Skills",
                      new List<string> { "Sử dụng ứng dụng/Excel ghi chép nghiêm túc không sót một đồng.", "Chi tiêu linh hoạt theo cảm xúc, ước lượng sơ bộ trong đầu.", "Chia nhỏ ngân sách vào các quỹ: Tiết kiệm, Đầu tư, Nâng cấp bản thân.", "Tìm cách tối ưu hóa, đầu tư sinh lời từ các khoản tiền nhàn rỗi." },
                      new List<(int, int)> { (6, 5), (3, 3), (6, 4), (5, 5) }),
 
                     // Q9
                     ("Khi bất chợt nảy ra một ý tưởng kinh doanh mới, bạn làm gì trước tiên?",
+                     "Personality",
                      new List<string> { "Phân tích, xây dựng bản kế hoạch chi tiết và khảo sát thị trường.", "Liên hệ ngay với bạn bè có thế mạnh chuyên môn khác để lập Team.", "Tìm một Mentor có uy tín lớn trong ngành để xin ý kiến tư vấn.", "Lập tức xây dựng thử nghiệm sản phẩm phiên bản Demo (MVP)." },
                      new List<(int, int)> { (5, 5), (5, 4), (4, 4), (0, 5) }),
 
                     // Q10
                     ("Bạn đánh giá khả năng xử lý công việc dồn dập (áp lực Deadline lớn) của mình thế nào?",
+                     "Personality",
                      new List<string> { "Rất tốt, áp lực công nghệ kích thích sự tập trung giải bài toán khó của tôi.", "Tốt, tôi sẽ thiết lập kế hoạch chia nhỏ công việc, sắp xếp độ ưu tiên rõ ràng.", "Dễ bị áp lực tâm lý, tôi cần sự động viên hoặc chỉ dẫn từ đồng nghiệp.", "Tôi thích làm việc tuần tự và sẽ chủ động đàm phán kéo dài thời gian." },
                      new List<(int, int)> { (1, 4), (5, 5), (4, 4), (6, 4) }),
 
                     // Q11
                     ("Khi truy cập vào một trang web mới, yếu tố nào tác động tới bạn đầu tiên?",
+                     "Interests",
                      new List<string> { "Hệ màu sắc bố cục, độ mượt mà của trải nghiệm UI/UX.", "Tốc độ tải trang, kiến trúc tính năng hệ thống thông minh.", "Độ chính xác logic của nội dung truyền tải và thông tin liên hệ.", "Mô hình chuyển đổi kinh doanh, cách thức tối ưu doanh thu của trang." },
                      new List<(int, int)> { (3, 5), (0, 5), (2, 4), (5, 4) }),
 
                     // Q12
                     ("Bạn mong muốn đối tượng tương tác chính trong công việc hàng ngày của mình là gì?",
+                     "Interests",
                      new List<string> { "Hệ thống câu lệnh mã code, máy móc cấu hình mạng hoặc thuật toán.", "Con người (Học viên, ứng viên, đối tác chiến lược hoặc khách hàng).", "Sản phẩm sáng tạo nghệ thuật, hình ảnh truyền thông, giao diện số.", "Hồ sơ chứng từ tài chính, quy trình kiểm toán, văn bản hành chính." },
                      new List<(int, int)> { (0, 5), (4, 5), (3, 5), (6, 5) }),
 
                     // Q13
                     ("Khi xảy ra xung đột nghiêm trọng về quan điểm kỹ thuật trong nội bộ dự án, bạn sẽ:",
+                     "Values",
                      new List<string> { "Đưa ra các dẫn chứng số liệu, logic thực tế để bảo vệ luận điểm chuyên môn.", "Lắng nghe các bên, tìm giải pháp dung hòa tinh thần đồng đội.", "Đề xuất một cuộc họp lấy biểu quyết đồng thuận theo đa số hành chính.", "Mời chuyên gia/Mentor có kinh nghiệm dày dặn đứng ra phân xử khách quan." },
                      new List<(int, int)> { (2, 5), (4, 5), (6, 4), (5, 4) }),
 
                     // Q14
                     ("Bạn tự tin nhất vào siêu năng lực bẩm sinh nào của bản thân?",
+                     "Skills",
                      new List<string> { "Tư duy logic, giải quyết các bài toán chuỗi dữ liệu hóc búa.", "Giao tiếp thuyết phục, tạo tầm ảnh hưởng dẫn dắt đám đông.", "Sự tỉ mỉ, quan sát chi tiết siêu nhỏ, kiểm lỗi dữ liệu chính xác.", "Thích ứng công nghệ cực nhanh, đổi mới tư duy linh hoạt." },
                      new List<(int, int)> { (0, 5), (5, 5), (6, 5), (1, 5) }),
 
                     // Q15
                     ("Khi cấp trên giao phó một nhiệm vụ công nghệ hoàn toàn mới chưa từng có tài liệu hướng dẫn:",
+                     "Skills",
                      new List<string> { "Rất hào hứng, tự tra cứu tài liệu quốc tế chuyên sâu để xử lý.", "Cần có một Mentor giàu kinh nghiệm cầm tay chỉ việc giai đoạn đầu.", "Tìm kiếm các biểu mẫu (Template) tương đồng để áp dụng có quy trình.", "Đề xuất chuyển giao nhiệm vụ cho người có chuyên môn phù hợp hơn." },
                      new List<(int, int)> { (0, 5), (4, 4), (6, 4), (5, 3) }),
 
                     // Q16
                     ("Đâu là động lực cốt lõi lớn nhất thúc đẩy bạn làm việc mỗi ngày?",
+                     "Values",
                      new List<string> { "Mức thu nhập cao, cơ hội thăng tiến lên cấp quản lý điều hành.", "Được tự do sáng tạo nghệ thuật, không chịu sự gò bó hành chính.", "Mang lại giá trị lớn cho xã hội, hỗ trợ phát triển năng lực con người.", "Sự ổn định lâu dài, môi trường làm việc ít biến động rủi ro tài chính." },
                      new List<(int, int)> { (5, 5), (3, 5), (4, 5), (6, 5) }),
 
                     // Q17
                     ("Bạn có xu hướng đưa ra quyết định cuối cùng dựa trên nền tảng nào?",
+                     "Personality",
                      new List<string> { "Số liệu thống kê thực tế, chứng cứ khoa học kiểm định rõ ràng.", "Trực giác nhạy bén kết hợp cảm xúc nghệ thuật tại thời điểm đó.", "Sự thống nhất, đồng lòng của toàn bộ thành viên trong tập thể.", "Các hướng dẫn của chuyên gia đầu ngành hoặc quy chuẩn pháp lý có sẵn." },
                      new List<(int, int)> { (2, 5), (3, 5), (4, 4), (6, 4) }),
 
                     // Q18
                     ("Khi tham gia setup một không gian làm việc mới cho Team, bạn ưu tiên tiêu chí nào?",
+                     "Values",
                      new List<string> { "Tối ưu hóa công năng kỹ thuật, đường truyền mạng tốc độ cao ổn định.", "Thiết kế độc đáo mang tính nghệ thuật cao, khơi nguồn cảm hứng sáng tạo.", "Gần gũi thiên nhiên, có khu vực kết nối trò chuyện mở giữa các thành viên.", "Tiết kiệm chi phí đầu tư vật liệu, tối ưu hóa ngân sách quản lý." },
                      new List<(int, int)> { (1, 5), (3, 5), (4, 5), (6, 5) }),
 
                     // Q19
                     ("Tần suất bạn chủ động tự học để cập nhật các kiến thức công nghệ/xu hướng mới là:",
+                     "Interests",
                      new List<string> { "Mỗi ngày, tôi liên tục đọc báo cáo thị trường chuyên ngành quốc tế.", "Vài lần một tuần khi bắt gặp các nguồn bài viết phân tích uy tín.", "Chỉ học tập khi hệ thống công việc bắt buộc hoặc có kỳ kiểm tra định kỳ.", "Rất ít khi, tôi ưu tiên tối ưu hóa tốt các kỹ năng hiện có của bản thân." },
                      new List<(int, int)> { (0, 5), (2, 4), (6, 4), (5, 3) }),
 
                     // Q20
                     ("Đối với bạn, một người Mentor đồng hành lý tưởng nhất thiết phải có tố chất nào?",
+                     "Values",
                      new List<string> { "Kỹ năng chuyên môn kỹ thuật thượng thừa, giải quyết lỗi hệ thống cực nhanh.", "Định hướng tầm nhìn chiến lược phát triển sự nghiệp dài hạn.", "Biết lắng nghe tâm tư, truyền cảm hứng bứt phá năng lực.", "Nghiêm khắc, quản lý tiến độ học tập một cách quy chuẩn kỷ luật." },
                      new List<(int, int)> { (0, 5), (5, 5), (4, 5), (6, 5) })
                 };
+
+                // Generate 80 additional questions programmatically (20 for each of the 4 test types)
+                var pathTexts = new Dictionary<string, string[]>()
+                {
+                    { "Interests", new[] {
+                        "Nghiên cứu công nghệ mới, tự viết mã nguồn phần mềm.",
+                        "Thiết lập, quản trị hệ thống mạng và thiết bị phần cứng.",
+                        "Khám phá dữ liệu, trực quan hóa biểu đồ và tìm kiếm quy luật.",
+                        "Phác thảo giao diện, phối màu và cải tiến trải nghiệm người dùng.",
+                        "Tuyển dụng, trò chuyện hỗ trợ nhân sự và xây dựng văn hóa doanh nghiệp.",
+                        "Lập kế hoạch kinh doanh, quản lý tiến độ và tổ chức vận hành nhóm.",
+                        "Kiểm tra hóa đơn chứng từ, phân tích cân đối thu chi tài chính."
+                    }},
+                    { "Skills", new[] {
+                        "Khả năng gỡ lỗi phần mềm và tư duy lập trình logic.",
+                        "Khả năng cấu hình Router/Switch và phát hiện xâm nhập mạng.",
+                        "Khả năng thống kê toán học và viết truy vấn dữ liệu SQL.",
+                        "Khả năng sử dụng Figma và tạo các bản mẫu tương tác (Prototype).",
+                        "Khả năng phỏng vấn tuyển dụng và đánh giá năng lực con người.",
+                        "Khả năng quản trị thời gian, đàm phán và thuyết trình dự án.",
+                        "Khả năng lập báo cáo tài chính và kiểm soát ngân sách nội bộ."
+                    }},
+                    { "Values", new[] {
+                        "Giá trị của sản phẩm phần mềm mang lại tiện ích cho cộng đồng.",
+                        "Sự an toàn, ổn định và bảo mật thông tin tuyệt đối của hệ thống.",
+                        "Tính chính xác, khách quan của các quyết định dựa trên dữ liệu.",
+                        "Vẻ đẹp thẩm mỹ, tính dễ sử dụng và thân thiện với người dùng.",
+                        "Môi trường hòa đồng, phát triển tiềm năng con người tối đa.",
+                        "Hiệu suất công việc, tính linh hoạt và tinh thần khởi nghiệp.",
+                        "Tính minh bạch, trung thực và tuân thủ pháp luật về tài chính."
+                    }},
+                    { "Personality", new[] {
+                        "Kiên nhẫn, thích làm việc độc lập với máy tính và giải quyết lỗi.",
+                        "Cẩn thận, nhạy bén trước các nguy cơ bảo mật hệ thống.",
+                        "Tò mò, có đầu óc phân tích logic và yêu thích toán học.",
+                        "Bay bổng, sáng tạo nghệ thuật và có gu thẩm mỹ tốt.",
+                        "Thấu hiểu, biết lắng nghe chia sẻ và có trí tuệ cảm xúc cao.",
+                        "Quyết đoán, thích dẫn dắt đội nhóm và có mục tiêu rõ ràng.",
+                        "Tỉ mỉ, coi trọng quy củ, sự ngăn nắp và tính chính xác cao."
+                    }}
+                };
+
+                var aspectPrompts = new Dictionary<string, string>()
+                {
+                    { "Interests", "Lĩnh vực hoặc hoạt động học tập/làm việc nào khiến bạn cảm thấy hào hứng và muốn đầu tư thời gian tìm hiểu nhất?" },
+                    { "Skills", "Kỹ năng chuyên môn hoặc năng lực thực tế nào dưới đây là thế mạnh vượt trội mà bạn tự tin nhất?" },
+                    { "Values", "Khi lựa chọn công việc hoặc định hướng sự nghiệp, giá trị hoặc yếu tố cốt lõi nào dưới đây quan trọng nhất đối với bạn?" },
+                    { "Personality", "Phẩm chất hoặc đặc điểm phong cách làm việc nào mô tả chính xác nhất con người hành vi của bạn?" }
+                };
+
+                var aspectTypes = new[] { "Interests", "Skills", "Values", "Personality" };
+                int questionIndex = 1;
+                foreach (var aspect in aspectTypes)
+                {
+                    for (int i = 1; i <= 20; i++)
+                    {
+                        var aspectNameVietnamese = aspect == "Interests" ? "Sở thích" : aspect == "Skills" ? "Kỹ năng" : aspect == "Values" ? "Giá trị" : "Tính cách";
+                        var content = $"{aspectPrompts[aspect]} (Khảo sát {aspectNameVietnamese} - Câu hỏi phụ {questionIndex})";
+                        var opts = new List<string>();
+                        var weights = new List<(int, int)>();
+                        
+                        for (int j = 0; j < 4; j++)
+                        {
+                            int pathIdx = (questionIndex + j) % 7;
+                            opts.Add(pathTexts[aspect][pathIdx]);
+                            weights.Add((pathIdx, 5));
+                        }
+
+                        questionsData.Add((content, aspect, opts, weights));
+                        questionIndex++;
+                    }
+                }
 
                 foreach (var qData in questionsData)
                 {
@@ -334,7 +719,8 @@ namespace Career_Guidance_Platform.Data
                     {
                         TestId = baseTest.Id,
                         QuestionTypeId = singleChoiceType.Id,
-                        Content = qData.Content
+                        Content = qData.Content,
+                        TestType = qData.TestType
                     };
                     context.QuestionTests.Add(question);
                     await context.SaveChangesAsync(); // Lưu để sinh QuestionId
@@ -577,34 +963,98 @@ namespace Career_Guidance_Platform.Data
             }
 
             // 12. Seed Learning Resources
-            if (!await context.Resources.AnyAsync())
+            if (!await context.Resources.AnyAsync(r => r.CategoryId != null))
             {
+                // Clear old resources to ensure clean seeding of the new structure
+                var oldResources = await context.Resources.ToListAsync();
+                context.Resources.RemoveRange(oldResources);
+                await context.SaveChangesAsync();
+
                 var dbCareerPaths = await context.CareerPaths.OrderBy(c => c.Id).ToListAsync();
                 if (dbCareerPaths.Count >= 7)
                 {
+                    if (skills == null || !skills.Any())
+                    {
+                        skills = await context.Skills.OrderBy(s => s.Id).ToListAsync();
+                    }
+
+                    var techCategory = await context.Categories.FirstOrDefaultAsync(c => c.Name.Contains("Kỹ thuật") || c.Name.Contains("Công nghệ"));
+                    var businessCategory = await context.Categories.FirstOrDefaultAsync(c => c.Name.Contains("Kinh doanh") || c.Name.Contains("Kinh tế"));
+                    var socialCategory = await context.Categories.FirstOrDefaultAsync(c => c.Name.Contains("Xã hội"));
+
+                    var techCatId = techCategory?.Id ?? 1;
+                    var bizCatId = businessCategory?.Id ?? 2;
+                    var socCatId = socialCategory?.Id ?? 3;
+
+                    // We will create parent courses (nested parents)
+                    var csharpCourse = new Resource 
+                    { 
+                        PathId = dbCareerPaths[0].Id, 
+                        CategoryId = techCatId,
+                        SkillId = skills.Count > 0 ? skills[0].Id : (int?)null, // Lập trình C#
+                        ResourceType = "Course", 
+                        Title = "Khóa học ASP.NET Core MVC Full Stack", 
+                        Url = "https://example.com/courses/aspnet-fullstack",
+                        Description = "Học lập trình Backend Web với ASP.NET Core từ căn bản đến nâng cao.",
+                        Status = 1
+                    };
+
+                    var figmaCourse = new Resource
+                    {
+                        PathId = dbCareerPaths[3].Id,
+                        CategoryId = techCatId,
+                        SkillId = skills.Count > 8 ? skills[8].Id : (int?)null, // Figma
+                        ResourceType = "Course",
+                        Title = "Khóa học Thiết kế UI/UX với Figma chuyên nghiệp",
+                        Url = "https://example.com/courses/figma-mastery",
+                        Description = "Làm chủ Figma, thiết kế giao diện web/app chuẩn UI/UX.",
+                        Status = 1
+                    };
+
+                    var ccnaCourse = new Resource
+                    {
+                        PathId = dbCareerPaths[1].Id,
+                        CategoryId = techCatId,
+                        SkillId = skills.Count > 17 ? skills[17].Id : (int?)null, // CCNA
+                        ResourceType = "Course",
+                        Title = "Học mạng căn bản CCNA từ con số 0",
+                        Url = "https://example.com/courses/ccna-networking",
+                        Description = "Kiến thức mạng toàn diện, chuẩn bị thi chứng chỉ CCNA.",
+                        Status = 1
+                    };
+
+                    context.Resources.AddRange(csharpCourse, figmaCourse, ccnaCourse);
+                    await context.SaveChangesAsync(); // generate parent IDs
+
                     var resources = new List<Resource>
                     {
                         // Software Engineer (PathIdx 0)
-                        new Resource { PathId = dbCareerPaths[0].Id, ResourceType = "PDF", Title = "C# & .NET Core Developer Handbook", Url = "https://example.com/books/csharp-handbook.pdf" },
-                        new Resource { PathId = dbCareerPaths[0].Id, ResourceType = "Video", Title = "Mastering Clean Architecture in ASP.NET Core", Url = "https://example.com/videos/clean-architecture" },
+                        new Resource { PathId = dbCareerPaths[0].Id, CategoryId = techCatId, SkillId = skills.Count > 0 ? skills[0].Id : (int?)null, ParentResourceId = csharpCourse.Id, ResourceType = "PDF", Title = "C# & .NET Core Developer Handbook", Url = "https://example.com/books/csharp-handbook.pdf", Description = "Tài liệu tra cứu nhanh ngôn ngữ C# và .NET Core.", Status = 1 },
+                        new Resource { PathId = dbCareerPaths[0].Id, CategoryId = techCatId, SkillId = skills.Count > 3 ? skills[3].Id : (int?)null, ParentResourceId = csharpCourse.Id, ResourceType = "Video", Title = "Mastering Clean Architecture in ASP.NET Core", Url = "https://example.com/videos/clean-architecture", Description = "Video hướng dẫn thiết kế Clean Architecture.", Status = 1 },
+                        
                         // Network & Security (PathIdx 1)
-                        new Resource { PathId = dbCareerPaths[1].Id, ResourceType = "Doc", Title = "Cisco CCNA Networking Lab Guide", Url = "https://example.com/docs/ccna-networking-guide" },
-                        new Resource { PathId = dbCareerPaths[1].Id, ResourceType = "PDF", Title = "Introduction to Cyber Security Standards 2026", Url = "https://example.com/books/cybersecurity-standards.pdf" },
+                        new Resource { PathId = dbCareerPaths[1].Id, CategoryId = techCatId, SkillId = skills.Count > 17 ? skills[17].Id : (int?)null, ParentResourceId = ccnaCourse.Id, ResourceType = "Doc", Title = "Cisco CCNA Networking Lab Guide", Url = "https://example.com/docs/ccna-networking-guide", Description = "Tài liệu hướng dẫn thực hành lab CCNA.", Status = 1 },
+                        new Resource { PathId = dbCareerPaths[1].Id, CategoryId = techCatId, SkillId = skills.Count > 18 ? skills[18].Id : (int?)null, ResourceType = "PDF", Title = "Introduction to Cyber Security Standards 2026", Url = "https://example.com/books/cybersecurity-standards.pdf", Description = "Sách giới thiệu các tiêu chuẩn bảo mật hệ thống mạng.", Status = 1 },
+                        
                         // Data Scientist (PathIdx 2)
-                        new Resource { PathId = dbCareerPaths[2].Id, ResourceType = "Video", Title = "Python for Data Analysis and Visualization", Url = "https://example.com/videos/python-data-science" },
-                        new Resource { PathId = dbCareerPaths[2].Id, ResourceType = "PDF", Title = "Practical Machine Learning Guide", Url = "https://example.com/books/machine-learning-guide.pdf" },
+                        new Resource { PathId = dbCareerPaths[2].Id, CategoryId = techCatId, SkillId = skills.Count > 11 ? skills[11].Id : (int?)null, ResourceType = "Video", Title = "Python for Data Analysis and Visualization", Url = "https://example.com/videos/python-data-science", Description = "Video hướng dẫn Python, Pandas, Matplotlib.", Status = 1 },
+                        new Resource { PathId = dbCareerPaths[2].Id, CategoryId = techCatId, SkillId = skills.Count > 12 ? skills[12].Id : (int?)null, ResourceType = "PDF", Title = "Practical Machine Learning Guide", Url = "https://example.com/books/machine-learning-guide.pdf", Description = "Sách hướng dẫn thuật toán Machine Learning thực chiến.", Status = 1 },
+                        
                         // UI/UX Designer (PathIdx 3)
-                        new Resource { PathId = dbCareerPaths[3].Id, ResourceType = "Doc", Title = "Figma Design System Component Standards", Url = "https://example.com/docs/figma-design-system" },
-                        new Resource { PathId = dbCareerPaths[3].Id, ResourceType = "Video", Title = "User Experience (UX) Research Methodology", Url = "https://example.com/videos/ux-research" },
+                        new Resource { PathId = dbCareerPaths[3].Id, CategoryId = techCatId, SkillId = skills.Count > 8 ? skills[8].Id : (int?)null, ParentResourceId = figmaCourse.Id, ResourceType = "Doc", Title = "Figma Design System Component Standards", Url = "https://example.com/docs/figma-design-system", Description = "Quy chuẩn thiết kế Component và Auto-layout.", Status = 1 },
+                        new Resource { PathId = dbCareerPaths[3].Id, CategoryId = techCatId, SkillId = skills.Count > 9 ? skills[9].Id : (int?)null, ParentResourceId = figmaCourse.Id, ResourceType = "Video", Title = "User Experience (UX) Research Methodology", Url = "https://example.com/videos/ux-research", Description = "Video phương pháp nghiên cứu trải nghiệm người dùng.", Status = 1 },
+                        
                         // HR Specialist (PathIdx 4)
-                        new Resource { PathId = dbCareerPaths[4].Id, ResourceType = "PDF", Title = "Modern Human Resources Management Guide", Url = "https://example.com/books/modern-hr-management.pdf" },
-                        new Resource { PathId = dbCareerPaths[4].Id, ResourceType = "Doc", Title = "KPI & Performance Review Template", Url = "https://example.com/docs/kpi-performance-review" },
+                        new Resource { PathId = dbCareerPaths[4].Id, CategoryId = socCatId, SkillId = skills.Count > 13 ? skills[13].Id : (int?)null, ResourceType = "PDF", Title = "Modern Human Resources Management Guide", Url = "https://example.com/books/modern-hr-management.pdf", Description = "Cẩm nang quản trị nhân sự hiện đại.", Status = 1 },
+                        new Resource { PathId = dbCareerPaths[4].Id, CategoryId = socCatId, ResourceType = "Doc", Title = "KPI & Performance Review Template", Url = "https://example.com/docs/kpi-performance-review", Description = "Mẫu đánh giá KPI nhân sự.", Status = 1 },
+                        
                         // Business Manager (PathIdx 5)
-                        new Resource { PathId = dbCareerPaths[5].Id, ResourceType = "Video", Title = "Strategic Thinking & Project Management", Url = "https://example.com/videos/strategic-thinking" },
-                        new Resource { PathId = dbCareerPaths[5].Id, ResourceType = "PDF", Title = "Startup Business Model Planning Handbook", Url = "https://example.com/books/business-model-planning.pdf" },
+                        new Resource { PathId = dbCareerPaths[5].Id, CategoryId = bizCatId, SkillId = skills.Count > 14 ? skills[14].Id : (int?)null, ResourceType = "Video", Title = "Strategic Thinking & Project Management", Url = "https://example.com/videos/strategic-thinking", Description = "Video tư duy chiến lược và quản lý dự án Agile.", Status = 1 },
+                        new Resource { PathId = dbCareerPaths[5].Id, CategoryId = bizCatId, ResourceType = "PDF", Title = "Startup Business Model Planning Handbook", Url = "https://example.com/books/business-model-planning.pdf", Description = "Cẩm nang lập kế hoạch mô hình kinh doanh khởi nghiệp.", Status = 1 },
+                        
                         // Accountant/Auditor (PathIdx 6)
-                        new Resource { PathId = dbCareerPaths[6].Id, ResourceType = "Doc", Title = "Vietnamese Accounting Standards (VAS) Cheat Sheet", Url = "https://example.com/docs/vas-cheat-sheet" },
-                        new Resource { PathId = dbCareerPaths[6].Id, ResourceType = "PDF", Title = "Corporate Taxation & Auditing Principles", Url = "https://example.com/books/corporate-taxation-principles.pdf" }
+                        new Resource { PathId = dbCareerPaths[6].Id, CategoryId = bizCatId, SkillId = skills.Count > 15 ? skills[15].Id : (int?)null, ResourceType = "Doc", Title = "Vietnamese Accounting Standards (VAS) Cheat Sheet", Url = "https://example.com/docs/vas-cheat-sheet", Description = "Bảng tóm tắt hệ thống tài khoản kế toán Việt Nam.", Status = 1 },
+                        new Resource { PathId = dbCareerPaths[6].Id, CategoryId = bizCatId, SkillId = skills.Count > 16 ? skills[16].Id : (int?)null, ResourceType = "PDF", Title = "Corporate Taxation & Auditing Principles", Url = "https://example.com/books/corporate-taxation-principles.pdf", Description = "Tài liệu nguyên lý kế toán và thuế doanh nghiệp.", Status = 1 }
                     };
                     context.Resources.AddRange(resources);
                     await context.SaveChangesAsync();

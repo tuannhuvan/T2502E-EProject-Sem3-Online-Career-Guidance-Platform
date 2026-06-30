@@ -28,10 +28,6 @@ public class HomeController : Controller
     public async Task<IActionResult> CareerTest()
     {
         var test = await _context.Tests
-            .Include(t => t.QuestionTests)
-                .ThenInclude(qt => qt.QuestionOptions)
-            .Include(t => t.QuestionTests)
-                .ThenInclude(qt => qt.QuestionType)
             .FirstOrDefaultAsync(t => t.Status == 1);
 
         if (test == null)
@@ -39,13 +35,37 @@ public class HomeController : Controller
             return NotFound("Không tìm thấy bài đánh giá nghề nghiệp nào đang hoạt động.");
         }
 
+        // Fetch all active questions with options for this test
+        var allQuestions = await _context.QuestionTests
+            .Where(q => q.TestId == test.Id && q.Status == 1)
+            .Include(q => q.QuestionOptions)
+            .ToListAsync();
+
+        var random = new Random();
+        
+        var interestsPool = allQuestions.Where(q => q.TestType == "Interests").OrderBy(q => random.Next()).Take(5).ToList();
+        var skillsPool = allQuestions.Where(q => q.TestType == "Skills").OrderBy(q => random.Next()).Take(5).ToList();
+        var valuesPool = allQuestions.Where(q => q.TestType == "Values").OrderBy(q => random.Next()).Take(5).ToList();
+        var personalityPool = allQuestions.Where(q => q.TestType == "Personality").OrderBy(q => random.Next()).Take(5).ToList();
+
+        var selectedQuestions = interestsPool
+            .Concat(skillsPool)
+            .Concat(valuesPool)
+            .Concat(personalityPool)
+            .OrderBy(q => random.Next()) // Shuffle final selection
+            .ToList();
+
         var viewModel = new TakeTestViewModel
         {
             TestId = test.Id,
-            Questions = test.QuestionTests.Select(qt => new TakeTestQuestionVm
+            Questions = selectedQuestions.Select(qt => new TakeTestQuestionVm
             {
                 QuestionId = qt.Id,
-                Group = qt.QuestionType?.Name ?? "General",
+                Group = qt.TestType == "Interests" ? "Sở thích"
+                        : qt.TestType == "Skills" ? "Kỹ năng"
+                        : qt.TestType == "Values" ? "Giá trị"
+                        : qt.TestType == "Personality" ? "Tính cách"
+                        : qt.TestType,
                 Content = qt.Content,
                 Options = qt.QuestionOptions.Select(opt => new TakeTestOptionVm
                 {
