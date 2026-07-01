@@ -13,7 +13,7 @@ namespace Career_Guidance_Platform.Data
         public static async Task SeedAsync(AppDbContext context, UserManager<User> userManager, RoleManager<IdentityRole<int>> roleManager)
         {
             // 1. Seed Roles
-            string[] roles = { "Admin", "Student" };
+            string[] roles = { "Admin", "Student", "Mentor" };
             foreach (var roleName in roles)
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
@@ -1059,6 +1059,173 @@ namespace Career_Guidance_Platform.Data
                     context.Resources.AddRange(resources);
                     await context.SaveChangesAsync();
                 }
+            }
+
+            // 13. Seed Mentors (Users with Role "Mentor" and their MentorProfiles)
+            var mentorEmail1 = "mentor1@careerpath.vn";
+            var mentorUser1 = await userManager.FindByEmailAsync(mentorEmail1);
+            if (mentorUser1 == null)
+            {
+                mentorUser1 = new User
+                {
+                    UserName = mentorEmail1,
+                    Email = mentorEmail1,
+                    FullName = "Trần Quốc Bảo",
+                    Role = "Mentor",
+                    EmailConfirmed = true,
+                    Status = 1
+                };
+                var result = await userManager.CreateAsync(mentorUser1, "Mentor@123456");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(mentorUser1, "Mentor");
+                    
+                    var profile = new MentorProfile
+                    {
+                        UserId = mentorUser1.Id,
+                        JobTitle = "Software Architect",
+                        Company = "TechCorp Global",
+                        Specialization = "Phát triển phần mềm, C#, .NET Core, Cloud Computing, Clean Architecture",
+                        Biography = "Hơn 10 năm kinh nghiệm thiết kế hệ thống lớn và phát triển ứng dụng Web. Từng dẫn dắt nhiều dự án chuyển đổi số quy mô lớn.",
+                        Rating = 4.9m,
+                        LinkedInUrl = "https://linkedin.com/in/quocbao-developer",
+                        AvailabilityJson = "[\"Thứ 2 (19h - 21h)\", \"Thứ 7 (9h - 11h)\"]"
+                    };
+                    context.MentorProfiles.Add(profile);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            var mentorEmail2 = "mentor2@careerpath.vn";
+            var mentorUser2 = await userManager.FindByEmailAsync(mentorEmail2);
+            if (mentorUser2 == null)
+            {
+                mentorUser2 = new User
+                {
+                    UserName = mentorEmail2,
+                    Email = mentorEmail2,
+                    FullName = "Vũ Hoàng My",
+                    Role = "Mentor",
+                    EmailConfirmed = true,
+                    Status = 1
+                };
+                var result = await userManager.CreateAsync(mentorUser2, "Mentor@123456");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(mentorUser2, "Mentor");
+                    
+                    var profile = new MentorProfile
+                    {
+                        UserId = mentorUser2.Id,
+                        JobTitle = "UI/UX Design Lead",
+                        Company = "Creative Studio",
+                        Specialization = "Thiết kế sản phẩm, Figma, User Research, Mobile App UX",
+                        Biography = "Nhà thiết kế sản phẩm số đam mê tạo ra các trải nghiệm người dùng tinh tế, có kinh nghiệm làm việc với nhiều khách hàng đa quốc gia.",
+                        Rating = 4.85m,
+                        LinkedInUrl = "https://linkedin.com/in/hoangmy-design",
+                        AvailabilityJson = "[\"Thứ 4 (14h - 16h)\", \"Chủ nhật (15h - 17h)\"]"
+                    };
+                    context.MentorProfiles.Add(profile);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            var mentorEmail3 = "mentor3@careerpath.vn";
+            var mentorUser3 = await userManager.FindByEmailAsync(mentorEmail3);
+            if (mentorUser3 == null)
+            {
+                mentorUser3 = new User
+                {
+                    UserName = mentorEmail3,
+                    Email = mentorEmail3,
+                    FullName = "Lâm Minh Hưng",
+                    Role = "Mentor",
+                    EmailConfirmed = true,
+                    Status = 1
+                };
+                var result = await userManager.CreateAsync(mentorUser3, "Mentor@123456");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(mentorUser3, "Mentor");
+                    
+                    var profile = new MentorProfile
+                    {
+                        UserId = mentorUser3.Id,
+                        JobTitle = "Chief Accountant",
+                        Company = "Finance Group Vina",
+                        Specialization = "Kế toán tài chính, Thuế doanh nghiệp, Kiểm toán nội bộ",
+                        Biography = "Chuyên gia tài chính với chứng chỉ CPA, hơn 8 năm quản lý hệ thống kế toán doanh nghiệp lớn.",
+                        Rating = 4.95m,
+                        LinkedInUrl = "https://linkedin.com/in/minhhung-cpa",
+                        AvailabilityJson = "[\"Thứ 3 (20h - 22h)\", \"Thứ 5 (20h - 22h)\"]"
+                    };
+                    context.MentorProfiles.Add(profile);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            // 14. Seed JobPostings
+            if (!await context.JobPostings.AnyAsync())
+            {
+                var dbCareerPaths = await context.CareerPaths.ToListAsync();
+                var softwarePath = dbCareerPaths.FirstOrDefault(cp => cp.Title.Contains("Software Engineer"));
+                var uiuxPath = dbCareerPaths.FirstOrDefault(cp => cp.Title.Contains("UI/UX Designer"));
+                var accountantPath = dbCareerPaths.FirstOrDefault(cp => cp.Title.Contains("Accountant") || cp.Title.Contains("Kế toán"));
+
+                var jobs = new List<JobPosting>
+                {
+                    new JobPosting
+                    {
+                        CareerPathId = softwarePath?.Id,
+                        Title = "Junior .NET Developer (C#)",
+                        CompanyName = "FPT Software",
+                        JobType = "FullTime",
+                        Location = "Hà Nội",
+                        ExperienceLevel = "1-2 năm kinh nghiệm",
+                        Salary = 15000000,
+                        Description = "Tham gia phát triển các dự án Web Application lớn của khách hàng Nhật Bản và Âu Mỹ. Sử dụng C#, ASP.NET Core MVC, SQL Server.",
+                        Status = 1
+                    },
+                    new JobPosting
+                    {
+                        CareerPathId = softwarePath?.Id,
+                        Title = "Backend Engineer (ASP.NET Core)",
+                        CompanyName = "VNG Corporation",
+                        JobType = "FullTime",
+                        Location = "Hồ Chí Minh",
+                        ExperienceLevel = "2-3 năm kinh nghiệm",
+                        Salary = 26000000,
+                        Description = "Phát triển các API dịch vụ hiệu năng cao, tối ưu cơ sở dữ liệu lớn và triển khai sản phẩm phần mềm lên môi trường Kubernetes/Docker.",
+                        Status = 1
+                    },
+                    new JobPosting
+                    {
+                        CareerPathId = uiuxPath?.Id,
+                        Title = "UI/UX Designer (Figma)",
+                        CompanyName = "Viettel Group",
+                        JobType = "FullTime",
+                        Location = "Hà Nội",
+                        ExperienceLevel = "1-3 năm kinh nghiệm",
+                        Salary = 18000000,
+                        Description = "Thiết kế wireframe, mockup và prototype cho các sản phẩm ứng dụng di động và website của Tập đoàn. Đọc hiểu tài liệu UX Research.",
+                        Status = 1
+                    },
+                    new JobPosting
+                    {
+                        CareerPathId = accountantPath?.Id,
+                        Title = "Nhân viên Kế toán tổng hợp",
+                        CompanyName = "VinGroup",
+                        JobType = "FullTime",
+                        Location = "Hà Nội",
+                        ExperienceLevel = "1-2 năm kinh nghiệm",
+                        Salary = 12000000,
+                        Description = "Hỗ trợ ghi nhận doanh thu, chi phí, kiểm tra đối chiếu hóa đơn chứng từ và lập báo cáo thuế định kỳ cho ban giám đốc.",
+                        Status = 1
+                    }
+                };
+
+                context.JobPostings.AddRange(jobs);
+                await context.SaveChangesAsync();
             }
         }
     }

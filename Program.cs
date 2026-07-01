@@ -26,6 +26,26 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
 
+    // Ensure user_course_progress table is created (fixes EF Core migration desync on MySQL)
+    var createTableSql = @"
+        CREATE TABLE IF NOT EXISTS user_course_progress (
+            Id INT AUTO_INCREMENT PRIMARY KEY,
+            UserId INT NOT NULL,
+            CourseId INT NOT NULL,
+            StartDate DATETIME(6) NOT NULL,
+            DeadlineDate DATETIME(6) NOT NULL,
+            ProgressPercent INT NOT NULL,
+            Status LONGTEXT NOT NULL,
+            TestPassed TINYINT(1) NOT NULL,
+            TestScore DOUBLE NOT NULL,
+            CONSTRAINT FK_user_course_progress_AspNetUsers_UserId FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
+            CONSTRAINT FK_user_course_progress_career_path_courses_CourseId FOREIGN KEY (CourseId) REFERENCES career_path_courses(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ";
+    Console.WriteLine("[DEBUG] Running ExecuteSqlRaw for user_course_progress...");
+    dbContext.Database.ExecuteSqlRaw(createTableSql);
+    Console.WriteLine("[DEBUG] Table user_course_progress check/creation complete.");
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
     await DbSeeder.SeedAsync(dbContext, userManager, roleManager);
