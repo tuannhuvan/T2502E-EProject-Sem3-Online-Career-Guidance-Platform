@@ -6,6 +6,8 @@
 // If you have a local static 'questions' array above in file, keep it as fallback.
 // If serverQuestions is present, override questions.
 
+let questions = [];
+
 if (typeof serverQuestions !== 'undefined' && Array.isArray(serverQuestions) && serverQuestions.length > 0) {
     // Normalize serverQuestions items to the shape we use below: { group, title, answers: [{ id, text, desc? }] }
     questions = serverQuestions.map(q => ({

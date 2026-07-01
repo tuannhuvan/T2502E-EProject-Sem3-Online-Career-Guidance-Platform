@@ -14,6 +14,12 @@ namespace Career_Guidance_Platform.Controllers
             _context = context;
         }
 
+        // Fallback for Detail vs Details
+        public IActionResult Detail(int id)
+        {
+            return RedirectToAction("Details", new { id });
+        }
+
         // Trang chi tiết Career Path
         public async Task<IActionResult> Details(int id)
         {
@@ -25,6 +31,16 @@ namespace Career_Guidance_Platform.Controllers
             {
                 return NotFound();
             }
+
+            // Fetch Career Stages along with required Skills
+            var stages = await _context.CareerStages
+                .Include(cs => cs.CareerStageSkills)
+                    .ThenInclude(css => css.Skill)
+                .Where(cs => cs.CareerPathId == id)
+                .OrderBy(cs => cs.SequenceOrder)
+                .ToListAsync();
+
+            ViewBag.Stages = stages;
 
             ViewBag.Jobs = await _context.JobPostings
                 .Where(j => j.CareerPathId == id && j.Status == 1)

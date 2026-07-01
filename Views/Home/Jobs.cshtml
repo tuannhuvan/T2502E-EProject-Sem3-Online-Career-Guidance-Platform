@@ -1,53 +1,186 @@
-﻿@{
-    ViewData["Title"] = "Việc làm";
+@model IEnumerable<Career_Guidance_Platform.Models.JobPosting>
+@{
+    ViewData["Title"] = "Bảng tin Việc làm cá nhân hóa";
+    var resumes = ViewBag.Resumes as List<Career_Guidance_Platform.Models.Resume> ?? new List<Career_Guidance_Platform.Models.Resume>();
+    var appliedJobIds = ViewBag.AppliedJobIds as List<int> ?? new List<int>();
+    var recPathId = ViewBag.RecommendedPathId as int?;
 }
 
-<section class="page-hero">
-
-    <span class="page-badge">💼 Jobs</span>
-
-    <h1>Việc làm & Thực tập</h1>
-
-    <p>
-        Kết nối với các cơ hội nghề nghiệp phù hợp.
-    </p>
-
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
+    <span class="page-badge">💼 Personalized Job Board</span>
+    <h1>Việc làm đề xuất cho bạn</h1>
+    <p>Khám phá các cơ hội nghề nghiệp thực tế được đề xuất và tối ưu hóa dựa trên lộ trình kỹ năng của bạn.</p>
 </section>
 
-<section class="content-section">
-
-    <div class="faq-list">
-
-        <div class="faq-item">
-
-            <h3>Junior .NET Developer</h3>
-
-            <p>
-                Công ty ABC - Hà Nội
-            </p>
-
+<section class="content-section" style="max-width: 1000px;">
+    @if (TempData["ApplySuccess"] != null)
+    {
+        <div style="background: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; padding: 16px 24px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; box-shadow: 0 4px 12px rgba(21, 128, 61, 0.05);">
+            🎉 @TempData["ApplySuccess"]
         </div>
-
-        <div class="faq-item">
-
-            <h3>Frontend React Intern</h3>
-
-            <p>
-                Công ty XYZ - Hồ Chí Minh
-            </p>
-
+    }
+    @if (TempData["ApplyWarning"] != null)
+    {
+        <div style="background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c; padding: 16px 24px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.05);">
+            ⚠️ @TempData["ApplyWarning"]
         </div>
+    }
 
-        <div class="faq-item">
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var job in Model)
+            {
+                var isRecommended = recPathId.HasValue && job.CareerPathId == recPathId.Value;
+                var isApplied = appliedJobIds.Contains(job.Id);
 
-            <h3>UI/UX Designer</h3>
+                <div class="info-card" style="padding: 28px; border-radius: 20px; transition: all 0.3s; border: 1px solid @(isRecommended ? "#c7d2fe" : "#e2e8f0"); background: @(isRecommended ? "#faf5ff" : "#ffffff"); position: relative;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                    
+                    @if (isRecommended)
+                    {
+                        <span style="position: absolute; right: 28px; top: 28px; font-size: 11px; font-weight: 800; color: #6d28d9; background: #f3e8ff; border: 1px solid #d8b4fe; padding: 4px 12px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            ✨ Phù hợp nhất
+                        </span>
+                    }
 
-            <p>
-                Startup DEF - Remote
-            </p>
+                    <div style="max-width: 80%;">
+                        <span style="font-size:12px;font-weight:700;color:#64748b;background:#f1f5f9;padding:4px 10px;border-radius:6px;display:inline-block;margin-bottom:8px;">
+                            @(job.CareerPath?.Title ?? "Tổng quan")
+                        </span>
+                        
+                        <h3 style="font-size: 22px; color: #020617; margin: 4px 0 8px; font-weight: 800;">@job.Title</h3>
+                        
+                        <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13.5px; color: #475569; margin-bottom: 15px;">
+                            <span style="font-weight: 600; color: #020617;">🏢 @job.CompanyName</span>
+                            <span>📍 @job.Location</span>
+                            <span>💼 @job.JobType</span>
+                            <span>⏱ @job.ExperienceLevel</span>
+                            @if (job.Salary > 0)
+                            {
+                                <span style="color: #10b981; font-weight: 700;">💰 @job.Salary.ToString("N0") VNĐ</span>
+                            }
+                        </div>
 
-        </div>
+                        <p style="font-size: 14.5px; color: #64748b; line-height: 1.6; margin: 0 0 20px;">
+                            @job.Description
+                        </p>
+                    </div>
 
+                    <div style="border-top: 1px dashed #e2e8f0; padding-top: 20px; display: flex; justify-content: flex-end; gap: 12px;">
+                        @if (isApplied)
+                        {
+                            <button class="btn" disabled style="background: #cbd5e1; color: #64748b; border: 1px solid #cbd5e1; padding: 10px 24px; border-radius: 12px; font-weight: 700; cursor: not-allowed;">
+                                ✓ Đã ứng tuyển
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn" style="background: #4f46e5; color: white; border: none; padding: 10px 24px; border-radius: 12px; font-weight: 700; cursor: pointer;" onclick="openApplyModal(@job.Id, '@job.Title', '@job.CompanyName')">
+                                Ứng tuyển ngay
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="info-card" style="text-align: center; padding: 50px;">
+                <p style="color: #64748b; font-style: italic; margin: 0;">Hiện chưa có công việc nào được đăng tuyển.</p>
+            </div>
+        }
     </div>
-
 </section>
+
+<!-- Apply Job Modal -->
+<div id="applyModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div class="info-card" style="background-color: #ffffff; padding: 32px; border-radius: 24px; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); margin: auto;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 20px; color: #0f172a; font-weight: 800;">Ứng tuyển Việc làm</h3>
+            <span style="font-size: 24px; color: #94a3b8; cursor: pointer; font-weight: 700;" onclick="closeApplyModal()">&times;</span>
+        </div>
+
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <form asp-controller="Home" asp-action="ApplyJob" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="applyJobPostingId" name="jobPostingId" value="" />
+
+                <div style="margin-bottom: 18px;">
+                    <p style="font-size: 14.5px; color: #475569; margin: 0 0 4px;">Vị trí tuyển dụng:</p>
+                    <strong id="applyJobTitle" style="font-size: 16px; color: #0f172a; display: block; margin-bottom: 10px;">...</strong>
+                    <span id="applyCompanyName" style="font-size: 14px; color: #64748b;">...</span>
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                    <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Chọn CV để ứng tuyển</label>
+                    @if (resumes.Any())
+                    {
+                        <select name="resumeId" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white;">
+                            @foreach (var res in resumes)
+                            {
+                                <option value="@res.Id">@res.Title (Tạo ngày @res.CreatedAt.ToString("dd/MM/yyyy"))</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        <div style="background: #fffbeb; border: 1px solid #fef3c7; padding: 12px 16px; border-radius: 8px; font-size: 13px; color: #b45309; line-height: 1.5; margin-bottom: 10px;">
+                            ⚠️ Bạn chưa có CV nào lưu trong hệ thống. Hãy tạo CV trước khi ứng tuyển.
+                        </div>
+                        <a asp-controller="Home" asp-action="ResumeBuilder" class="btn secondary-btn" style="display: inline-block; font-size: 13px; text-decoration: none; padding: 8px 16px;">Tới trang Tạo CV ngay →</a>
+                    }
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Thư giới thiệu (Không bắt buộc)</label>
+                    <textarea name="notes" placeholder="Giới thiệu bản thân ngắn gọn hoặc lý do bạn phù hợp với công việc này..." style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 80px; resize: vertical;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn secondary-btn" style="border-radius: 10px; font-weight: 700; padding: 10px 20px;" onclick="closeApplyModal()">Hủy bỏ</button>
+                    @if (resumes.Any())
+                    {
+                        <button type="submit" class="btn" style="background: #4f46e5; color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 700; cursor: pointer;">Gửi đơn ứng tuyển</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn" disabled style="background: #cbd5e1; color: #64748b; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 700; cursor: not-allowed;">Gửi đơn ứng tuyển</button>
+                    }
+                </div>
+            </form>
+        }
+        else
+        {
+            <div style="text-align: center; padding: 10px 0;">
+                <p style="font-size: 15px; color: #475569; margin-bottom: 20px;">Vui lòng đăng nhập tài khoản học viên để ứng tuyển công việc này.</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <a asp-controller="Account" asp-action="Login" class="btn primary-btn" style="padding: 10px 24px; text-decoration: none;">Đăng nhập</a>
+                    <button type="button" class="btn secondary-btn" style="padding: 10px 20px;" onclick="closeApplyModal()">Đóng</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    function openApplyModal(jobId, jobTitle, companyName) {
+        document.getElementById("applyJobPostingId").value = jobId;
+        document.getElementById("applyJobTitle").textContent = jobTitle;
+        document.getElementById("applyCompanyName").textContent = "Công ty: " + companyName;
+        document.getElementById("applyModal").style.display = "flex";
+    }
+
+    function closeApplyModal() {
+        document.getElementById("applyModal").style.display = "none";
+    }
+
+    // Close when clicking outside modal
+    window.onclick = function(event) {
+        var modal = document.getElementById("applyModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>

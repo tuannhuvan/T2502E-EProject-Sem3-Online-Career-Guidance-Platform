@@ -43,11 +43,19 @@ namespace Career_Guidance_Platform.Controllers
                 .OrderByDescending(r => r.UpdatedAt ?? r.CreatedAt)
                 .ToListAsync();
 
+            var jobApplications = await _context.JobApplications
+                .Include(ja => ja.JobPosting)
+                .Include(ja => ja.Resume)
+                .Where(ja => ja.UserId == user.Id)
+                .OrderByDescending(ja => ja.AppliedAt)
+                .ToListAsync();
+
             var viewModel = new ProfileViewModel
             {
                 User = user,
                 TestResults = testResults,
-                Resumes = resumes
+                Resumes = resumes,
+                JobApplications = jobApplications
             };
 
             return View(viewModel);

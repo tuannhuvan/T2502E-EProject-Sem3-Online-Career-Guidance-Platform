@@ -21,11 +21,26 @@ public class JobPosting
     [Column("company_name")]
     public string? CompanyName { get; set; }
 
+    [Column("job_type")]
+    public string JobType { get; set; } = "FullTime";
+
+    [Column("location")]
+    public string? Location { get; set; }
+
+    [Column("experience_level")]
+    public string? ExperienceLevel { get; set; }
+
+    [Column("application_url")]
+    public string? ApplicationUrl { get; set; }
+
     [Column("salary", TypeName = "decimal(18,2)")]
     public decimal Salary { get; set; } = 0;
 
     [Column("description")]
     public string? Description { get; set; }
+
+    [Column("expired_at")]
+    public DateTime? ExpiredAt { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -44,4 +59,7 @@ public class JobPosting
 
     [ForeignKey("CareerPathId")]
     public CareerPath? CareerPath { get; set; }
+
+    public ICollection<SavedJob> SavedJobs { get; set; } = new List<SavedJob>();
+    public ICollection<JobApplication> JobApplications { get; set; } = new List<JobApplication>();
 }

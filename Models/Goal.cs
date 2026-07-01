@@ -20,6 +20,9 @@ public class Goal
     [Column("title")]
     public string Title { get; set; } = string.Empty;
 
+    [Column("goal_type")]
+    public string GoalType { get; set; } = "ShortTerm";
+
     [Column("progress")]
     public int Progress { get; set; } = 0;
 
@@ -46,4 +49,6 @@ public class Goal
 
     [ForeignKey("CareerPathId")]
     public CareerPath? CareerPath { get; set; }
+
+    public ICollection<GoalMilestone> GoalMilestones { get; set; } = new List<GoalMilestone>();
 }

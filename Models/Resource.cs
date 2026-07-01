@@ -37,6 +37,29 @@ public class Resource
     [Column("status")]
     public int Status { get; set; } = 1;
 
+    [Column("skill_id")]
+    public int? SkillId { get; set; }
+
+    [Column("category_id")]
+    public int? CategoryId { get; set; }
+
+    [ForeignKey("CategoryId")]
+    public Category? Category { get; set; }
+
+    [Column("parent_resource_id")]
+    public int? ParentResourceId { get; set; }
+
+    [ForeignKey("ParentResourceId")]
+    public Resource? ParentResource { get; set; }
+
+    [Column("description")]
+    public string? Description { get; set; }
+
     [ForeignKey("PathId")]
     public CareerPath? CareerPath { get; set; }
+
+    [ForeignKey("SkillId")]
+    public Skill? Skill { get; set; }
+
+    public ICollection<Resource> ChildResources { get; set; } = new List<Resource>();
 }

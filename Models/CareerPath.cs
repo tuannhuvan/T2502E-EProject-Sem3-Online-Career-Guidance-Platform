@@ -16,12 +16,24 @@ public class CareerPath
     [Column("category_id")]
     public int CategoryId { get; set; }
 
+    [Column("parent_path_id")]
+    public int? ParentPathId { get; set; }
+
     [Required]
     [Column("title")]
     public string Title { get; set; } = string.Empty;
 
     [Column("content")]
     public string? Content { get; set; }
+
+    [Column("salary_min", TypeName = "decimal(18,2)")]
+    public decimal SalaryMin { get; set; } = 0;
+
+    [Column("salary_max", TypeName = "decimal(18,2)")]
+    public decimal SalaryMax { get; set; } = 0;
+
+    [Column("job_outlook")]
+    public double JobOutlook { get; set; } = 0;
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -41,9 +53,16 @@ public class CareerPath
     [ForeignKey("CategoryId")]
     public Category? Category { get; set; }
 
+    [ForeignKey("ParentPathId")]
+    public CareerPath? ParentPath { get; set; }
+
+    public ICollection<CareerPath> ChildPaths { get; set; } = new List<CareerPath>();
     public ICollection<OptionCareerPath> OptionCareerPaths { get; set; } = new List<OptionCareerPath>();
     public ICollection<TestResult> TestResults { get; set; } = new List<TestResult>();
     public ICollection<Resource> Resources { get; set; } = new List<Resource>();
     public ICollection<JobPosting> JobPostings { get; set; } = new List<JobPosting>();
     public ICollection<Goal> Goals { get; set; } = new List<Goal>();
+    public ICollection<CareerPathSkill> CareerPathSkills { get; set; } = new List<CareerPathSkill>();
+    public ICollection<SuccessStory> SuccessStories { get; set; } = new List<SuccessStory>();
+    public ICollection<TestResultScore> TestResultScores { get; set; } = new List<TestResultScore>();
 }

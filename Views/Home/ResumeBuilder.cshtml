@@ -915,6 +915,40 @@
             } catch (e) {
                 console.error("Lỗi nạp dữ liệu CV cũ:", e);
             }
+        } else {
+            // Autofill user details, skills, and completed courses for a new CV
+            @if (ViewBag.FullName != null || ViewBag.Email != null || (ViewBag.UserSkills != null && ((List<string>)ViewBag.UserSkills).Any()) || (ViewBag.CompletedCourses != null && ((List<string>)ViewBag.CompletedCourses).Any()))
+            {
+                <text>
+                cvData.fullName = "@Html.Raw(ViewBag.FullName ?? "")";
+                cvData.email = "@Html.Raw(ViewBag.Email ?? "")";
+                cvData.skills = "@Html.Raw(string.Join(", ", ViewBag.UserSkills ?? new List<string>()))";
+                
+                @if (ViewBag.CompletedCourses != null)
+                {
+                    var courses = (List<string>)ViewBag.CompletedCourses;
+                    for (int i = 0; i < courses.Count; i++)
+                    {
+                        <text>
+                        cvData.projects.push({
+                            id: Date.now() + @i,
+                            title: "@Html.Raw(courses[i])",
+                            company: "Học phần hệ thống CareerPath",
+                            period: "Đã hoàn thành",
+                            desc: "Đã hoàn thành khóa học chuyên môn trên hệ thống và vượt qua bài đánh giá năng lực cuối khóa."
+                        });
+                        </text>
+                    }
+                }
+
+                inputFullName.value = cvData.fullName;
+                inputEmail.value = cvData.email;
+                inputSkills.value = cvData.skills;
+                
+                renderProjectFormItems();
+                renderCV();
+                </text>
+            }
         }
 
         // Save Resume to Account Action (if authenticated)

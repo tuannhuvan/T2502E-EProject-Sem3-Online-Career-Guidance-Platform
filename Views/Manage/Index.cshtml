@@ -59,6 +59,9 @@
                 <button type="button" class="profile-tab-btn" data-target="tab-resumes">
                     📄 CV đã lưu (@Model.Resumes.Count)
                 </button>
+                <button type="button" class="profile-tab-btn" data-target="tab-jobs">
+                    💼 Đơn ứng tuyển (@Model.JobApplications.Count)
+                </button>
             </div>
 
             <!-- Tab Content: Test Results -->
@@ -182,6 +185,89 @@
                                                         </button>
                                                     </form>
                                                 </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Tab Content: Job Applications / Application Tracker -->
+            <div class="profile-tab-pane" id="tab-jobs">
+                <div class="info-card">
+                    <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #020617;">Lịch sử ứng tuyển & Theo dõi trạng thái</h3>
+                    
+                    @if (Model.JobApplications.Count == 0)
+                    {
+                        <div class="empty-state-panel">
+                            <span class="empty-icon">💼</span>
+                            <h4>Bạn chưa ứng tuyển công việc nào</h4>
+                            <p>Hãy truy cập Bảng tin việc làm cá nhân hóa để tìm các vị trí phù hợp với lộ trình của bạn và ứng tuyển.</p>
+                            <a class="btn primary-btn" asp-controller="Home" asp-action="Jobs" style="margin-top: 10px; text-decoration: none;">
+                                Khám phá việc làm ngay →
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Công việc & Công ty</th>
+                                        <th>Ngày nộp</th>
+                                        <th>CV sử dụng</th>
+                                        <th>Trạng thái đơn</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var app in Model.JobApplications)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight: 700; color: #020617;">@(app.JobPosting?.Title ?? "N/A")</div>
+                                                <div style="font-size: 13px; color: #64748b;">🏢 @(app.JobPosting?.CompanyName ?? "N/A")</div>
+                                            </td>
+                                            <td>@app.AppliedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                <span style="font-size: 13.5px; color: #4f46e5; font-weight: 600;">
+                                                    📄 @(app.Resume?.Title ?? "CV Hệ thống")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (app.Status == "Applied")
+                                                {
+                                                    <span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Đã nộp đơn
+                                                    </span>
+                                                }
+                                                else if (app.Status == "Interviewing")
+                                                {
+                                                    <span style="background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Đang phỏng vấn ⏳
+                                                    </span>
+                                                }
+                                                else if (app.Status == "Offered")
+                                                {
+                                                    <span style="background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Nhận thư mời 🎉
+                                                    </span>
+                                                }
+                                                else if (app.Status == "Rejected")
+                                                {
+                                                    <span style="background: #fee2e2; color: #b91c1c; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Từ chối
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        @app.Status
+                                                    </span>
+                                                }
                                             </td>
                                         </tr>
                                     }

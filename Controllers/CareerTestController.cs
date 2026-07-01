@@ -82,6 +82,22 @@ namespace Career_Guidance_Platform.Controllers
                         ? (decimal)System.Math.Round((double)best.Score / totalWeight * 100, 2) 
                         : 100;
 
+                    // Save detailed scores to test_result_scores
+                    foreach (var ps in pathScores)
+                    {
+                        var scorePct = totalWeight > 0 
+                            ? (decimal)System.Math.Round((double)ps.Score / totalWeight * 100, 2) 
+                            : 0;
+
+                        var resultScore = new TestResultScore
+                        {
+                            TestResultId = testResult.Id,
+                            CareerPathId = ps.CareerPathId,
+                            Score = scorePct
+                        };
+                        _context.TestResultScores.Add(resultScore);
+                    }
+
                     await _context.SaveChangesAsync();
                 }
 
@@ -159,6 +175,22 @@ namespace Career_Guidance_Platform.Controllers
                         ? (decimal)System.Math.Round((double)best.Score / totalWeight * 100, 2) 
                         : 100;
 
+                    // Save detailed scores to test_result_scores
+                    foreach (var ps in pathScores)
+                    {
+                        var scorePct = totalWeight > 0 
+                            ? (decimal)System.Math.Round((double)ps.Score / totalWeight * 100, 2) 
+                            : 0;
+
+                        var resultScore = new TestResultScore
+                        {
+                            TestResultId = testResult.Id,
+                            CareerPathId = ps.CareerPathId,
+                            Score = scorePct
+                        };
+                        _context.TestResultScores.Add(resultScore);
+                    }
+
                     await _context.SaveChangesAsync();
                 }
 
@@ -189,6 +221,8 @@ namespace Career_Guidance_Platform.Controllers
                 .Include(tr => tr.Test)
                 .Include(tr => tr.RecommendedCareerPath)
                 .Include(tr => tr.User)
+                .Include(tr => tr.TestResultScores)
+                    .ThenInclude(trs => trs.CareerPath)
                 .Include(tr => tr.TestAnswers)
                     .ThenInclude(ta => ta.QuestionTest)
                 .Include(tr => tr.TestAnswers)
