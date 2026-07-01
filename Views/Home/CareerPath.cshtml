@@ -3,30 +3,30 @@
     ViewData["Title"] = "Gợi ý & Lộ trình";
 }
 
-<section class="page-hero">
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9;">
     <span class="page-badge">🎯 Career Path</span>
-
     <h1>Gợi ý & Lộ trình nghề nghiệp</h1>
-
-    <p>
-        Khám phá các ngành nghề phù hợp với kết quả đánh giá của bạn.
-    </p>
+    <p>Khám phá các ngành nghề phù hợp với tính cách, năng lực và kết quả đánh giá của bạn.</p>
 </section>
 
-<section class="content-section">
-
-    <div class="news-grid">
+<section class="content-section" style="max-width: 1200px; padding: 60px 24px;">
+    <div class="news-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;">
         @if (Model != null && Model.Any())
         {
             foreach (var path in Model)
             {
-                <div class="news-card">
-                    <span style="font-size:12px;font-weight:700;color:#4f46e5;text-transform:uppercase;background:#eef2ff;padding:4px 10px;border-radius:999px;display:inline-block;margin-bottom:10px;">
-                        @(path.Category?.Name ?? "Định hướng")
-                    </span>
-                    <h3 style="margin-top: 5px;">@path.Title</h3>
+                <div class="news-card" style="display: flex; flex-direction: column; height: 100%; padding: 32px; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.03); transition: all 0.3s ease;">
+                    <div style="margin-bottom: 16px;">
+                        <span style="font-size: 11px; font-weight: 800; color: #4f46e5; text-transform: uppercase; background: #eef2ff; padding: 6px 12px; border-radius: 999px; display: inline-block; border: 1px solid #e0e7ff;">
+                            💼 @(path.Category?.Name ?? "Định hướng")
+                        </span>
+                    </div>
+                    
+                    <h3 style="margin: 0 0 12px 0; font-size: 21px; font-weight: 800; color: #0f172a; line-height: 1.4;">
+                        @path.Title
+                    </h3>
 
-                    <p style="min-height: 80px;">
+                    <p style="color: #64748b; font-size: 14.5px; line-height: 1.7; margin: 0 0 24px 0; flex-grow: 1;">
                         @if (!string.IsNullOrEmpty(path.Content) && path.Content.Length > 120)
                         {
                             @(path.Content.Substring(0, 117) + "...")
@@ -37,18 +37,21 @@
                         }
                     </p>
 
-                    <a asp-controller="CareerPath" asp-action="Details" asp-route-id="@path.Id">
-                        Xem lộ trình →
-                    </a>
+                    <div style="margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                        <a asp-controller="CareerPath" asp-action="Details" asp-route-id="@path.Id" class="btn primary-btn" style="width: 100%; justify-content: center; font-size: 14.5px; padding: 12px;">
+                            🚀 Khám phá lộ trình
+                        </a>
+                    </div>
                 </div>
             }
         }
         else
         {
-            <div class="info-card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                <p style="color: #64748b; font-style: italic; margin: 0;">Hiện chưa có lộ trình nghề nghiệp nào được xuất bản.</p>
+            <div class="info-card" style="grid-column: 1 / -1; text-align: center; padding: 60px; border-radius: 24px; border: 1px dashed #cbd5e1; background: #f8fafc;">
+                <span style="font-size: 48px; display: block; margin-bottom: 16px;">🧭</span>
+                <h4 style="font-size: 18px; color: #475569; margin-bottom: 8px;">Chưa có lộ trình nào</h4>
+                <p style="color: #64748b; font-style: italic; margin: 0;">Hiện chưa có lộ trình nghề nghiệp nào được xuất bản trên hệ thống.</p>
             </div>
         }
     </div>
-
 </section>
