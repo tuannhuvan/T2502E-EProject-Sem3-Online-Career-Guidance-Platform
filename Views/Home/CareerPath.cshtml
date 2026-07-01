@@ -1,4 +1,5 @@
-﻿@{
+@model IEnumerable<Career_Guidance_Platform.Models.CareerPath>
+@{
     ViewData["Title"] = "Gợi ý & Lộ trình";
 }
 
@@ -15,45 +16,39 @@
 <section class="content-section">
 
     <div class="news-grid">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var path in Model)
+            {
+                <div class="news-card">
+                    <span style="font-size:12px;font-weight:700;color:#4f46e5;text-transform:uppercase;background:#eef2ff;padding:4px 10px;border-radius:999px;display:inline-block;margin-bottom:10px;">
+                        @(path.Category?.Name ?? "Định hướng")
+                    </span>
+                    <h3 style="margin-top: 5px;">@path.Title</h3>
 
-        <div class="news-card">
-            <h3>Software Engineer</h3>
+                    <p style="min-height: 80px;">
+                        @if (!string.IsNullOrEmpty(path.Content) && path.Content.Length > 120)
+                        {
+                            @(path.Content.Substring(0, 117) + "...")
+                        }
+                        else
+                        {
+                            @path.Content
+                        }
+                    </p>
 
-            <p>
-                Phù hợp với người có tư duy logic,
-                giải quyết vấn đề và yêu thích công nghệ.
-            </p>
-
-            <a href="#">
-                Xem lộ trình →
-            </a>
-        </div>
-
-        <div class="news-card">
-            <h3>UI/UX Designer</h3>
-
-            <p>
-                Dành cho người yêu thích sáng tạo,
-                thiết kế và trải nghiệm người dùng.
-            </p>
-
-            <a href="#">
-                Xem lộ trình →
-            </a>
-        </div>
-
-        <div class="news-card">
-            <h3>Business Analyst</h3>
-
-            <p>
-                Kết nối giữa nghiệp vụ và công nghệ.
-            </p>
-
-            <a href="#">
-                Xem lộ trình →
-            </a>
-        </div>
-
+                    <a asp-controller="CareerPath" asp-action="Details" asp-route-id="@path.Id">
+                        Xem lộ trình →
+                    </a>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="info-card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                <p style="color: #64748b; font-style: italic; margin: 0;">Hiện chưa có lộ trình nghề nghiệp nào được xuất bản.</p>
+            </div>
+        }
     </div>
 
 </section>
