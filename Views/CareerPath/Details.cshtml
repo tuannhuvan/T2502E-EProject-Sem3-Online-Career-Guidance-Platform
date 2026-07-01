@@ -107,7 +107,13 @@
     </div>
 
     <!-- Back button -->
-    <div style="text-align: center; margin-top: 40px;">
-        <a href="javascript:history.back()" class="btn secondary-btn" style="padding: 12px 30px; border-radius: 12px; font-weight: 700;">⬅ Quay lại kết quả</a>
-    </div>
+    
+    <div style="margin-top:40px;text-align:center;">
+        <a asp-controller="CareerTest"
+           asp-action="GetResultDetail"
+           asp-route-id="@Model.Id"
+           class="btn secondary-btn">
+            ⬅ Quay lại trang kết quả
+        </a>
+    </div>v>
 </section>
