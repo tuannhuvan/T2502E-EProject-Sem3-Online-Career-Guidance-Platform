@@ -14,6 +14,12 @@ namespace Career_Guidance_Platform.Controllers
             _context = context;
         }
 
+        // Fallback for Detail vs Details
+        public IActionResult Detail(int id)
+        {
+            return RedirectToAction("Details", new { id });
+        }
+
         // Trang chi tiết Career Path
         public async Task<IActionResult> Details(int id)
         {

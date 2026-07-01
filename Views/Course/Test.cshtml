@@ -1,0 +1,99 @@
+@model Career_Guidance_Platform.Models.CareerPathCourse
+@{
+    ViewData["Title"] = "Bài kiểm tra: " + Model.Title;
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
+    <span class="page-badge">📝 Bài kiểm tra</span>
+    <h1>@Model.Title</h1>
+    <p>Hãy hoàn thành 3 câu hỏi trắc nghiệm dưới đây để chứng minh bạn đã nắm vững kiến thức môn học.</p>
+</section>
+
+<section class="content-section" style="max-width: 800px;">
+    <form asp-controller="Course" asp-action="SubmitTest" method="post" id="courseTestForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="courseId" value="@Model.Id" />
+        <input type="hidden" id="finalScore" name="score" value="0" />
+
+        <div class="info-card" style="padding: 30px; margin-bottom: 24px;">
+            <h3 style="margin-top: 0; color: #4f46e5; margin-bottom: 20px; font-size: 1.15rem;">Câu hỏi 1: Lợi ích chính của việc sử dụng công cụ/ngôn ngữ này là gì?</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <input type="radio" name="q1" value="correct" required />
+                    Tối ưu hóa hiệu năng, tăng khả năng mở rộng và quản lý code dễ dàng.
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <input type="radio" name="q1" value="wrong1" />
+                    Chỉ để làm cho giao diện đẹp mắt hơn mà không ảnh hưởng hiệu suất.
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <input type="radio" name="q1" value="wrong2" />
+                    Không có lợi ích cụ thể nào, dùng vì trào lưu.
+                </label>
+            </div>
+        </div>
+
+        <div class="info-card" style="padding: 30px; margin-bottom: 24px;">
+            <h3 style="margin-top: 0; color: #4f46e5; margin-bottom: 20px; font-size: 1.15rem;">Câu hỏi 2: Đâu là một phương pháp/mô hình tối ưu khi phát triển sản phẩm chuyên nghiệp?</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <input type="radio" name="q2" value="wrong1" required />
+                    Viết code/thiết kế ngẫu nhiên không cần lập kế hoạch hay cấu trúc.
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <input type="radio" name="q2" value="correct" />
+                    Tuân thủ quy chuẩn thiết kế, viết Clean Code/Component tái sử dụng và kiểm thử đầy đủ.
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <input type="radio" name="q2" value="wrong2" />
+                    Bỏ qua phần bảo mật và kiểm thử để đẩy nhanh tiến độ sản phẩm.
+                </label>
+            </div>
+        </div>
+
+        <div class="info-card" style="padding: 30px; margin-bottom: 30px;">
+            <h3 style="margin-top: 0; color: #4f46e5; margin-bottom: 20px; font-size: 1.15rem;">Câu hỏi 3: Để làm chủ lộ trình nghề nghiệp này, bạn nên tập trung vào điều gì tiếp theo?</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <input type="radio" name="q3" value="wrong1" required />
+                    Chỉ cần học lý thuyết mà không cần thực hành bất kỳ dự án thực tế nào.
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <input type="radio" name="q3" value="wrong2" />
+                    Chờ đợi cơ hội tự đến mà không chủ động nâng cao năng lực bản thân.
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <input type="radio" name="q3" value="correct" />
+                    Kết hợp thực hành dự án thực tế, học hỏi từ Mentor và tham gia cộng đồng chuyên môn.
+                </label>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <a asp-controller="Course" asp-action="Detail" asp-route-id="@Model.Id" class="btn secondary-btn" style="padding: 12px 24px; border-radius: 12px; font-weight: 700; text-decoration: none;">⬅ Quay lại bài học</a>
+            <button type="submit" class="btn" style="background: #10b981; color: white; padding: 12px 36px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer;">Nộp bài & Hoàn thành</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <script>
+        document.getElementById("courseTestForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            // Calculate score (each correct answer is 33.3 points)
+            let score = 0;
+            const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+            const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+            const q3 = document.querySelector('input[name="q3"]:checked')?.value;
+
+            if (q1 === "correct") score += 34;
+            if (q2 === "correct") score += 33;
+            if (q3 === "correct") score += 33;
+
+            document.getElementById("finalScore").value = score;
+            
+            this.submit();
+        });
+    </script>
+}
