@@ -359,16 +359,116 @@
     font-weight: 800;
 }
 
-.result-summary { display:flex; gap:2rem; padding:1rem; border:1px solid #e5e7eb; border-radius:6px; background:#fff; }
-.result-left { flex: 1 1 40%; min-width:280px; }
-.result-right { flex: 1 1 60%; max-height: 60vh; overflow:auto; padding-left:0.5rem; }
-.compatibility .score { font-size:1.4rem; color:#1f7a1f; margin-left:.5rem; }
-.answer-list { padding-left: 1rem; margin:0; }
-.answer-item { margin-bottom: 1rem; padding-bottom: .6rem; border-bottom:1px dashed #eee; }
-.option-content strong { color:#0b5ed7; }
-.btn { padding:.45rem .9rem; border-radius:4px; display:inline-block; text-decoration:none; margin-right:.5rem; border:1px solid transparent; }
-.primary-btn { background:#0b5ed7; color:white; }
-.secondary-btn { background:#6c757d; color:white; }
+/* Updated Result and Button Styles */
+.result-summary {
+    display: flex;
+    gap: 2.5rem;
+    padding: 2.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.01);
+}
+.result-left {
+    flex: 1 1 45%;
+    min-width: 320px;
+}
+.result-right {
+    flex: 1 1 55%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+/* Scrollbar styling for result-right */
+.result-right::-webkit-scrollbar {
+    width: 6px;
+}
+.result-right::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 8px;
+}
+.result-right::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+}
+.compatibility {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.compatibility .score {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #10b981;
+    text-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+.answer-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+.answer-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.25rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.answer-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.02);
+}
+.answer-item .question {
+    font-size: 1.05rem;
+    color: #0f172a;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+.option-content strong {
+    color: #4f46e5;
+    font-size: 1rem;
+}
+.btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 15px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.primary-btn {
+    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+    color: white !important;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+}
+.primary-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+    background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
+}
+.secondary-btn {
+    background: #ffffff;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.secondary-btn:hover {
+    background: #f8fafc;
+    color: #0f172a !important;
+    border-color: #94a3b8;
+}
 
 
 /* =========================
@@ -1409,4 +1509,116 @@ aside a:hover::before {
         grid-template-columns: 1fr;
         gap: 24px;
     }
+}
+
+/* Custom radio cards for testing */
+.answer-list.detailed {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 24px;
+}
+.answer-list.detailed label.answer-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 24px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+}
+.answer-list.detailed label.answer-item:hover {
+    border-color: #4f46e5;
+    background: rgba(79, 70, 229, 0.02);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.05);
+}
+.answer-list.detailed label.answer-item input[type="radio"] {
+    margin-top: 4px;
+    width: 20px;
+    height: 20px;
+    accent-color: #4f46e5;
+    cursor: pointer;
+}
+.answer-list.detailed label.answer-item strong {
+    font-size: 16px;
+    color: #0f172a;
+    display: block;
+    margin-bottom: 4px;
+}
+.answer-list.detailed label.answer-item p {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Radio button style when checked */
+.answer-list.detailed label.answer-item:has(input[type="radio"]:checked) {
+    border-color: #4f46e5;
+    background: rgba(79, 70, 229, 0.04);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
+}
+
+/* Timeline vertical track */
+.timeline-track {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    position: relative;
+    padding-left: 36px;
+    margin: 40px 0;
+}
+.timeline-track::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: #e2e8f0;
+}
+.timeline-node {
+    position: relative;
+}
+.timeline-marker {
+    position: absolute;
+    left: -31px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #4f46e5;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+.timeline-node:hover .timeline-marker {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.25);
+    background: #4f46e5;
+}
+
+/* LED style Countdown panel */
+.countdown-panel {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.countdown-timer {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #f97316;
+    text-shadow: 0 0 12px rgba(249, 115, 22, 0.4);
+    margin: 12px 0;
 }

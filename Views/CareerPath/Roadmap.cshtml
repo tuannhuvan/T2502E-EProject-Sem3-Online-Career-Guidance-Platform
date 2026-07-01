@@ -4,67 +4,70 @@
     var courses = ViewBag.Courses as List<Career_Guidance_Platform.Models.CareerPathCourse>;
 }
 
-<section class="page-hero">
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9;">
     <span class="page-badge">🚀 Lộ trình học tập</span>
-    <h1>@Model.Title</h1>
-    <p>Hoàn thành từng khóa học để tăng mức độ phù hợp với nghề nghiệp này.</p>
+    <h1 style="max-width: 800px; margin-left: auto; margin-right: auto;">@Model.Title</h1>
+    <p>Hoàn thành từng khóa học theo thứ tự gợi ý dưới đây để tích lũy kiến thức và nâng cao độ phù hợp với nghề nghiệp.</p>
 </section>
 
-<section class="content-section" style="max-width: 1100px;">
-    <h2 style="font-size: 26px; color: #020617; margin-bottom: 30px;">
-        Danh sách khóa học trong lộ trình
+<section class="content-section" style="max-width: 1000px; padding: 50px 24px;">
+    <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 30px; display: flex; align-items: center; gap: 8px;">
+        <span>📚</span> Danh sách khóa học trong lộ trình
     </h2>
 
     @if (courses != null && courses.Any())
     {
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px;">
             @foreach (var course in courses)
             {
-                <div class="info-card" style="padding: 26px; border-radius: 20px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                        <span style="font-size:13px;font-weight:700;color:#4f46e5;background:#eef2ff;padding:6px 12px;border-radius:999px;">
-                            Course @course.SortOrder
+                <div class="info-card" style="padding: 30px; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.03); display: flex; flex-direction: column; height: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <span style="font-size: 11px; font-weight: 800; color: #4f46e5; background: #eef2ff; padding: 6px 12px; border-radius: 6px; border: 1px solid #e0e7ff; text-transform: uppercase;">
+                            Khóa @course.SortOrder
                         </span>
 
-                        <span style="font-size:13px;color:#64748b;">
-                            ⏱ @course.EstimatedDays ngày
+                        <span style="font-size: 13px; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                            ⏱️ @course.EstimatedDays ngày
                         </span>
                     </div>
 
-                    <h3 style="font-size:21px;color:#020617;margin-bottom:10px;">
+                    <h3 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 12px 0; line-height: 1.4;">
                         @course.Title
                     </h3>
 
-                    <p style="font-size:14px;color:#64748b;line-height:1.7;min-height:70px;">
+                    <p style="font-size: 14.5px; color: #64748b; line-height: 1.7; margin: 0 0 24px 0; flex-grow: 1;">
                         @course.Description
                     </p>
 
-                    <a asp-controller="Course"
-                       asp-action="Detail"
-                       asp-route-id="@course.Id"
-                       class="btn"
-                       style="display:inline-block;background:#4f46e5;color:white;padding:10px 18px;border-radius:10px;font-weight:700;text-decoration:none;">
-                        Bắt đầu học
-                    </a>
+                    <div style="margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 18px;">
+                        <a asp-controller="Course"
+                           asp-action="Detail"
+                           asp-route-id="@course.Id"
+                           class="btn primary-btn"
+                           style="width: 100%; justify-content: center; font-size: 14px; padding: 12px;">
+                            📖 Bắt đầu học
+                        </a>
+                    </div>
                 </div>
             }
         </div>
     }
     else
     {
-        <div class="info-card" style="padding:30px;">
-            <p style="margin:0;color:#64748b;">
-                Chưa có khóa học nào cho lộ trình này.
+        <div class="info-card" style="padding: 40px; text-align: center; border-radius: 20px; border: 1px dashed #cbd5e1; background: #f8fafc;">
+            <p style="margin: 0; color: #64748b; font-style: italic;">
+                Chưa có khóa học nào được thiết kế cho lộ trình này. Vui lòng quay lại sau.
             </p>
         </div>
     }
 
-    <div style="margin-top:40px;text-align:center;">
+    <div style="margin-top: 48px; text-align: center;">
         <a asp-controller="CareerPath"
            asp-action="Details"
            asp-route-id="@Model.Id"
-           class="btn secondary-btn">
-            ⬅ Quay lại Career Path
+           class="btn secondary-btn"
+           style="padding: 12px 32px;">
+            ⬅ Quay lại chi tiết Lộ trình
         </a>
     </div>
 </section>
