@@ -1,6 +1,10 @@
 @using Microsoft.AspNetCore.Identity
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -23,6 +27,104 @@
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/footer.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/page.css" asp-append-version="true" />
+    <style>
+        /* Modern Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 380px;
+            width: calc(100% - 48px);
+            pointer-events: none;
+        }
+
+        .toast-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 16px -6px rgba(15, 23, 42, 0.04);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            pointer-events: auto;
+            cursor: pointer;
+            transform: translateX(120%);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+        }
+
+        .toast-card.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-card.hide {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+
+        .toast-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+        }
+
+        .toast-card.toast-success {
+            border-left: 4px solid #10b981;
+        }
+        .toast-card.toast-success .toast-icon {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .toast-card.toast-error {
+            border-left: 4px solid #ef4444;
+        }
+        .toast-card.toast-error .toast-icon {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .toast-card.toast-warning {
+            border-left: 4px solid #f59e0b;
+        }
+        .toast-card.toast-warning .toast-icon {
+            background: #fffbeb;
+            color: #f59e0b;
+        }
+
+        .toast-card.toast-info {
+            border-left: 4px solid #3b82f6;
+        }
+        .toast-card.toast-info .toast-icon {
+            background: #eff6ff;
+            color: #3b82f6;
+        }
+
+        .toast-content {
+            flex-grow: 1;
+        }
+
+        .toast-message {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.5;
+            margin: 0;
+        }
+    </style>
 </head>
 <body>
 
@@ -33,34 +135,47 @@
     </a>
 
     <nav class="nav-menu">
-        <a asp-controller="Home" asp-action="Index">Trang chủ</a>
-        <a asp-controller="Home" asp-action="CareerTest">Đánh giá nghề nghiệp</a>
-        <a asp-controller="Home" asp-action="CareerPath">Gợi ý & Lộ trình</a>
-        <a asp-controller="Home" asp-action="Training">Đào tạo</a>
-        <a asp-controller="Home" asp-action="Mentors">Cố vấn</a>
-        <a asp-controller="Home" asp-action="Jobs">Việc làm</a>
-        <a asp-controller="Home" asp-action="Community">Cộng đồng</a>
+        <a class='@(currentController == "Home" && currentAction == "Index" ? "active" : "")' asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <a class='@(currentController == "Home" && currentAction == "CareerTest" ? "active" : "")' asp-controller="Home" asp-action="CareerTest">Đánh giá nghề nghiệp</a>
+        <a class='@(currentController == "Home" && currentAction == "CareerPath" ? "active" : "")' asp-controller="Home" asp-action="CareerPath">Gợi ý & Lộ trình</a>
+        <a class='@(currentController == "Goal" ? "active" : "")' asp-controller="Goal" asp-action="Index">Mục tiêu của tôi</a>
+        <a class='@(currentController == "Home" && currentAction == "Training" ? "active" : "")' asp-controller="Home" asp-action="Training">Đào tạo</a>
+        <a class='@(currentController == "Home" && currentAction == "Mentors" ? "active" : "")' asp-controller="Home" asp-action="Mentors">Cố vấn</a>
+        <a class='@(currentController == "Home" && currentAction == "Jobs" ? "active" : "")' asp-controller="Home" asp-action="Jobs">Việc làm</a>
+        <a class='@(currentController == "Home" && currentAction == "Community" ? "active" : "")' asp-controller="Home" asp-action="Community">Cộng đồng</a>
     </nav>
 
     <div class="nav-actions">
         @if (SignInManager.IsSignedIn(User))
         {
-            <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" class="navbar-right">
-                <ul class="nav navbar-nav navbar-right">
+            <div class="user-profile-dropdown">
+                <button class="profile-trigger-btn">
+                    <div class="profile-avatar">
+                        <span>@UserManager.GetUserName(User)?[0].ToString().ToUpper()</span>
+                    </div>
+                    <span class="profile-username">@UserManager.GetUserName(User)</span>
+                    <span class="profile-chevron">▼</span>
+                </button>
+                <div class="profile-dropdown-content">
+                    <div class="dropdown-header-info">
+                        <strong>@UserManager.GetUserName(User)</strong>
+                        <p>Học viên</p>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a asp-controller="Manage" asp-action="Index">👤 Thông tin cá nhân</a>
+                    <a asp-controller="Goal" asp-action="Index">🎯 Mục tiêu học tập</a>
                     @if (User.IsInRole("Admin"))
                     {
-                        <li style="margin-right: 15px; display: inline-block;">
-                            <a asp-controller="Admin" asp-action="Dashboard" style="color: #ef4444; font-weight: 700; text-decoration: none;">🛡️ Admin Panel</a>
-                        </li>
+                        <a asp-controller="Admin" asp-action="Dashboard" class="admin-link">🛡️ Admin Panel</a>
                     }
-                    <li>
-                        <a asp-controller="Manage" asp-action="Index" title="Manage">Hello @UserManager.GetUserName(User)!</a>
-                    </li>
-                    <li>
-                        <button type="submit" class="btn btn-link navbar-btn navbar-link">Log out</button>
-                    </li>
-                </ul>
-            </form>
+                    <div class="dropdown-divider"></div>
+                    <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" style="margin: 0;">
+                        <button type="submit" class="logout-btn">
+                            <span>🚪 Đăng xuất</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
         }
         else
         {
@@ -119,6 +234,67 @@
 </footer>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Global Toast Container -->
+<div id="toast-container" class="toast-container"></div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="tempDataSuccess" style="display:none;" data-message="@TempData["SuccessMessage"]"></div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div id="tempDataError" style="display:none;" data-message="@TempData["ErrorMessage"]"></div>
+}
+
+<script>
+    window.showToast = function(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const card = document.createElement('div');
+        card.className = `toast-card toast-${type}`;
+
+        let icon = 'ℹ️';
+        if (type === 'success') icon = '✅';
+        else if (type === 'error') icon = '❌';
+        else if (type === 'warning') icon = '⚠️';
+
+        card.innerHTML = `
+            <div class="toast-icon">${icon}</div>
+            <div class="toast-content">
+                <p class="toast-message">${message}</p>
+            </div>
+        `;
+
+        container.appendChild(card);
+
+        // Trigger animate-in
+        setTimeout(() => card.classList.add('show'), 10);
+
+        // Auto-remove after 4 seconds
+        const autoHide = setTimeout(() => {
+            card.classList.remove('show');
+            card.classList.add('hide');
+            setTimeout(() => card.remove(), 400);
+        }, 4000);
+
+        // Click to dismiss
+        card.onclick = () => {
+            clearTimeout(autoHide);
+            card.classList.remove('show');
+            card.classList.add('hide');
+            setTimeout(() => card.remove(), 400);
+        };
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const successEl = document.getElementById('tempDataSuccess');
+        const errorEl = document.getElementById('tempDataError');
+        if (successEl) showToast(successEl.getAttribute('data-message'), 'success');
+        if (errorEl) showToast(errorEl.getAttribute('data-message'), 'error');
+    });
+</script>
 
 @await RenderSectionAsync("Scripts", required: false)
 

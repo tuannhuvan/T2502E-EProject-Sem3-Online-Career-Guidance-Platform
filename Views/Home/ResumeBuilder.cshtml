@@ -959,7 +959,7 @@
                 if (title === null) return; // user cancelled
                 
                 if (title.trim() === "") {
-                    alert("Tiêu đề không được để trống!");
+                    showToast("Tiêu đề không được để trống!", "warning");
                     return;
                 }
                 
@@ -985,14 +985,14 @@
                 .then(data => {
                     if (data.success) {
                         cvId = data.id;
-                        alert("Lưu CV thành công!");
+                        showToast("Lưu CV thành công!", "success");
                     } else {
-                        alert("Lưu thất bại: " + data.message);
+                        showToast("Lưu thất bại: " + data.message, "error");
                     }
                 })
                 .catch(err => {
                     console.error("Lỗi lưu CV:", err);
-                    alert("Có lỗi xảy ra trong quá trình lưu CV. Vui lòng thử lại.");
+                    showToast("Có lỗi xảy ra trong quá trình lưu CV. Vui lòng thử lại.", "error");
                 })
                 .finally(() => {
                     btnSaveResume.innerHTML = originalText;

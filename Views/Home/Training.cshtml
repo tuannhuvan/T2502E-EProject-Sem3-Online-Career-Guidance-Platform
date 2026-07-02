@@ -134,14 +134,14 @@
     function submitMockUpgradeTest() {
         const selected = document.querySelector('input[name="mockQ"]:checked');
         if (!selected) {
-            alert('Vui lòng chọn một đáp án trước khi nộp bài!');
+            showToast('Vui lòng chọn một đáp án trước khi nộp bài!', 'warning');
             return;
         }
         
         if (selected.value === 'B') {
-            alert('🎉 Chúc mừng! Bạn trả lời chính xác và đạt điểm tối đa (100%). Điểm số bồi dưỡng kiến thức của bạn đã được cập nhật thành công vượt mức 80%!');
+            showToast('🎉 Chúc mừng! Bạn trả lời chính xác và đạt điểm tối đa (100%). Điểm số bồi dưỡng kiến thức của bạn đã được cập nhật thành công vượt mức 80%!', 'success');
         } else {
-            alert('❌ Câu trả lời chưa chính xác. Hãy ôn tập kỹ tài liệu và làm lại bài sau nhé!');
+            showToast('❌ Câu trả lời chưa chính xác. Hãy ôn tập kỹ tài liệu và làm lại bài sau nhé!', 'error');
         }
         closeUpgradeTest();
     }

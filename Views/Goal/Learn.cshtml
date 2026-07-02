@@ -1,0 +1,181 @@
+@model Career_Guidance_Platform.Models.Skill
+@{
+    ViewData["Title"] = "Học tập kỹ năng: " + Model.Name;
+    var userSkill = ViewBag.UserSkill as Career_Guidance_Platform.Models.UserSkill;
+    string timeElapsedStr = "Vừa mới bắt đầu";
+    if (userSkill != null && userSkill.StartTimestamp.HasValue)
+    {
+        var span = DateTime.Now - userSkill.StartTimestamp.Value;
+        if (span.TotalDays >= 1)
+        {
+            timeElapsedStr = $"{(int)span.TotalDays} ngày {span.Hours} giờ";
+        }
+        else if (span.TotalHours >= 1)
+        {
+            timeElapsedStr = $"{span.Hours} giờ {span.Minutes} phút";
+        }
+        else
+        {
+            timeElapsedStr = $"{span.Minutes} phút";
+        }
+    }
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #eef2ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9; padding: 60px 24px 40px;">
+    <span class="page-badge">📖 Phòng học trực tuyến</span>
+    <h1>@Model.Name</h1>
+    <div style="display: flex; justify-content: center; gap: 16px; margin-top: 15px;">
+        <span style="font-size: 13.5px; font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 4px 12px; border-radius: 6px; border: 1px solid #e0e7ff;">
+            ⚙️ @Model.SkillType
+        </span>
+        <span style="font-size: 13.5px; font-weight: 700; color: #475569; background: #f1f5f9; padding: 4px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            ⏱️ Đang học: @timeElapsedStr
+        </span>
+    </div>
+</section>
+
+<section class="content-section" style="max-width: 1000px; padding: 40px 24px 80px;">
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: #fef2f2; border: 1px solid #ef4444; color: #991b1b; padding: 16px 20px; border-radius: 12px; margin-bottom: 24px; font-weight: 600;">
+            ⚠️ @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 36px; align-items: start;">
+        
+        <!-- Left: Material Contents & Video Player -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- Mock Player -->
+            <div class="info-card" style="padding: 0; overflow: hidden; border-radius: 20px; border: 1px solid #cbd5e1;">
+                <div id="videoPlaceholder" style="background: #0f172a; height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 20px; position: relative;">
+                    <span style="font-size: 64px; margin-bottom: 12px;">📺</span>
+                    <h3 id="playerTitle" style="margin: 0 0 8px 0; font-size: 18px; font-weight: 800;">Chọn bài học để bắt đầu học tập</h3>
+                    <p id="playerDesc" style="color: #94a3b8; font-size: 14px; max-width: 400px; margin: 0;">Các video bài giảng và tài liệu hướng dẫn sẽ mở trực tuyến ngay tại khung hình này.</p>
+                    <button id="btnPlayVideo" onclick="simulateVideoPlay()" class="btn primary-btn" style="display: none; margin-top: 15px; padding: 8px 20px; font-size: 13.5px; border-radius: 8px;">▶ Phát video</button>
+                    
+                    <!-- Loading skeleton -->
+                    <div id="playerLoading" class="hidden" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.9); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px;">
+                        <span class="spinner"></span>
+                        <span style="font-weight: 700; font-size:14px;">Đang tải bài giảng trực tuyến...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Card -->
+            <div class="info-card" style="padding: 28px; border-radius: 20px;">
+                <h3 style="font-size: 16px; font-weight: 800; color: #334155; text-transform: uppercase; margin: 0 0 12px 0;">🎯 Yêu cầu năng lực kỹ năng</h3>
+                <p style="font-size: 15px; line-height: 1.7; color: #475569; margin: 0;">
+                    @(Model.Description ?? "Kỹ năng này yêu cầu sự tập trung học hỏi lý thuyết song song với làm các bài tập thực hành được cung cấp dưới đây.")
+                </p>
+            </div>
+        </div>
+
+        <!-- Right: Resource list and test buttons -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- Resources Card -->
+            <div class="info-card" style="padding: 28px; border-radius: 20px;">
+                <h3 style="font-size: 16px; font-weight: 800; color: #334155; text-transform: uppercase; margin: 0 0 16px 0;">📚 Bài giảng & Tài liệu</h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    @if (Model.Resources != null && Model.Resources.Any())
+                    {
+                        int index = 1;
+                        foreach (var res in Model.Resources)
+                        {
+                            var typeEmoji = res.ResourceType == "Video" ? "🎥" : res.ResourceType == "PDF" ? "📕" : "📖";
+                            <div onclick="selectResource('@res.Title', '@(res.Description ?? "Bài giảng trực tuyến")', '@res.ResourceType', '@res.Url')" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 18px;">@typeEmoji</span>
+                                    <div>
+                                        <strong style="font-size: 13.5px; color: #0f172a; display: block; line-height: 1.4;">Bài @index: @res.Title</strong>
+                                        <span style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: #64748b;">@res.ResourceType</span>
+                                    </div>
+                                </div>
+                                <span style="font-size: 11px; color: #3b82f6; font-weight: 700;">Học ngay</span>
+                            </div>
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <p style="color: #64748b; font-style: italic; font-size: 13.5px; margin: 0;">Chưa có tài liệu học tập cụ thể nào được liên kết. Vui lòng tham khảo tài liệu của khóa học lộ trình.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Test Trigger Card -->
+            <div class="info-card" style="padding: 28px; border-radius: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border-color: #bbf7d0; box-shadow: 0 10px 25px -10px rgba(16,185,129,0.05);">
+                <h3 style="font-size: 16px; font-weight: 800; color: #065f46; text-transform: uppercase; margin: 0 0 8px 0;">📝 Kiểm tra & Đánh giá</h3>
+                <p style="font-size: 13.5px; color: #047857; margin-bottom: 20px; line-height: 1.6;">Khi đã chuẩn bị đầy đủ kiến thức, bạn hãy thực hiện bài thi trắc nghiệm (yêu cầu đạt từ 80/100 điểm để hoàn thành).</p>
+                
+                <a asp-controller="Goal" asp-action="Test" asp-route-skillId="@Model.Id" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; width: 100%; border: none; font-weight: 700; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 4px 14px rgba(16,185,129,0.2);">
+                    ✏️ Bắt đầu bài test
+                </a>
+            </div>
+            
+            <a asp-controller="Goal" asp-action="Index" class="btn secondary-btn" style="justify-content: center; padding: 12px; border-radius: 10px;">
+                ⬅ Quay lại trang Mục tiêu
+            </a>
+        </div>
+
+    </div>
+</section>
+
+<style>
+    /* Spinner */
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .hidden {
+        display: none !important;
+    }
+</style>
+
+<script>
+    function selectResource(title, desc, type, url) {
+        const loading = document.getElementById("playerLoading");
+        loading.classList.remove("hidden");
+        
+        setTimeout(() => {
+            loading.classList.add("hidden");
+            
+            const placeholder = document.getElementById("videoPlaceholder");
+            const playerTitle = document.getElementById("playerTitle");
+            const playerDesc = document.getElementById("playerDesc");
+            const btnPlay = document.getElementById("btnPlayVideo");
+            
+            playerTitle.innerText = title;
+            playerDesc.innerText = desc;
+            
+            if (type === "Video") {
+                placeholder.style.background = "#020617";
+                btnPlay.style.display = "inline-block";
+                btnPlay.onclick = function() {
+                    window.open(url, '_blank');
+                };
+            } else {
+                placeholder.style.background = "#1e293b";
+                btnPlay.style.display = "inline-block";
+                btnPlay.innerText = "📖 Xem tài liệu";
+                btnPlay.onclick = function() {
+                    window.open(url, '_blank');
+                };
+            }
+        }, 600);
+    }
+
+    function simulateVideoPlay() {
+        showToast("Đang chuyển hướng bạn tới đường dẫn bài giảng trực tuyến...", "info");
+    }
+</script>

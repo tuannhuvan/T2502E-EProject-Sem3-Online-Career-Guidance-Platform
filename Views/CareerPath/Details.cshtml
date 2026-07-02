@@ -46,6 +46,41 @@
                     <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Nghiệp vụ nâng cao</span>
                     <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Thực hành dự án (Clone)</span>
                     <span style="font-size: 12px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 4px 10px; border-radius: 6px;">Tư duy hệ thống</span>
+                <div class="timeline-node">
+                    <div class="timeline-marker" style="border-color: @color; box-shadow: 0 0 0 4px @shadow;"></div>
+                    <div class="info-card" style="padding: 28px; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; transition: all 0.25s ease;">
+                        <span style="font-weight: 800; color: @color; font-size: 12px; text-transform: uppercase; background: @(color)10; padding: 4px 10px; border-radius: 6px; border: 1px solid @(color)20; display: inline-block; margin-bottom: 12px;">
+                            Cấp bậc @stage.SequenceOrder
+                        </span>
+                        <h3 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 10px 0;">@stage.Title</h3>
+                        <p style="font-size: 15px; line-height: 1.7; color: #64748b; margin: 0 0 20px 0;">@stage.Description</p>
+                        
+                        @if (stage.CareerStageSkills != null && stage.CareerStageSkills.Any())
+                        {
+                            <div style="margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                                <strong style="font-size: 13.5px; color: #334155; display: block; margin-bottom: 10px;">🛠️ Kỹ năng yêu cầu:</strong>
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    @foreach (var css in stage.CareerStageSkills)
+                                    {
+                                        if (css.Skill != null)
+                                        {
+                                            <div class="skill-badge-btn" 
+                                                 data-id="@css.Skill.Id"
+                                                 style="font-size: 12.5px; font-weight: 600; color: #1e293b; background: #f8fafc; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s;" 
+                                                 onmouseover="this.style.background='#eef2ff'; this.style.borderColor='#cbd5e1'; this.style.transform='translateY(-1px)';" 
+                                                 onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0'; this.style.transform='none';"
+                                                 onclick="openSkillPopup(@css.Skill.Id)">
+                                                <input type="checkbox" class="skill-select-checkbox" data-id="@css.Skill.Id" onclick="event.stopPropagation(); toggleSkillSelection()" style="width: 15px; height: 15px; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                                                <span>⚙️</span>
+                                                <span>@css.Skill.Name</span>
+                                                <span style="font-size: 10px; font-weight: 800; color: @color; background: @(color)15; padding: 2px 6px; border-radius: 4px;">@css.ProficiencyRequired</span>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -96,6 +131,11 @@
                         }
                         <p style="font-size: 13px; color: #4b5563; line-height: 1.6; margin: 0 0 16px;">@job.Description</p>
                         <button class="btn" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;" onclick="alert('Đã gửi hồ sơ ứng tuyển của bạn đến @job.CompanyName!')">Ứng tuyển ngay</button>
+                        <p style="font-size: 13.5px; color: #475569; line-height: 1.6; margin: 0 0 20px 0; flex-grow: 1;">@job.Description</p>
+                        
+                        <button class="btn" style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: all 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'" onclick="showToast('Đã gửi hồ sơ ứng tuyển của bạn đến @job.CompanyName!', 'success')">
+                            Apply ứng tuyển
+                        </button>
                     </div>
                 }
             </div>
@@ -106,14 +146,393 @@
         }
     </div>
 
-    <!-- Back button -->
-    
-    <div style="margin-top:40px;text-align:center;">
+    <!-- Actions and Navigation -->
+    <div style="margin-top: 50px; text-align: center; display: flex; justify-content: center; gap: 15px;">
         <a asp-controller="CareerTest"
            asp-action="GetResultDetail"
            asp-route-id="@Model.Id"
-           class="btn secondary-btn">
+           class="btn secondary-btn"
+           style="padding: 12px 28px; border-radius: 12px;">
             ⬅ Quay lại trang kết quả
         </a>
     </div>v>
+        <a href="javascript:history.back()" class="btn secondary-btn" style="padding: 12px 28px; border-radius: 12px;">
+            ⬅ Quay lại danh sách
+        </a>
+    </div>
 </section>
+
+<!-- Floating Action Bar for Multiple Skill Selection -->
+<div id="floatingSelectionBar" class="floating-selection-bar hidden">
+    <div class="floating-content">
+        <span class="count-badge">💡 Đã chọn <strong id="selectedSkillsCount">0</strong> kỹ năng</span>
+        <button onclick="addSelectedSkillsToGoals()" class="btn primary-btn btn-sm">🎯 Thêm vào Mục tiêu</button>
+        <button onclick="clearSkillSelection()" class="btn secondary-btn btn-sm" style="color: white; border-color: rgba(255,255,255,0.3); background: transparent;">Hủy</button>
+    </div>
+</div>
+
+<!-- Modal Skill Details -->
+<div id="skillDetailsModal" class="modal-overlay hidden" onclick="closeSkillPopup()">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <button class="modal-close-btn" onclick="closeSkillPopup()">×</button>
+        
+        <div class="modal-header">
+            <span id="popupSkillType" class="badge">Hard Skill</span>
+            <h2 id="popupSkillName">Tên kỹ năng</h2>
+            <div class="skill-meta-tags">
+                <span class="meta-tag">⏱️ <span id="popupSkillHours">10</span> giờ học</span>
+                <span id="popupSkillDifficulty" class="meta-tag difficulty-tag medium">Trung bình</span>
+            </div>
+        </div>
+        
+        <div class="modal-body">
+            <div class="info-section">
+                <h4>🎯 Mô tả kỹ năng</h4>
+                <p id="popupSkillDesc">Chi tiết mô tả kỹ năng sẽ được hiển thị ở đây...</p>
+            </div>
+            
+            <div class="info-section">
+                <h4>📚 Tài liệu & Học liệu liên quan</h4>
+                <div id="popupResourcesList" class="resources-grid">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button id="btnAddSingleGoal" onclick="addCurrentSkillToGoals()" class="btn secondary-btn">🎯 Thêm vào Mục tiêu</button>
+            <form id="startLearningForm" method="post" action="/Goal/StartLearning" style="margin: 0;">
+                <input type="hidden" name="skillId" id="startLearningSkillId" value="" />
+                <button type="submit" class="btn primary-btn">🚀 Bắt đầu học ngay</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Floating Action Bar */
+    .floating-selection-bar {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 100px;
+        padding: 12px 24px;
+        z-index: 999;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .floating-selection-bar.hidden {
+        opacity: 0;
+        transform: translate(-50%, 30px);
+        pointer-events: none;
+    }
+    .floating-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .floating-content .count-badge {
+        color: white;
+        font-size: 14.5px;
+        font-weight: 600;
+    }
+    .floating-content .btn-sm {
+        padding: 8px 16px;
+        font-size: 13.5px;
+        border-radius: 999px;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        transition: all 0.25s ease;
+    }
+    .modal-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+    .modal-card {
+        background: #ffffff;
+        border-radius: 24px;
+        width: 90%;
+        max-width: 580px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        border: 1px solid #cbd5e1;
+        overflow: hidden;
+        position: relative;
+        transform: translateY(0);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        display: flex;
+        flex-direction: column;
+        max-height: 85vh;
+    }
+    .modal-overlay.hidden .modal-card {
+        transform: translateY(40px);
+    }
+    .modal-close-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #f1f5f9;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: pointer;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+    .modal-close-btn:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    .modal-header {
+        padding: 32px 32px 20px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .modal-header .badge {
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #4f46e5;
+        background: #eef2ff;
+        padding: 4px 10px;
+        border-radius: 6px;
+        display: inline-block;
+        margin-bottom: 12px;
+    }
+    .modal-header h2 {
+        margin: 0 0 12px;
+        font-size: 24px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .skill-meta-tags {
+        display: flex;
+        gap: 12px;
+    }
+    .meta-tag {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 600;
+        background: #f8fafc;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    .difficulty-tag.easy { color: #10b981; background: #ecfdf5; border-color: #a7f3d0; }
+    .difficulty-tag.medium { color: #f59e0b; background: #fffbeb; border-color: #fde68a; }
+    .difficulty-tag.hard { color: #ef4444; background: #fef2f2; border-color: #fecaca; }
+
+    .modal-body {
+        padding: 24px 32px 32px;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+    .info-section {
+        margin-bottom: 24px;
+    }
+    .info-section h4 {
+        margin: 0 0 10px;
+        font-size: 14.5px;
+        font-weight: 800;
+        color: #334155;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .info-section p {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #475569;
+    }
+    .resources-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .resource-card-item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .resource-card-item:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    .resource-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .resource-title {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 14px;
+    }
+    .resource-type {
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: #64748b;
+    }
+    .resource-icon {
+        font-size: 18px;
+    }
+
+    .modal-footer {
+        padding: 20px 32px 28px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: #f8fafc;
+    }
+</style>
+
+<script>
+    let selectedSkillIds = [];
+    let currentSkillId = null;
+
+    function openSkillPopup(skillId) {
+        currentSkillId = skillId;
+        
+        // Show loading status in popup
+        document.getElementById("popupSkillName").innerText = "Đang tải dữ liệu...";
+        document.getElementById("popupSkillDesc").innerText = "Vui lòng chờ giây lát...";
+        document.getElementById("popupResourcesList").innerHTML = "<p style='color: #64748b; font-style: italic;'>Đang tìm tài liệu học tập...</p>";
+        
+        // Open modal first
+        document.getElementById("skillDetailsModal").classList.remove("hidden");
+        
+        // Fetch detailed data via AJAX
+        fetch(`/Goal/GetSkillDetails?skillId=${skillId}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("popupSkillName").innerText = data.name;
+                document.getElementById("popupSkillDesc").innerText = data.description || "Chưa có mô tả chi tiết.";
+                document.getElementById("popupSkillType").innerText = data.skillType;
+                document.getElementById("popupSkillHours").innerText = data.estimatedHours;
+                
+                // Difficulty tag styling
+                const diffTag = document.getElementById("popupSkillDifficulty");
+                diffTag.innerText = data.difficulty === "Easy" ? "Dễ" : data.difficulty === "Hard" ? "Khó" : "Trung bình";
+                diffTag.className = "meta-tag difficulty-tag " + data.difficulty.toLowerCase();
+                
+                // Set form input for Start Learning
+                document.getElementById("startLearningSkillId").value = data.id;
+
+                // Load resources
+                const list = document.getElementById("popupResourcesList");
+                list.innerHTML = "";
+                
+                if (data.resources && data.resources.length > 0) {
+                    data.resources.forEach(r => {
+                        const typeEmoji = r.resourceType === "Video" ? "🎥" : r.resourceType === "PDF" ? "📕" : "📖";
+                        const item = document.createElement("a");
+                        item.href = r.url || "#";
+                        item.target = "_blank";
+                        item.className = "resource-card-item";
+                        item.innerHTML = `
+                            <div class="resource-info">
+                                <span class="resource-title">${r.title}</span>
+                                <span class="resource-type">${r.resourceType} - ${r.description || "Tài liệu học tập"}</span>
+                            </div>
+                            <span class="resource-icon">${typeEmoji}</span>
+                        `;
+                        list.appendChild(item);
+                    });
+                } else {
+                    list.innerHTML = "<p style='color: #64748b; font-style: italic; font-size: 13.5px; margin: 0;'>Chưa có học liệu liên kết cho kỹ năng này. Hãy bấm học để sử dụng học liệu lộ trình chung.</p>";
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById("popupSkillName").innerText = "Lỗi kết nối";
+                document.getElementById("popupSkillDesc").innerText = "Không thể tải dữ liệu kỹ năng. Vui lòng kiểm tra lại.";
+            });
+    }
+
+    function closeSkillPopup() {
+        document.getElementById("skillDetailsModal").classList.add("hidden");
+    }
+
+    function addCurrentSkillToGoals() {
+        if (!currentSkillId) return;
+        
+        fetch(`/Goal/AddSkillToGoals?skillId=${currentSkillId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                showToast(data.message, data.success ? 'success' : 'error');
+                if (data.success) {
+                    closeSkillPopup();
+                }
+            })
+            .catch(err => showToast("Có lỗi xảy ra: " + err, "error"));
+    }
+
+    function toggleSkillSelection() {
+        const checkboxes = document.querySelectorAll(".skill-select-checkbox:checked");
+        selectedSkillIds = Array.from(checkboxes).map(cb => parseInt(cb.getAttribute("data-id")));
+        
+        const bar = document.getElementById("floatingSelectionBar");
+        const count = document.getElementById("selectedSkillsCount");
+        
+        if (selectedSkillIds.length > 0) {
+            count.innerText = selectedSkillIds.length;
+            bar.classList.remove("hidden");
+        } else {
+            bar.classList.add("hidden");
+        }
+    }
+
+    function clearSkillSelection() {
+        const checkboxes = document.querySelectorAll(".skill-select-checkbox:checked");
+        checkboxes.forEach(cb => cb.checked = false);
+        selectedSkillIds = [];
+        document.getElementById("floatingSelectionBar").classList.add("hidden");
+    }
+
+    function addSelectedSkillsToGoals() {
+        if (selectedSkillIds.length === 0) return;
+        
+        fetch('/Goal/AddMultipleSkillsToGoals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(selectedSkillIds)
+        })
+        .then(res => res.json())
+        .then(data => {
+            showToast(data.message, data.success ? 'success' : 'error');
+            if (data.success) {
+                clearSkillSelection();
+            }
+        })
+        .catch(err => showToast("Có lỗi xảy ra: " + err, "error"));
+    }
+</script>
+

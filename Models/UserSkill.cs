@@ -21,7 +21,13 @@ namespace Career_Guidance_Platform.Models
         [Required]
         [Column("status")]
         [StringLength(50)]
-        public string Status { get; set; } = "Acquired"; // Acquired, Learning, Gap
+        public string Status { get; set; } = "Acquired"; // Acquired, Learning, Gap, In-Goals, Completed
+
+        [Column("start_timestamp")]
+        public DateTime? StartTimestamp { get; set; }
+
+        [Column("cooldown_until")]
+        public DateTime? CooldownUntil { get; set; }
 
         [ForeignKey("UserId")]
         public User? User { get; set; }

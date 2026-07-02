@@ -1,0 +1,363 @@
+@{
+    ViewData["Title"] = "Mục tiêu học tập & Tiến trình";
+    var goals = ViewBag.Goals as List<Career_Guidance_Platform.Models.UserSkill> ?? new List<Career_Guidance_Platform.Models.UserSkill>();
+    var completed = ViewBag.Completed as List<Career_Guidance_Platform.Models.UserSkill> ?? new List<Career_Guidance_Platform.Models.UserSkill>();
+    var resumes = ViewBag.Resumes as List<Career_Guidance_Platform.Models.Resume> ?? new List<Career_Guidance_Platform.Models.Resume>();
+
+    int totalSkillsCount = goals.Count + completed.Count;
+    int progressPercent = totalSkillsCount > 0 ? (int)Math.Round((double)completed.Count / totalSkillsCount * 100) : 0;
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f0fdf4 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9; padding: 70px 24px 50px;">
+    <span class="page-badge">🎯 Bảng điều khiển mục tiêu</span>
+    <h1>Làm chủ mục tiêu của bạn</h1>
+    <p>Theo dõi thời gian học, quản lý các kỹ năng cần bổ sung và đồng bộ hóa trực tiếp vào CV xin việc chuyên nghiệp.</p>
+</section>
+
+<section class="content-section" style="max-width: 1100px; padding: 20px 24px 80px;">
+    
+
+
+    <!-- Progress Overview Card -->
+    <div class="info-card" style="padding: 32px; border-radius: 24px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05); margin-bottom: 40px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 32px; align-items: center;">
+        <div>
+            <h3 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 16px 0;">📊 Tiến độ mục tiêu cá nhân</h3>
+            <div style="display: flex; gap: 20px; margin-bottom: 12px;">
+                <div>
+                    <span style="font-size: 32px; font-weight: 900; color: #4f46e5; display: block;">@completed.Count</span>
+                    <span style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase;">Kỹ năng đã đạt</span>
+                </div>
+                <div style="border-left: 1px solid #e2e8f0; padding-left: 20px;">
+                    <span style="font-size: 32px; font-weight: 900; color: #0f172a; display: block;">@goals.Count</span>
+                    <span style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase;">Đang học tập</span>
+                </div>
+            </div>
+            
+            <div class="progress-track" style="height: 10px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: 15px;">
+                <span style="display: block; height: 100%; width: @progressPercent%; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); border-radius: 999px;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-top: 8px;">
+                <span style="color: #4f46e5;">Tiến trình hoàn thành</span>
+                <span style="color: #0f172a;">@progressPercent%</span>
+            </div>
+        </div>
+        
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <span style="font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 4px;">⏱️ Thời gian còn lại</span>
+                <span style="font-size: 24px; font-weight: 800; color: #ef4444;">@ViewBag.TotalEstimatedTime giờ</span>
+                <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0; line-height: 1.4;">Ước tính cần thiết để hoàn thành toàn bộ mục tiêu hiện tại.</p>
+            </div>
+            <div>
+                <span style="font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 4px;">🎯 Thời gian đã hoàn thành</span>
+                <span style="font-size: 24px; font-weight: 800; color: #10b981;">@ViewBag.TotalCompletedTime giờ</span>
+                <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0; line-height: 1.4;">Thời lượng tích lũy từ các kỹ năng đã làm chủ thành công.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Section Navigation -->
+    <div style="display: flex; border-bottom: 2px solid #e2e8f0; gap: 24px; margin-bottom: 32px;">
+        <button onclick="switchTab('tab-active-goals')" id="btn-tab-active-goals" class="tab-nav-btn active">
+            🎯 Mục tiêu hiện tại (@goals.Count)
+        </button>
+        <button onclick="switchTab('tab-inventory')" id="btn-tab-inventory" class="tab-nav-btn">
+            💼 Kho kỹ năng (@completed.Count)
+        </button>
+        <button onclick="switchTab('tab-cv-sync')" id="btn-tab-cv-sync" class="tab-nav-btn">
+            📝 Đồng bộ CV (@resumes.Count)
+        </button>
+    </div>
+
+    <!-- TAB 1: ACTIVE GOALS -->
+    <div id="tab-active-goals" class="tab-pane active">
+        @if (goals.Count == 0)
+        {
+            <div style="text-align: center; padding: 60px 40px; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 24px; box-shadow: 0 10px 25px -10px rgba(0,0,0,0.02);">
+                <span style="font-size: 48px; display: block; margin-bottom: 16px;">🧭</span>
+                <h4 style="font-size: 18px; color: #334155; font-weight: 800; margin: 0 0 8px 0;">Mục tiêu học tập đang trống</h4>
+                <p style="color: #64748b; font-size: 15px; max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">Hãy truy cập Bản đồ sự nghiệp của các ngành học và thêm các kỹ năng cần thiết để bắt đầu xây dựng lộ trình học tập.</p>
+                <a asp-controller="Home" asp-action="CareerPath" class="btn primary-btn" style="padding: 12px 28px; border-radius: 12px;">🚀 Khám phá Lộ trình & Kỹ năng</a>
+            </div>
+        }
+        else
+        {
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+                @foreach (var item in goals)
+                {
+                    var isLearning = item.Status == "Learning";
+                    <div style="background: #ffffff; border: 1px solid @(isLearning ? "#cbd5e1" : "#e2e8f0"); border-radius: 20px; padding: 24px; box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.04); display: flex; flex-direction: column; position: relative; transition: all 0.25s;" onmouseover="this.style.borderColor='#4f46e5'; this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='@(isLearning ? "#cbd5e1" : "#e2e8f0")'; this.style.transform='none'">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <span style="font-size: 11px; font-weight: 800; color: #4f46e5; background: #eef2ff; border: 1px solid #e0e7ff; padding: 4px 8px; border-radius: 6px; text-transform: uppercase;">
+                                @(item.Skill?.SkillType ?? "Skill")
+                            </span>
+                            @if (isLearning)
+                            {
+                                <span style="font-size: 11.5px; font-weight: 700; color: #3b82f6; background: #eff6ff; padding: 4px 10px; border-radius: 999px; border: 1px solid #bfdbfe; display: flex; align-items: center; gap: 4px;">
+                                    <span class="pulse-dot"></span> Đang học
+                                </span>
+                            }
+                            else
+                            {
+                                <span style="font-size: 11.5px; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 4px 10px; border-radius: 999px; border: 1px solid #e2e8f0;">
+                                    Chờ bắt đầu
+                                </span>
+                            }
+                        </div>
+                        
+                        <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; line-height: 1.4;">@(item.Skill?.Name ?? "Tên kỹ năng")</h3>
+                        <p style="font-size: 13.5px; color: #64748b; line-height: 1.6; margin: 0 0 16px 0; flex-grow: 1;">@(item.Skill?.Description ?? "Kỹ năng cần thiết nằm trong lộ trình.")</p>
+                        
+                        <div style="display: flex; gap: 12px; font-size: 12.5px; font-weight: 700; color: #475569; border-top: 1px solid #f1f5f9; padding-top: 12px; margin-bottom: 16px;">
+                            <span>⏱️ @(item.Skill?.EstimatedHours ?? 10) giờ học</span>
+                            <span>⚡ Độ khó: @(item.Skill?.Difficulty == "Easy" ? "Dễ" : item.Skill?.Difficulty == "Hard" ? "Khó" : "Trung bình")</span>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; margin-top: auto;">
+                            @if (isLearning)
+                            {
+                                <a asp-controller="Goal" asp-action="Learn" asp-route-skillId="@item.SkillId" class="btn secondary-btn" style="flex: 1; font-size: 13.5px; padding: 10px 12px; border-radius: 8px;">📖 Tài liệu</a>
+                                <a asp-controller="Goal" asp-action="Test" asp-route-skillId="@item.SkillId" class="btn primary-btn" style="flex: 1.2; font-size: 13.5px; padding: 10px 12px; border-radius: 8px; font-weight: 700;">📝 Làm bài test</a>
+                            }
+                            else
+                            {
+                                <form asp-controller="Goal" asp-action="StartLearning" method="post" style="width: 100%; margin: 0;">
+                                    <input type="hidden" name="skillId" value="@item.SkillId" />
+                                    <button type="submit" class="btn primary-btn" style="width: 100%; font-size: 13.5px; padding: 10px 12px; border-radius: 8px; font-weight: 700;">🚀 Bắt đầu học ngay</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- TAB 2: INVENTORY (COMPLETED SKILLS) -->
+    <div id="tab-inventory" class="tab-pane">
+        @if (completed.Count == 0)
+        {
+            <div style="text-align: center; padding: 50px 30px; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 24px;">
+                <span style="font-size: 44px; display: block; margin-bottom: 12px;">🏆</span>
+                <h4 style="font-size: 17px; color: #334155; font-weight: 800; margin: 0 0 6px 0;">Kho kỹ năng trống</h4>
+                <p style="color: #64748b; font-size: 14.5px; margin: 0;">Hãy hoàn thành các bài thi đánh giá kỹ năng để lưu chứng chỉ của bạn tại đây.</p>
+            </div>
+        }
+        else
+        {
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.01);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                    <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0;">🌟 Danh mục kỹ năng đã sở hữu</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="goToCVSyncTab()" class="btn primary-btn" style="padding: 10px 20px; font-size: 13.5px; border-radius: 8px;">📝 Đưa vào CV của bạn</button>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                    @foreach (var item in completed)
+                    {
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; border-left: 5px solid #10b981;">
+                            <span style="font-size: 28px;">🛡️</span>
+                            <div>
+                                <h4 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 800; color: #0f172a;">@(item.Skill?.Name ?? "Tên kỹ năng")</h4>
+                                <span style="font-size: 11px; font-weight: 700; color: #047857; background: #e6f4ea; padding: 2px 8px; border-radius: 4px; border: 1px solid #a7f3d0;">
+                                    Đã xác minh (Intermediate)
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- TAB 3: CV SYNC INTEGRATION -->
+    <div id="tab-cv-sync" class="tab-pane">
+        @if (completed.Count == 0)
+        {
+            <div style="text-align: center; padding: 50px 30px; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 24px;">
+                <span style="font-size: 44px; display: block; margin-bottom: 12px;">📝</span>
+                <h4 style="font-size: 17px; color: #334155; font-weight: 800; margin: 0 0 6px 0;">Không thể đồng bộ CV</h4>
+                <p style="color: #64748b; font-size: 14.5px; margin: 0;">Bạn cần hoàn thành ít nhất một kỹ năng kiểm tra để có thể đồng bộ hóa dữ liệu vào CV mẫu.</p>
+            </div>
+        }
+        else
+        {
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: start;">
+                <!-- Left column: select skills -->
+                <div class="info-card" style="padding: 30px; border-radius: 20px;">
+                    <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 12px;">1. Chọn kỹ năng muốn tích hợp</h3>
+                    <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Check chọn các kỹ năng bạn muốn hiển thị trên file CV của mình:</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 12px; max-height: 350px; overflow-y: auto; padding-right: 8px;">
+                        @foreach (var item in completed)
+                        {
+                            <label style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                <input type="checkbox" class="cv-skill-checkbox" value="@(item.Skill?.Name)" checked style="width: 18px; height: 18px; cursor: pointer;" />
+                                <div>
+                                    <strong style="font-size: 14.5px; color: #0f172a;">@(item.Skill?.Name)</strong>
+                                    <span style="font-size: 12px; color: #64748b; display: block;">@(item.Skill?.SkillType) • Lộ trình học tập</span>
+                                </div>
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <!-- Right column: select CV and sync -->
+                <div class="info-card" style="padding: 30px; border-radius: 20px; background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%); border-color: #99f6e4;">
+                    <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 12px;">2. Chọn CV và hoàn tất</h3>
+                    
+                    @if (resumes.Count == 0)
+                    {
+                        <div style="background: #ffffff; border: 1px solid #ccfbf1; padding: 20px; border-radius: 14px; text-align: center; margin-bottom: 20px;">
+                            <p style="font-size: 13.5px; color: #14b8a6; font-style: italic; margin-bottom: 16px;">Bạn chưa có CV nào được lưu trong hệ thống.</p>
+                            <form asp-controller="Goal" asp-action="CreateCVFromSkills" method="post" id="createCvForm">
+                                <div id="hiddenSkillsContainer"></div>
+                                <button type="submit" onclick="submitCreateCV(event)" class="btn primary-btn" style="width: 100%; border-radius: 10px; font-size: 14px; padding: 12px;">
+                                    ✨ Tạo CV mẫu mới
+                                </button>
+                            </form>
+                        </div>
+                    }
+                    else
+                    {
+                        <form asp-controller="Goal" asp-action="UpdateCV" method="post" id="updateCvForm">
+                            <div id="hiddenSkillsContainerUpdate"></div>
+                            
+                            <label style="font-size: 14px; font-weight: 700; color: #334155; display: block; margin-bottom: 8px;">Chọn CV cần đồng bộ:</label>
+                            <select name="resumeId" required style="width: 100%; height: 48px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14.5px; margin-bottom: 24px; background: white;">
+                                @foreach (var r in resumes)
+                                {
+                                    <option value="@r.Id">@r.Title (Cập nhật: @(r.UpdatedAt?.ToString("dd/MM/yyyy") ?? r.CreatedAt.ToString("dd/MM/yyyy")))</option>
+                                }
+                            </select>
+                            
+                            <button type="submit" onclick="submitUpdateCV(event)" class="btn primary-btn" style="width: 100%; border-radius: 10px; font-size: 14.5px; padding: 12px; font-weight: 700; box-shadow: 0 4px 14px rgba(13,148,136,0.2);">
+                                🔄 Đồng bộ vào CV đã chọn
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+</section>
+
+<style>
+    /* Tabs buttons */
+    .tab-nav-btn {
+        background: transparent;
+        border: none;
+        padding: 12px 8px;
+        font-size: 15.5px;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+    }
+    .tab-nav-btn:hover {
+        color: #4f46e5;
+    }
+    .tab-nav-btn.active {
+        color: #4f46e5;
+    }
+    .tab-nav-btn.active::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: #4f46e5;
+        border-radius: 99px;
+    }
+
+    /* Tab Panes */
+    .tab-pane {
+        display: none;
+    }
+    .tab-pane.active {
+        display: block;
+    }
+
+    /* Pulse animation dot */
+    .pulse-dot {
+        width: 7px;
+        height: 7px;
+        background: #3b82f6;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse-animation 1.5s infinite;
+    }
+    @@keyframes pulse-animation {
+        0% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+        }
+    }
+</style>
+
+<script>
+    function switchTab(tabId) {
+        document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.remove("active"));
+        document.querySelectorAll(".tab-nav-btn").forEach(btn => btn.classList.remove("active"));
+        
+        document.getElementById(tabId).classList.add("active");
+        document.getElementById("btn-" + tabId).classList.add("active");
+    }
+
+    function goToCVSyncTab() {
+        switchTab("tab-cv-sync");
+    }
+
+    function getSelectedSkills() {
+        const checked = document.querySelectorAll(".cv-skill-checkbox:checked");
+        return Array.from(checked).map(cb => cb.value);
+    }
+
+    function submitUpdateCV(event) {
+        const skills = getSelectedSkills();
+        if (skills.length === 0) {
+            showToast("Vui lòng check chọn ít nhất một kỹ năng để đồng bộ.", "warning");
+            event.preventDefault();
+            return;
+        }
+
+        const container = document.getElementById("hiddenSkillsContainerUpdate");
+        container.innerHTML = "";
+        skills.forEach(s => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "selectedSkills";
+            input.value = s;
+            container.appendChild(input);
+        });
+    }
+
+    function submitCreateCV(event) {
+        const skills = getSelectedSkills();
+        if (skills.length === 0) {
+            showToast("Vui lòng check chọn ít nhất một kỹ năng để tạo CV.", "warning");
+            event.preventDefault();
+            return;
+        }
+
+        const container = document.getElementById("hiddenSkillsContainer");
+        container.innerHTML = "";
+        skills.forEach(s => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "selectedSkills";
+            input.value = s;
+            container.appendChild(input);
+        });
+    }
+</script>
