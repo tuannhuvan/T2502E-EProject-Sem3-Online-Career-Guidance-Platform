@@ -40,6 +40,13 @@ namespace Career_Guidance_Platform.Models
         [Column("status")]
         public int Status { get; set; } = 1;
 
+        [Column("estimated_hours")]
+        public int EstimatedHours { get; set; } = 10;
+
+        [Column("difficulty")]
+        [StringLength(50)]
+        public string Difficulty { get; set; } = "Medium";
+
         public ICollection<CareerPathSkill> CareerPathSkills { get; set; } = new List<CareerPathSkill>();
         public ICollection<UserSkill> UserSkills { get; set; } = new List<UserSkill>();
         public ICollection<Resource> Resources { get; set; } = new List<Resource>();
