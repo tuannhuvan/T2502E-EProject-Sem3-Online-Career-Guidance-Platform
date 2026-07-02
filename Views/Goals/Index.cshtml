@@ -1,0 +1,51 @@
+@model IEnumerable<Career_Guidance_Platform.Models.Goal>
+
+@{
+    ViewData["Title"] = "Mục tiêu nghề nghiệp";
+}
+
+<section class="content-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <div>
+            <h1>Mục tiêu nghề nghiệp</h1>
+            <p>Quản lý các mục tiêu ngắn hạn và dài hạn của bạn.</p>
+        </div>
+
+        <a asp-action="Create" class="btn btn-primary">+ Tạo Goal</a>
+    </div>
+
+    <div class="info-card">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Tên mục tiêu</th>
+                <th>Career Path</th>
+                <th>Tiến độ</th>
+                <th>Deadline</th>
+                <th style="width:220px;">Hành động</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var goal in Model)
+            {
+                <tr>
+                    <td>@goal.Title</td>
+                    <td>@(goal.CareerPath?.Title ?? "Không chọn")</td>
+                    <td>
+                        <div style="background:#e5e7eb;border-radius:999px;height:10px;width:120px;">
+                            <div style="background:#4f46e5;height:10px;border-radius:999px;width:@goal.Progress%;"></div>
+                        </div>
+                        <small>@goal.Progress%</small>
+                    </td>
+                    <td>@goal.TargetDate?.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@goal.Id">Xem</a> |
+                        <a asp-action="Edit" asp-route-id="@goal.Id">Sửa</a> |
+                        <a asp-action="Delete" asp-route-id="@goal.Id" style="color:red;">Xóa</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

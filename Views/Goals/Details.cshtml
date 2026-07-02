@@ -1,0 +1,20 @@
+@model Career_Guidance_Platform.Models.Goal
+
+@{
+    ViewData["Title"] = "Chi tiết Goal";
+}
+
+<section class="content-section">
+    <h1>Chi tiết mục tiêu</h1>
+
+    <div class="info-card">
+        <p><strong>Tên mục tiêu:</strong> @Model.Title</p>
+        <p><strong>Career Path:</strong> @(Model.CareerPath?.Title ?? "Không chọn")</p>
+        <p><strong>Tiến độ:</strong> @Model.Progress%</p>
+        <p><strong>Deadline:</strong> @Model.TargetDate?.ToString("dd/MM/yyyy")</p>
+        <p><strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Sửa</a>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </div>
+</section>

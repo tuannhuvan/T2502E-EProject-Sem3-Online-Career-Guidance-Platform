@@ -25,6 +25,7 @@ namespace Career_Guidance_Platform.Data
         public DbSet<Resource> Resources { get; set; }
         
         
+        
         public DbSet<UserCourseProgress> UserCourseProgresses { get; set; }
         
         public DbSet<CareerPathCourse> CareerPathCourses { get; set; }
