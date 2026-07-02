@@ -1,0 +1,44 @@
+@model Career_Guidance_Platform.Models.Goal
+
+@{
+    ViewData["Title"] = "Tạo Goal";
+}
+
+<section class="content-section">
+    <h1>Tạo mục tiêu nghề nghiệp</h1>
+
+    <form asp-action="Create" method="post" class="info-card">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="form-group">
+            <label asp-for="Title">Tên mục tiêu</label>
+            <input asp-for="Title" class="form-control" placeholder="VD: Hoàn thành khóa học ASP.NET Core" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="CareerPathId">Career Path</label>
+            <select asp-for="CareerPathId" asp-items="ViewBag.CareerPaths" class="form-control">
+                <option value="">-- Không chọn --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Progress">Tiến độ (%)</label>
+            <input asp-for="Progress" type="number" min="0" max="100" class="form-control" />
+            <span asp-validation-for="Progress" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="TargetDate">Deadline</label>
+            <input asp-for="TargetDate" type="date" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Lưu</button>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -569,12 +569,14 @@ namespace Career_Guidance_Platform.Migrations
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("longtext")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("created_by");
 
                     b.Property<string>("GoalType")
                         .IsRequired()
-                        .HasColumnType("longtext")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
                         .HasColumnName("goal_type");
 
                     b.Property<int>("Progress")
@@ -595,7 +597,8 @@ namespace Career_Guidance_Platform.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("longtext")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("title");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -603,7 +606,8 @@ namespace Career_Guidance_Platform.Migrations
                         .HasColumnName("updated_at");
 
                     b.Property<string>("UpdatedBy")
-                        .HasColumnType("longtext")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("updated_by");
 
                     b.HasKey("Id");

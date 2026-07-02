@@ -1,0 +1,23 @@
+@model Career_Guidance_Platform.Models.Goal
+
+@{
+    ViewData["Title"] = "Xóa Goal";
+}
+
+<section class="content-section">
+    <h1>Xóa mục tiêu</h1>
+
+    <div class="info-card">
+        <p>Bạn có chắc muốn xóa mục tiêu này không?</p>
+
+        <p><strong>@Model.Title</strong></p>
+        <p>Tiến độ: @Model.Progress%</p>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <button type="submit" class="btn btn-danger">Xóa</button>
+            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+        </form>
+    </div>
+</section>
