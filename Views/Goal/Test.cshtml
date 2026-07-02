@@ -1,0 +1,236 @@
+@model Career_Guidance_Platform.Models.Skill
+@{
+    ViewData["Title"] = "Bài kiểm tra kỹ năng: " + Model.Name;
+
+    // Define questions based on skill name
+    var questions = new List<dynamic>();
+
+    if (Model.Name.Contains("C#"))
+    {
+        questions.Add(new {
+            Text = "Câu hỏi 1: Lợi ích chính của việc sử dụng các thuộc tính (Properties) thay vì trường công khai (Public fields) trong C# là gì?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Cho phép kiểm soát tính đóng gói, kiểm tra tính hợp lệ của dữ liệu trước khi gán." },
+                new { Val = "wrong1", Text = "Làm chương trình chạy nhanh hơn gấp đôi." },
+                new { Val = "wrong2", Text = "Bắt buộc phải khai báo bằng từ khóa static." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 2: Từ khóa 'using' trong C# (sử dụng trong một khối code block) có vai trò gì?",
+            Opts = new[] {
+                new { Val = "wrong1", Text = "Được dùng để định nghĩa một lớp static mới." },
+                new { Val = "correct", Text = "Đảm bảo giải phóng tài nguyên IDisposable (như file hoặc connection) ngay sau khi hết khối lệnh." },
+                new { Val = "wrong2", Text = "Dùng để tăng tốc hiệu suất truy cập database." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 3: Sự khác biệt chính giữa Class (lớp) và Struct (cấu trúc) trong C# là gì?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Class là kiểu tham chiếu (Reference Type), Struct là kiểu giá trị (Value Type)." },
+                new { Val = "wrong1", Text = "Class không kế thừa được, còn Struct thì kế thừa được." },
+                new { Val = "wrong2", Text = "Class luôn lưu ở bộ nhớ Stack, Struct lưu ở Heap." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 4: Cơ chế Garbage Collection (GC) trong .NET làm nhiệm vụ gì?",
+            Opts = new[] {
+                new { Val = "wrong1", Text = "Tự động sửa các lỗi cú pháp trong code khi chạy." },
+                new { Val = "wrong2", Text = "Mã hóa toàn bộ dữ liệu người dùng gửi lên database." },
+                new { Val = "correct", Text = "Tự động thu hồi bộ nhớ Heap đã cấp phát cho các đối tượng không còn được sử dụng." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 5: Khái niệm LINQ trong C# dùng để làm gì?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Cung cấp cú pháp truy vấn đồng nhất để truy xuất dữ liệu từ Objects, SQL, XML, v.v." },
+                new { Val = "wrong1", Text = "Để vẽ giao diện đồ họa cho ứng dụng desktop." },
+                new { Val = "wrong2", Text = "Là một thư viện bảo mật giúp mã hóa mật khẩu người dùng." }
+            }
+        });
+    }
+    else if (Model.Name.Contains("SQL") || Model.Name.Contains("Cơ sở dữ liệu"))
+    {
+        questions.Add(new {
+            Text = "Câu hỏi 1: Lệnh nào dùng để lấy các bản ghi không trùng lặp trong câu lệnh SELECT?",
+            Opts = new[] {
+                new { Val = "wrong1", Text = "SELECT UNIQUE" },
+                new { Val = "correct", Text = "SELECT DISTINCT" },
+                new { Val = "wrong2", Text = "SELECT DIFFERENT" }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 2: Khác biệt giữa WHERE và HAVING trong SQL là gì?",
+            Opts = new[] {
+                new { Val = "correct", Text = "WHERE lọc các dòng trước khi gom nhóm, HAVING lọc các nhóm sau khi GROUP BY." },
+                new { Val = "wrong1", Text = "WHERE chỉ dùng cho số, HAVING chỉ dùng cho chữ." },
+                new { Val = "wrong2", Text = "HAVING chạy nhanh hơn WHERE rất nhiều." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 3: Khóa ngoại (Foreign Key) trong database dùng để làm gì?",
+            Opts = new[] {
+                new { Val = "wrong1", Text = "Đảm bảo mọi bản ghi có giá trị tăng tự động." },
+                new { Val = "correct", Text = "Thiết lập liên kết giữa hai bảng và đảm bảo tính toàn vẹn tham chiếu dữ liệu." },
+                new { Val = "wrong2", Text = "Giúp mã hóa các thông tin nhạy cảm của bảng." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 4: Index trong SQL Server nhằm mục đích gì?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Tăng tốc độ truy vấn và tìm kiếm dữ liệu trên bảng." },
+                new { Val = "wrong1", Text = "Giúp tiết kiệm dung lượng lưu trữ ổ đĩa." },
+                new { Val = "wrong2", Text = "Tự động sao lưu dữ liệu khi có sự cố." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 5: TRANSACTION trong SQL dùng để làm gì?",
+            Opts = new[] {
+                new { Val = "wrong1", Text = "Dùng để chuyển dữ liệu từ bảng này sang bảng khác." },
+                new { Val = "wrong2", Text = "Dùng để gộp nhiều bảng thành một bảng ảo." },
+                new { Val = "correct", Text = "Đảm bảo một nhóm các câu lệnh SQL thực hiện thành công toàn bộ hoặc hủy bỏ toàn bộ (Tính nguyên tố ACID)." }
+            }
+        });
+    }
+    else if (Model.Name.Contains("Git"))
+    {
+        questions.Add(new {
+            Text = "Câu hỏi 1: Lệnh nào dùng để sao chép một kho chứa (repository) từ xa về máy cục bộ?",
+            Opts = new[] {
+                new { Val = "correct", Text = "git clone" },
+                new { Val = "wrong1", Text = "git pull" },
+                new { Val = "wrong2", Text = "git fork" }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 2: Mục đích của vùng Staging Area trong Git là gì?",
+            Opts = new[] {
+                new { Val = "wrong1", Text = "Để lưu trữ vĩnh viễn lịch sử của dự án." },
+                new { Val = "correct", Text = "Là nơi chuẩn bị và chọn lọc các file thay đổi trước khi tiến hành commit." },
+                new { Val = "wrong2", Text = "Dùng để so sánh sự khác nhau giữa các branch từ xa." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 3: Lệnh 'git merge' dùng để làm gì?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Gộp các thay đổi từ một nhánh (branch) khác vào nhánh hiện tại." },
+                new { Val = "wrong1", Text = "Xóa hoàn toàn một nhánh cục bộ ra khỏi Git." },
+                new { Val = "wrong2", Text = "Đưa code cục bộ lên Github server." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 4: Lệnh 'git stash' hữu ích trong trường hợp nào?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Khi muốn lưu tạm các thay đổi chưa commit để dọn sạch thư mục làm việc trước khi chuyển branch." },
+                new { Val = "wrong1", Text = "Khi muốn xóa sạch toàn bộ lịch sử commit trước đó." },
+                new { Val = "wrong2", Text = "Để tạo một bản backup nén của toàn bộ source code." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 5: Điểm khác biệt giữa 'git pull' và 'git fetch' là gì?",
+            Opts = new[] {
+                new { Val = "wrong1", Text = "git pull chỉ lấy thông tin, git fetch gộp code tự động." },
+                new { Val = "correct", Text = "git fetch chỉ tải dữ liệu từ remote về, git pull tải về và tự động merge vào nhánh hiện tại." },
+                new { Val = "wrong2", Text = "Hai lệnh này hoàn toàn giống hệt nhau không có sự khác biệt." }
+            }
+        });
+    }
+    else
+    {
+        // Fallback for other skills
+        questions.Add(new {
+            Text = "Câu hỏi 1: Phương pháp tốt nhất để nhanh chóng làm chủ một kỹ năng chuyên môn mới là gì?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Học lý thuyết căn bản kết hợp thực hành dự án thực tế và nhận góp ý từ người có kinh nghiệm." },
+                new { Val = "wrong1", Text = "Đọc tài liệu liên tục trong nhiều tuần mà không cần viết mã nguồn hay thực hành." },
+                new { Val = "wrong2", Text = "Chờ đợi cơ hội việc làm tự đến rồi mới bắt đầu học hỏi." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 2: Khi gặp lỗi phức tạp trong quá trình triển khai hoặc làm việc nhóm, bạn nên làm gì đầu tiên?",
+            Opts = new[] {
+                new { Val = "wrong1", Text = "Từ bỏ nhiệm vụ và yêu cầu người khác làm thay." },
+                new { Val = "correct", Text = "Đọc kỹ thông báo lỗi, tra cứu tài liệu hệ thống và thảo luận nhóm để tìm nguyên nhân gốc rễ." },
+                new { Val = "wrong2", Text = "Bỏ qua lỗi đó và tiếp tục làm phần khác." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 3: Vai trò của các tài liệu kỹ thuật (Documentation) đối với việc phát triển năng lực cá nhân là gì?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Cung cấp quy chuẩn, các phương pháp tối ưu và hướng dẫn chuẩn để xây dựng hệ thống chính xác." },
+                new { Val = "wrong1", Text = "Chỉ mang tính chất tham khảo không thực tế." },
+                new { Val = "wrong2", Text = "Làm chậm tiến độ do mất thời gian đọc tài liệu." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 4: Tinh thần Agile/Scrum hỗ trợ gì cho năng lực làm việc nhóm?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Giúp thích ứng nhanh với thay đổi, minh bạch hóa tiến độ và tăng cường giao tiếp liên tục." },
+                new { Val = "wrong1", Text = "Bắt buộc mọi người phải làm việc độc lập hoàn toàn." },
+                new { Val = "wrong2", Text = "Bỏ qua các bước lập kế hoạch dự án." }
+            }
+        });
+        questions.Add(new {
+            Text = "Câu hỏi 5: Lý do chúng ta cần liên tục đánh giá và kiểm tra năng lực của bản thân là gì?",
+            Opts = new[] {
+                new { Val = "correct", Text = "Nhận diện các lỗ hổng kiến thức để kịp thời bổ sung và định hình lộ trình thăng tiến rõ ràng." },
+                new { Val = "wrong1", Text = "Để so sánh hơn thua với các đồng nghiệp khác." },
+                new { Val = "wrong2", Text = "Không có lợi ích thực tế ngoài việc lấy điểm số." }
+            }
+        });
+    }
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9; padding: 70px 24px 40px;">
+    <span class="page-badge">📝 Bài thi đánh giá kỹ năng</span>
+    <h1>@Model.Name</h1>
+    <p>Trả lời đúng tối thiểu <strong>4/5 câu hỏi (80%)</strong> dưới đây để hoàn tất và đưa kỹ năng vào Hồ sơ năng lực của bạn.</p>
+</section>
+
+<section class="content-section" style="max-width: 800px; padding: 30px 20px 80px;">
+    <form asp-controller="Goal" asp-action="SubmitTest" method="post" id="skillTestForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="skillId" value="@Model.Id" />
+
+        @for (int i = 0; i < questions.Count; i++)
+        {
+            var q = questions[i];
+            // Shuffle options to make it professional
+            var r = new Random();
+            var shuffledOpts = ((IEnumerable<dynamic>)q.Opts).OrderBy(o => r.Next()).ToList();
+
+            <div class="info-card" style="padding: 32px; margin-bottom: 30px; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.03);">
+                <h3 style="margin-top: 0; color: #0f172a; margin-bottom: 20px; font-size: 16.5px; font-weight: 800; line-height: 1.5;">@q.Text</h3>
+                
+                <div class="answer-list detailed" style="margin-top: 0; display: flex; flex-direction: column; gap: 12px;">
+                    @foreach (var opt in shuffledOpts)
+                    {
+                        <label class="answer-item-label" style="display: flex; gap: 12px; align-items: flex-start; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                            <input type="radio" name="answers[@i]" value="@opt.Val" required style="margin-top: 4px;" />
+                            <div style="font-size: 14.5px; color: #334155; line-height: 1.5;">
+                                @opt.Text
+                            </div>
+                        </label>
+                    }
+                </div>
+            </div>
+        }
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 40px;">
+            <a asp-controller="Goal" asp-action="Learn" asp-route-skillId="@Model.Id" class="btn secondary-btn" style="padding: 12px 28px; border-radius: 10px;">⬅ Quay lại bài học</a>
+            <button type="submit" class="btn primary-btn" style="padding: 12px 36px; border-radius: 10px; font-weight: 700;">
+                Nộp bài & Đánh giá
+            </button>
+        </div>
+    </form>
+</section>
+
+<style>
+    .answer-item-label:hover {
+        border-color: #4f46e5;
+        background: #f8fafc;
+    }
+    .answer-item-label:has(input:checked) {
+        border-color: #4f46e5;
+        background: #f5f3ff;
+    }
+</style>

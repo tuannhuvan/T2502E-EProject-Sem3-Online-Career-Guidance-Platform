@@ -1,0 +1,73 @@
+@model Career_Guidance_Platform.Models.Skill
+@{
+    ViewData["Title"] = "Thời gian chờ ôn tập: " + Model.Name;
+    int remainingSeconds = ViewBag.RemainingSeconds ?? 120;
+}
+
+<section class="content-section" style="max-width: 600px; padding: 100px 24px; text-align: center;">
+    <div class="info-card" style="padding: 48px 32px; border-radius: 24px; border: 1px solid #fed7aa; background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%); box-shadow: 0 20px 40px -15px rgba(249, 115, 22, 0.1);">
+        <div style="font-size: 64px; margin-bottom: 24px; display: inline-block; animation: pulse 2s infinite;">⏳</div>
+        
+        <h2 style="font-size: 24px; font-weight: 800; color: #ea580c; margin: 0 0 12px 0;">Đang trong thời gian ôn tập</h2>
+        <p style="color: #64748b; font-size: 15.5px; line-height: 1.6; margin: 0 0 28px 0; max-width: 420px; margin-left: auto; margin-right: auto;">
+            Bạn chưa vượt qua bài đánh giá kỹ năng <strong>@Model.Name</strong> trước đó. Hãy tận dụng thời gian này để xem lại tài liệu và quay lại làm bài kiểm tra sau:
+        </p>
+        
+        <!-- Countdown Clock -->
+        <div style="background: #ffffff; border: 1px solid #ffedd5; border-radius: 16px; padding: 16px 32px; display: inline-block; margin-bottom: 36px; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
+            <span id="countdownTimer" style="font-size: 36px; font-weight: 900; color: #ea580c; font-family: monospace;">00:00</span>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <a id="btnRetry" href="" class="btn primary-btn disabled" style="pointer-events: none; opacity: 0.5; padding: 12px; border-radius: 10px; font-weight: 700;">
+                🔄 Thử lại ngay
+            </a>
+            <a asp-controller="Goal" asp-action="Learn" asp-route-skillId="@Model.Id" class="btn secondary-btn" style="padding: 12px; border-radius: 10px;">
+                📖 Xem lại tài liệu ôn tập
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let secondsLeft = @remainingSeconds;
+        const timerElement = document.getElementById("countdownTimer");
+        const btnRetry = document.getElementById("btnRetry");
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = secondsLeft % 60;
+            const displayMin = minutes < 10 ? "0" + minutes : minutes;
+            const displaySec = seconds < 10 ? "0" + seconds : seconds;
+            timerElement.innerText = `${displayMin}:${displaySec}`;
+        }
+
+        updateTimerDisplay();
+
+        const interval = setInterval(function() {
+            secondsLeft--;
+            if (secondsLeft <= 0) {
+                clearInterval(interval);
+                timerElement.innerText = "00:00";
+                
+                // Enable retry button
+                btnRetry.classList.remove("disabled");
+                btnRetry.style.pointerEvents = "auto";
+                btnRetry.style.opacity = "1";
+                btnRetry.innerText = "🔄 Làm bài thi ngay";
+                btnRetry.href = `/Goal/Test?skillId=@Model.Id`;
+            } else {
+                updateTimerDisplay();
+            }
+        }, 1000);
+    });
+</script>
+
+<style>
+    @@keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+        100% { transform: scale(1); }
+    }
+</style>
