@@ -2,12 +2,13 @@
 @{
     ViewData["Title"] = "Đào tạo & Nâng cấp nghề nghiệp";
     var selectedPath = ViewBag.SelectedPath as Career_Guidance_Platform.Models.CareerPath;
+    string status = ViewBag.Status as string ?? "HasResults";
 }
 
 <section class="page-hero" style="background: radial-gradient(circle at top right, #ecfeff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
     <span class="page-badge">📚 Phân hệ LMS & Đào tạo</span>
     
-    @if (selectedPath != null)
+    @if (status == "HasResults" && selectedPath != null)
     {
         <h1>Bồi dưỡng kiến thức: @selectedPath.Title</h1>
         <p>Hệ thống học tập định hướng giúp bạn củng cố kiến thức và khắc phục các lỗ hổng chuyên môn để đạt chuẩn kết nối doanh nghiệp.</p>
@@ -20,78 +21,128 @@
 </section>
 
 <section class="content-section" style="max-width: 1100px;">
-    
-    @if (selectedPath != null)
+    @if (status == "NotLoggedIn")
     {
-        <div class="info-card" style="margin-bottom: 40px; background: #e0f2fe; border: 1px solid #bae6fd; display: flex; gap: 20px; align-items: center; border-left: 6px solid #0284c7;">
-            <div style="font-size: 32px;">💡</div>
-            <div>
-                <strong style="color: #0369a1; font-size: 16px; display: block;">Mục tiêu học tập</strong>
-                <span style="color: #0c4a6e; font-size: 14px; line-height: 1.5;">Hoàn thành các tài liệu bồi dưỡng bên dưới, sau đó thực hiện <strong>Bài test nâng cấp (Upgrade Test)</strong> để đạt điều kiện điểm số vượt mức 80%!</span>
+        <div style="text-align: center; padding: 80px 40px; background: #ffffff; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); max-width: 600px; margin: 0 auto;">
+            <div style="font-size: 64px; margin-bottom: 24px;">🔒</div>
+            <h2 style="font-size: 24px; color: #0f172a; margin-bottom: 16px; font-weight: 800;">Bạn chưa đăng nhập</h2>
+            <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                Vui lòng đăng nhập hoặc đăng ký tài khoản và thực hiện bài kiểm tra định hướng nghề nghiệp để truy cập kho tài nguyên đào tạo và bồi dưỡng kiến thức.
+            </p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <a class="btn primary-btn" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Home/Training" style="padding: 12px 28px; border-radius: 12px; font-weight: 700; text-decoration: none;">Đăng nhập</a>
+                <a class="btn secondary-btn" asp-controller="Account" asp-action="Register" asp-route-returnUrl="/Home/Training" style="padding: 12px 28px; border-radius: 12px; font-weight: 700; text-decoration: none;">Đăng ký ngay</a>
             </div>
         </div>
     }
-
-    <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 40px; align-items: start;">
-        
-        <!-- Left Column: Documents list -->
-        <div>
-            <h2 style="font-size: 22px; color: #020617; margin-top: 0; margin-bottom: 20px;">📖 Tài nguyên bồi dưỡng kiến thức</h2>
-            
-            @if (Model.Any())
-            {
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    @foreach (var res in Model)
+    else if (status == "NoTestResults")
+    {
+        <div style="text-align: center; padding: 80px 40px; background: #ffffff; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); max-width: 600px; margin: 0 auto;">
+            <div style="font-size: 64px; margin-bottom: 24px;">🧭</div>
+            <h2 style="font-size: 24px; color: #0f172a; margin-bottom: 16px; font-weight: 800;">Chưa có kết quả đánh giá</h2>
+            <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                Bạn cần hoàn thành bài trắc nghiệm tính cách, sở thích và năng lực để mở khóa và nhận tài liệu đào tạo bồi dưỡng phù hợp với lộ trình đề xuất của bạn.
+            </p>
+            <a asp-controller="Home" asp-action="CareerTest" class="btn primary-btn" style="padding: 12px 32px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; justify-content: center;">
+                🚀 Làm bài Test định hướng ngay
+            </a>
+        </div>
+    }
+    else
+    {
+        <div style="margin-bottom: 30px; display: flex; gap: 12px; align-items: center; background: #f8fafc; padding: 15px; border-radius: 16px; border: 1px solid #e2e8f0;">
+            <span style="font-size: 14.5px; font-weight: 700; color: #334155;">Lọc tài liệu theo lộ trình đề xuất:</span>
+            <form method="get" action="/Home/Training" style="margin: 0; display: flex; gap: 10px;">
+                <select name="careerPathId" onchange="this.form.submit()" style="padding: 8px 16px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; color: #0f172a; cursor: pointer; background: #ffffff;">
+                    <option value="">-- Tất cả lộ trình đề xuất --</option>
+                    @if (ViewBag.RecommendedPaths != null)
                     {
-                        <div class="info-card" style="display: flex; gap: 20px; padding: 20px; align-items: center; transition: 0.25s;">
-                            <!-- File Icon -->
-                            <div style="width: 60px; height: 60px; border-radius: 12px; background: #f1f5f9; display: flex; flex-shrink: 0; align-items: center; justify-content: center; font-size: 24px;">
-                                @if (res.ResourceType == "PDF") { <span>📕</span> }
-                                else if (res.ResourceType == "Video") { <span>🎥</span> }
-                                else { <span>📄</span> }
-                            </div>
-                            <div style="flex-grow: 1;">
-                                <span style="font-size: 11px; font-weight: 700; color: #4f46e5; text-transform: uppercase; background: #e0e7ff; padding: 2px 8px; border-radius: 6px;">@res.ResourceType</span>
-                                <h3 style="font-size: 18px; color: #020617; margin: 6px 0 4px;">@res.Title</h3>
-                                <small style="color: #94a3b8;">Lộ trình: @(res.CareerPath?.Title ?? "Chung")</small>
-                            </div>
-                            <a href="@res.Url" target="_blank" class="btn secondary-btn" style="border-radius: 8px; font-size: 13px; font-weight: 600; padding: 8px 16px;">Tải / Xem ngay</a>
-                        </div>
+                        foreach (var path in (IEnumerable<Career_Guidance_Platform.Models.CareerPath>)ViewBag.RecommendedPaths)
+                        {
+                            if (selectedPath != null && selectedPath.Id == path.Id)
+                            {
+                                <option value="@path.Id" selected="selected">@path.Title</option>
+                            }
+                            else
+                            {
+                                <option value="@path.Id">@path.Title</option>
+                            }
+                        }
                     }
-                </div>
-            }
-            else
-            {
-                <p style="font-style: italic; color: #64748b;">Chưa có tài nguyên bồi dưỡng cụ thể cho lộ trình này. Ban điều phối sẽ cập nhật sớm nhất.</p>
-            }
+                </select>
+            </form>
         </div>
 
-        <!-- Right Column: Upgrade Test Area -->
-        <div>
-            <div class="info-card" style="border: 2px solid #4f46e5; background: #ffffff; padding: 24px; position: sticky; top: 100px;">
-                <span style="font-size: 12px; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.5px; background: #e0e7ff; padding: 4px 10px; border-radius: 999px;">Đánh giá tiến độ</span>
-                <h3 style="font-size: 20px; color: #020617; margin: 12px 0 8px;">📝 Bài test nâng cấp (Upgrade Test)</h3>
-                <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 0 0 20px;">Bài kiểm tra này giúp đánh giá lại kỹ năng của bạn sau quá trình tự bồi dưỡng kiến thức. Đạt điểm số trên 80% để mở khóa kết nối nhà tuyển dụng.</p>
+        @if (selectedPath != null)
+        {
+            <div class="info-card" style="margin-bottom: 40px; background: #e0f2fe; border: 1px solid #bae6fd; display: flex; gap: 20px; align-items: center; border-left: 6px solid #0284c7;">
+                <div style="font-size: 32px;">💡</div>
+                <div>
+                    <strong style="color: #0369a1; font-size: 16px; display: block;">Mục tiêu học tập</strong>
+                    <span style="color: #0c4a6e; font-size: 14px; line-height: 1.5;">Hoàn thành các tài liệu bồi dưỡng bên dưới, sau đó thực hiện <strong>Bài test nâng cấp (Upgrade Test)</strong> để đạt điều kiện điểm số vượt mức 80%!</span>
+                </div>
+            </div>
+        }
+
+        <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 40px; align-items: start;">
+            <!-- Left Column: Documents list -->
+            <div>
+                <h2 style="font-size: 22px; color: #020617; margin-top: 0; margin-bottom: 20px;">📖 Tài nguyên bồi dưỡng kiến thức</h2>
                 
-                @if (selectedPath != null)
+                @if (Model != null && Model.Any())
                 {
-                    <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 13px; color: #4b5563; line-height: 1.5;">
-                        <div>• Lộ trình: <strong>@selectedPath.Title</strong></div>
-                        <div>• Số lượng: <strong>10 câu hỏi nghiệp vụ</strong></div>
-                        <div>• Thời gian: <strong>15 phút</strong></div>
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        @foreach (var res in Model)
+                        {
+                            <div class="info-card" style="display: flex; gap: 20px; padding: 20px; align-items: center; transition: 0.25s;">
+                                <!-- File Icon -->
+                                <div style="width: 60px; height: 60px; border-radius: 12px; background: #f1f5f9; display: flex; flex-shrink: 0; align-items: center; justify-content: center; font-size: 24px;">
+                                    @if (res.ResourceType == "PDF") { <span>📕</span> }
+                                    else if (res.ResourceType == "Video") { <span>🎥</span> }
+                                    else { <span>📄</span> }
+                                </div>
+                                <div style="flex-grow: 1;">
+                                    <span style="font-size: 11px; font-weight: 700; color: #4f46e5; text-transform: uppercase; background: #e0e7ff; padding: 2px 8px; border-radius: 6px;">@res.ResourceType</span>
+                                    <h3 style="font-size: 18px; color: #020617; margin: 6px 0 4px;">@res.Title</h3>
+                                    <small style="color: #94a3b8;">Lộ trình: @(res.CareerPath?.Title ?? "Chung")</small>
+                                </div>
+                                <a href="@res.Url" target="_blank" class="btn secondary-btn" style="border-radius: 8px; font-size: 13px; font-weight: 600; padding: 8px 16px; text-decoration: none;">Tải / Xem ngay</a>
+                            </div>
+                        }
                     </div>
-                    
-                    <button class="btn primary-btn" style="width: 100%; border-radius: 10px; font-weight: 700; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: none; cursor: pointer;" onclick="startUpgradeTest()">Bắt đầu Upgrade Test</button>
                 }
                 else
                 {
-                    <p style="font-size: 13px; color: #94a3b8; font-style: italic;">Vui lòng chọn một lộ trình sự nghiệp cụ thể để được phân bổ bài kiểm tra nâng cấp tương ứng.</p>
-                    <a asp-controller="Home" asp-action="CareerTest" class="btn secondary-btn" style="width: 100%; text-align: center; border-radius: 10px; font-weight: 700; display: block; padding-top: 10px; box-sizing: border-box; height: 44px;">Làm bài Test định hướng</a>
+                    <p style="font-style: italic; color: #64748b;">Chưa có tài nguyên bồi dưỡng cụ thể cho lộ trình này. Ban điều phối sẽ cập nhật sớm nhất.</p>
                 }
             </div>
-        </div>
 
-    </div>
+            <!-- Right Column: Upgrade Test Area -->
+            <div>
+                <div class="info-card" style="border: 2px solid #4f46e5; background: #ffffff; padding: 24px; position: sticky; top: 100px;">
+                    <span style="font-size: 12px; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.5px; background: #e0e7ff; padding: 4px 10px; border-radius: 999px;">Đánh giá tiến độ</span>
+                    <h3 style="font-size: 20px; color: #020617; margin: 12px 0 8px;">📝 Bài test nâng cấp (Upgrade Test)</h3>
+                    <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin: 0 0 20px;">Bài kiểm tra này giúp đánh giá lại kỹ năng của bạn sau quá trình tự bồi dưỡng kiến thức. Đạt điểm số trên 80% để mở khóa kết nối nhà tuyển dụng.</p>
+                    
+                    @if (selectedPath != null)
+                    {
+                        <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 13px; color: #4b5563; line-height: 1.5;">
+                            <div>• Lộ trình: <strong>@selectedPath.Title</strong></div>
+                            <div>• Số lượng: <strong>10 câu hỏi nghiệp vụ</strong></div>
+                            <div>• Thời gian: <strong>15 phút</strong></div>
+                        </div>
+                        
+                        <button class="btn primary-btn" style="width: 100%; border-radius: 10px; font-weight: 700; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px; border: none; cursor: pointer;" onclick="startUpgradeTest()">Bắt đầu Upgrade Test</button>
+                    }
+                    else
+                    {
+                        <p style="font-size: 13px; color: #94a3b8; font-style: italic;">Vui lòng chọn một lộ trình sự nghiệp cụ thể để được phân bổ bài kiểm tra nâng cấp tương ứng.</p>
+                        <a asp-controller="Home" asp-action="CareerTest" class="btn secondary-btn" style="width: 100%; text-align: center; border-radius: 10px; font-weight: 700; display: block; padding-top: 10px; box-sizing: border-box; height: 44px; text-decoration: none;">Làm bài Test định hướng</a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 </section>
 
 <!-- Mock Upgrade Test Modal -->

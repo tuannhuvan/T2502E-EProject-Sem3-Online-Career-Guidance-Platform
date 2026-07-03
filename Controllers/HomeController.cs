@@ -81,30 +81,90 @@ public class HomeController : Controller
 
     public async Task<IActionResult> CareerPath()
     {
+        var userIdValue = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userIdValue))
+        {
+            ViewBag.Status = "NotLoggedIn";
+            return View(new List<CareerPath>());
+        }
+
+        var userId = int.Parse(userIdValue);
+        var pathIds = await _context.TestResults
+            .Where(tr => tr.UserId == userId && tr.RecommendedCareerPathId.HasValue)
+            .Select(tr => tr.RecommendedCareerPathId.Value)
+            .Distinct()
+            .ToListAsync();
+
+        if (!pathIds.Any())
+        {
+            ViewBag.Status = "NoTestResults";
+            return View(new List<CareerPath>());
+        }
+
+        ViewBag.Status = "HasResults";
         var paths = await _context.CareerPaths
             .Include(cp => cp.Category)
-            .Where(cp => cp.Status == 1)
+            .Where(cp => pathIds.Contains(cp.Id) && cp.Status == 1)
             .ToListAsync();
+
         return View(paths);
     }
 
     public async Task<IActionResult> Training(int? careerPathId)
     {
+        var userIdValue = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userIdValue))
+        {
+            ViewBag.Status = "NotLoggedIn";
+            return View(new List<Resource>());
+        }
+
+        var userId = int.Parse(userIdValue);
+        var pathIds = await _context.TestResults
+            .Where(tr => tr.UserId == userId && tr.RecommendedCareerPathId.HasValue)
+            .Select(tr => tr.RecommendedCareerPathId.Value)
+            .Distinct()
+            .ToListAsync();
+
+        if (!pathIds.Any())
+        {
+            ViewBag.Status = "NoTestResults";
+            return View(new List<Resource>());
+        }
+
+        ViewBag.Status = "HasResults";
+
+        // Get matching career paths for selection dropdown
+        var recommendedPaths = await _context.CareerPaths
+            .Where(cp => pathIds.Contains(cp.Id) && cp.Status == 1)
+            .ToListAsync();
+        ViewBag.RecommendedPaths = recommendedPaths;
+
         List<Resource> resources;
         if (careerPathId.HasValue)
         {
-            resources = await _context.Resources
-                .Where(r => r.PathId == careerPathId.Value && r.Status == 1)
-                .Include(r => r.CareerPath)
-                .ToListAsync();
-            
-            ViewBag.SelectedPath = await _context.CareerPaths.FindAsync(careerPathId.Value);
+            if (pathIds.Contains(careerPathId.Value))
+            {
+                resources = await _context.Resources
+                    .Where(r => r.PathId == careerPathId.Value && r.Status == 1)
+                    .Include(r => r.CareerPath)
+                    .ToListAsync();
+                
+                ViewBag.SelectedPath = recommendedPaths.FirstOrDefault(p => p.Id == careerPathId.Value);
+            }
+            else
+            {
+                resources = await _context.Resources
+                    .Where(r => pathIds.Contains(r.PathId) && r.Status == 1)
+                    .Include(r => r.CareerPath)
+                    .ToListAsync();
+            }
         }
         else
         {
             resources = await _context.Resources
                 .Include(r => r.CareerPath)
-                .Where(r => r.Status == 1)
+                .Where(r => pathIds.Contains(r.PathId) && r.Status == 1)
                 .ToListAsync();
         }
         return View(resources);

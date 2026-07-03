@@ -1,6 +1,7 @@
 @model IEnumerable<Career_Guidance_Platform.Models.CareerPath>
 @{
     ViewData["Title"] = "Gợi ý & Lộ trình";
+    string status = ViewBag.Status as string ?? "HasResults";
 }
 
 <section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9;">
@@ -10,48 +11,78 @@
 </section>
 
 <section class="content-section" style="max-width: 1200px; padding: 60px 24px;">
-    <div class="news-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;">
-        @if (Model != null && Model.Any())
-        {
-            foreach (var path in Model)
+    @if (status == "NotLoggedIn")
+    {
+        <div style="text-align: center; padding: 80px 40px; background: #ffffff; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); max-width: 600px; margin: 0 auto;">
+            <div style="font-size: 64px; margin-bottom: 24px;">🔒</div>
+            <h2 style="font-size: 24px; color: #0f172a; margin-bottom: 16px; font-weight: 800;">Bạn chưa đăng nhập</h2>
+            <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                Vui lòng đăng nhập hoặc đăng ký tài khoản và thực hiện bài kiểm tra định hướng nghề nghiệp để khám phá lộ trình phát triển phù hợp nhất với bản thân.
+            </p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <a class="btn primary-btn" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Home/CareerPath" style="padding: 12px 28px; border-radius: 12px; font-weight: 700; text-decoration: none;">Đăng nhập</a>
+                <a class="btn secondary-btn" asp-controller="Account" asp-action="Register" asp-route-returnUrl="/Home/CareerPath" style="padding: 12px 28px; border-radius: 12px; font-weight: 700; text-decoration: none;">Đăng ký ngay</a>
+            </div>
+        </div>
+    }
+    else if (status == "NoTestResults")
+    {
+        <div style="text-align: center; padding: 80px 40px; background: #ffffff; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); max-width: 600px; margin: 0 auto;">
+            <div style="font-size: 64px; margin-bottom: 24px;">🧭</div>
+            <h2 style="font-size: 24px; color: #0f172a; margin-bottom: 16px; font-weight: 800;">Chưa có kết quả đánh giá</h2>
+            <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                Bạn cần hoàn thành bài trắc nghiệm tính cách, sở thích và năng lực để hệ thống AI phân tích và gợi ý các lộ trình nghề nghiệp phù hợp nhất với bạn.
+            </p>
+            <a asp-controller="Home" asp-action="CareerTest" class="btn primary-btn" style="padding: 12px 32px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; justify-content: center;">
+                🚀 Làm bài Test định hướng ngay
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="news-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;">
+            @if (Model != null && Model.Any())
             {
-                <div class="news-card" style="display: flex; flex-direction: column; height: 100%; padding: 32px; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.03); transition: all 0.3s ease;">
-                    <div style="margin-bottom: 16px;">
-                        <span style="font-size: 11px; font-weight: 800; color: #4f46e5; text-transform: uppercase; background: #eef2ff; padding: 6px 12px; border-radius: 999px; display: inline-block; border: 1px solid #e0e7ff;">
-                            💼 @(path.Category?.Name ?? "Định hướng")
-                        </span>
-                    </div>
-                    
-                    <h3 style="margin: 0 0 12px 0; font-size: 21px; font-weight: 800; color: #0f172a; line-height: 1.4;">
-                        @path.Title
-                    </h3>
+                foreach (var path in Model)
+                {
+                    <div class="news-card" style="display: flex; flex-direction: column; height: 100%; padding: 32px; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.03); transition: all 0.3s ease;">
+                        <div style="margin-bottom: 16px;">
+                            <span style="font-size: 11px; font-weight: 800; color: #4f46e5; text-transform: uppercase; background: #eef2ff; padding: 6px 12px; border-radius: 999px; display: inline-block; border: 1px solid #e0e7ff;">
+                                💼 @(path.Category?.Name ?? "Định hướng")
+                            </span>
+                        </div>
+                        
+                        <h3 style="margin: 0 0 12px 0; font-size: 21px; font-weight: 800; color: #0f172a; line-height: 1.4;">
+                            @path.Title
+                        </h3>
 
-                    <p style="color: #64748b; font-size: 14.5px; line-height: 1.7; margin: 0 0 24px 0; flex-grow: 1;">
-                        @if (!string.IsNullOrEmpty(path.Content) && path.Content.Length > 120)
-                        {
-                            @(path.Content.Substring(0, 117) + "...")
-                        }
-                        else
-                        {
-                            @path.Content
-                        }
-                    </p>
+                        <p style="color: #64748b; font-size: 14.5px; line-height: 1.7; margin: 0 0 24px 0; flex-grow: 1;">
+                            @if (!string.IsNullOrEmpty(path.Content) && path.Content.Length > 120)
+                            {
+                                @(path.Content.Substring(0, 117) + "...")
+                            }
+                            else
+                            {
+                                @path.Content
+                            }
+                        </p>
 
-                    <div style="margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 20px;">
-                        <a asp-controller="CareerPath" asp-action="Details" asp-route-id="@path.Id" class="btn primary-btn" style="width: 100%; justify-content: center; font-size: 14.5px; padding: 12px;">
-                            🚀 Khám phá lộ trình
-                        </a>
+                        <div style="margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                            <a asp-controller="CareerPath" asp-action="Details" asp-route-id="@path.Id" class="btn primary-btn" style="width: 100%; justify-content: center; font-size: 14.5px; padding: 12px; text-decoration: none;">
+                                🚀 Khám phá lộ trình
+                            </a>
+                        </div>
                     </div>
+                }
+            }
+            else
+            {
+                <div class="info-card" style="grid-column: 1 / -1; text-align: center; padding: 60px; border-radius: 24px; border: 1px dashed #cbd5e1; background: #f8fafc;">
+                    <span style="font-size: 48px; display: block; margin-bottom: 16px;">🧭</span>
+                    <h4 style="font-size: 18px; color: #475569; margin-bottom: 8px;">Không tìm thấy lộ trình phù hợp</h4>
+                    <p style="color: #64748b; font-style: italic; margin: 0;">Hãy làm lại bài đánh giá nghề nghiệp hoặc liên hệ cố vấn để cập nhật thêm.</p>
                 </div>
             }
-        }
-        else
-        {
-            <div class="info-card" style="grid-column: 1 / -1; text-align: center; padding: 60px; border-radius: 24px; border: 1px dashed #cbd5e1; background: #f8fafc;">
-                <span style="font-size: 48px; display: block; margin-bottom: 16px;">🧭</span>
-                <h4 style="font-size: 18px; color: #475569; margin-bottom: 8px;">Chưa có lộ trình nào</h4>
-                <p style="color: #64748b; font-style: italic; margin: 0;">Hiện chưa có lộ trình nghề nghiệp nào được xuất bản trên hệ thống.</p>
-            </div>
-        }
-    </div>
+        </div>
+    }
 </section>
