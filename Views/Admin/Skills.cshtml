@@ -1,0 +1,162 @@
+@model IEnumerable<Career_Guidance_Platform.Models.Skill>
+
+@{
+    ViewData["Title"] = "Quản lý Skills";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Quản lý Kỹ năng (Skills)</h2>
+            <div class="text-muted mt-1">Danh sách kỹ năng toàn hệ thống và các liên kết</div>
+        </div>
+        <div class="col-auto">
+            <a asp-controller="Admin" asp-action="CreateSkill" class="btn btn-primary">
+                <i class="ti ti-plus me-1"></i>
+                Thêm Kỹ năng
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+        <i class="ti ti-circle-check me-1"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+        <i class="ti ti-circle-x me-1"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card mt-3">
+    <div class="card-body border-bottom py-3">
+        <div class="d-flex">
+            <div class="input-icon w-100" style="max-width: 380px;">
+                <span class="input-icon-addon">
+                    <i class="ti ti-search"></i>
+                </span>
+                <input type="text" id="skill-search" class="form-control" placeholder="Tìm kiếm tên, phân loại, độ khó..." onkeyup="filterSkills()">
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table align-middle" id="skills-table">
+            <thead>
+            <tr>
+                <th style="width: 50px;">ID</th>
+                <th>Tên Kỹ năng</th>
+                <th>Phân loại</th>
+                <th>Độ khó</th>
+                <th>Thời gian học</th>
+                <th>Trạng thái</th>
+                <th class="text-end">Hành động</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                var pathCount = ViewBag.PathCounts.ContainsKey(item.Id) ? ViewBag.PathCounts[item.Id] : 0;
+                var stageCount = ViewBag.StageCounts.ContainsKey(item.Id) ? ViewBag.StageCounts[item.Id] : 0;
+
+                <tr class="skill-row" data-name="@item.Name.ToLower()" data-type="@item.SkillType.ToLower()" data-difficulty="@item.Difficulty.ToLower()">
+                    <td>@item.Id</td>
+                    <td>
+                        <strong class="text-dark" style="font-size: 15px;">@item.Name</strong>
+                        <div class="text-muted small my-1">@(item.Description?.Length > 120 ? item.Description.Substring(0, 120) + "..." : item.Description)</div>
+                        <div class="d-flex gap-2 mt-1">
+                            <span class="badge bg-purple-lite text-purple small">
+                                <i class="ti ti-route me-1"></i> @pathCount Lộ trình
+                            </span>
+                            <span class="badge bg-azure-lite text-azure small">
+                                <i class="ti ti-timeline me-1"></i> @stageCount Giai đoạn
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        @if (item.SkillType == "Hard Skill")
+                        {
+                            <span class="badge bg-blue text-white">Hard Skill</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-green text-white">Soft Skill</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.Difficulty == "Easy")
+                        {
+                            <span class="badge bg-success-lite text-success">Easy</span>
+                        }
+                        else if (item.Difficulty == "Medium")
+                        {
+                            <span class="badge bg-warning-lite text-warning">Medium</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger-lite text-danger">Hard</span>
+                        }
+                    </td>
+                    <td>@item.EstimatedHours giờ</td>
+                    <td>
+                        @if (item.Status == 1)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-controller="Admin"
+                           asp-action="EditSkill"
+                           asp-route-id="@item.Id"
+                           class="btn btn-sm btn-warning">
+                            Sửa
+                        </a>
+
+                        <form asp-controller="Admin"
+                              asp-action="DeleteSkill"
+                              asp-route-id="@item.Id"
+                              method="post"
+                              style="display:inline;"
+                              onsubmit="return confirm('Xóa kỹ năng này sẽ tự động gỡ liên kết khỏi tất cả Lộ trình nghề nghiệp và Giai đoạn liên quan. Bạn chắc chắn muốn xóa?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                Xóa
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterSkills() {
+            const query = document.getElementById('skill-search').value.toLowerCase();
+            const rows = document.querySelectorAll('.skill-row');
+            rows.forEach(row => {
+                const name = row.getAttribute('data-name');
+                const type = row.getAttribute('data-type');
+                const diff = row.getAttribute('data-difficulty');
+                if (name.includes(query) || type.includes(query) || diff.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+}
