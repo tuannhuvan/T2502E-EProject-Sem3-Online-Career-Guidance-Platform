@@ -5,6 +5,8 @@ using Career_Guidance_Platform.Data;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using Career_Guidance_Platform.Dtos.Question;
+using Career_Guidance_Platform.Service.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -13,11 +15,13 @@ namespace Career_Guidance_Platform.Controllers;
 
 [Authorize(Roles = "Admin")]
 public class AdminController : Controller
-{
+{    private readonly IQuestiontestService _Questiontestservice;
     private readonly AppDbContext _context;
+ 
 
-    public AdminController(AppDbContext context)
+    public AdminController( IQuestiontestService Questiontestservice,AppDbContext context)
     {
+        _Questiontestservice = Questiontestservice;
         _context = context;
     }
 
@@ -608,5 +612,95 @@ public class AdminController : Controller
         await _context.SaveChangesAsync();
 
         return RedirectToAction(nameof(Resources));
+    }
+    ////////////////////////CRUD Questiontest////////////////////////
+    /// /////////////////////////////////////////////////////////////
+    ///
+      
+    // ================= INDEX =================
+    public async Task<IActionResult> getquestion()
+    {
+        var data = await _Questiontestservice.GetAllAsync();
+        return View(data);
+    }
+
+    // ================= CREATE =================
+    public IActionResult Create()
+    {
+        ViewBag.Tests = new SelectList(
+            _context.Tests,
+            "Id",
+            "Title"
+        );
+        ViewBag.QuestionTypes = new SelectList(
+            _context.QuestionTypes,
+            "Id",
+            "Title"
+        );
+
+        ViewBag.CareerPaths = new SelectList(
+            _context.CareerPaths,
+            "Id",
+            "Title"
+        );
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(QuestionFullCreateDto dto)
+    {
+        await _Questiontestservice.CreateAsync(dto);
+        return RedirectToAction("Index");
+    }
+
+    // ================= EDIT =================
+    public async Task<IActionResult> Edit(int id)
+    {
+        var data = await _Questiontestservice.GetByIdAsync(id);
+
+        if (data == null)
+            return NotFound();
+
+        ViewBag.Tests = new SelectList(
+            _context.Tests,
+            "Id",
+            "Title",
+            data.CareerTestId
+        );
+
+        ViewBag.QuestionTypes = new SelectList(
+            _context.QuestionTypes,
+            "Id",
+            "Title",
+            data.QuestionTypeId
+        );
+
+        ViewBag.CareerPaths = new SelectList(
+            _context.CareerPaths,
+            "Id",
+            "Title"
+        );
+
+        return View(data);
+    }
+    [HttpPost]
+    public async Task<IActionResult> Edit(QuestionFullDto dto)
+    {
+        await _Questiontestservice.UpdateAsync(dto);
+        return RedirectToAction("Index");
+    }
+
+    // ================= DELETE =================
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _Questiontestservice.DeleteAsync(id);
+        return RedirectToAction("Index");
+    }
+
+    // ================= DETAILS =================
+    public async Task<IActionResult> Details(int id)
+    {
+        var data = await _Questiontestservice.GetByIdAsync(id);
+        return View(data);
     }
 }
