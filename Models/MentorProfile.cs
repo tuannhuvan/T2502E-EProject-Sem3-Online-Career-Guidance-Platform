@@ -41,6 +41,21 @@ namespace Career_Guidance_Platform.Models
         [Column("rating", TypeName = "decimal(3,2)")]
         public decimal Rating { get; set; } = 5.00m;
 
+        [Column("is_active")]
+        public bool IsActive { get; set; } = true;
+
+        [Column("is_verified")]
+        public bool IsVerified { get; set; } = false;
+
+        [Column("hourly_rate", TypeName = "decimal(18,2)")]
+        public decimal HourlyRate { get; set; } = 0.00m;
+
+        [Column("experience_description", TypeName = "longtext")]
+        public string ExperienceDescription { get; set; } = string.Empty;
+
+        [Column("expertise", TypeName = "longtext")]
+        public string Expertise { get; set; } = string.Empty;
+
         [ForeignKey("UserId")]
         public User? User { get; set; }
 

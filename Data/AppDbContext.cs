@@ -36,6 +36,7 @@ namespace Career_Guidance_Platform.Data
         public DbSet<UserSkill> UserSkills { get; set; }
         public DbSet<SuccessStory> SuccessStories { get; set; }
         public DbSet<MentorProfile> MentorProfiles { get; set; }
+        public DbSet<MentorReview> MentorReviews { get; set; }
         public DbSet<MentorshipRequest> MentorshipRequests { get; set; }
         public DbSet<MentorshipMeeting> MentorshipMeetings { get; set; }
         public DbSet<MentorshipMessage> MentorshipMessages { get; set; }
@@ -146,6 +147,25 @@ namespace Career_Guidance_Platform.Data
                 .HasOne(mm => mm.Receiver)
                 .WithMany(u => u.ReceivedMessages)
                 .HasForeignKey(mm => mm.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // MentorReview relationship mappings
+            modelBuilder.Entity<MentorReview>()
+                .HasOne(mr => mr.Mentor)
+                .WithMany()
+                .HasForeignKey(mr => mr.MentorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MentorReview>()
+                .HasOne(mr => mr.Mentee)
+                .WithMany()
+                .HasForeignKey(mr => mr.MenteeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<MentorReview>()
+                .HasOne(mr => mr.Meeting)
+                .WithMany()
+                .HasForeignKey(mr => mr.MeetingId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // PeerConnection navigation configuration (multiple FKs to User)
