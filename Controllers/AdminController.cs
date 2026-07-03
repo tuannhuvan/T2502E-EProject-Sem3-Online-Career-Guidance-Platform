@@ -960,4 +960,151 @@ public class AdminController : Controller
 
         return RedirectToAction(nameof(Resources));
     }
+
+    // ==========================================
+    // CRUD SKILLS (MANAGEMENT)
+    // ==========================================
+
+    public async Task<IActionResult> Skills()
+    {
+        var skills = await _context.Skills
+            .OrderByDescending(s => s.Id)
+            .ToListAsync();
+
+        ViewBag.PathCounts = await _context.CareerPathSkills
+            .GroupBy(cps => cps.SkillId)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+
+        ViewBag.StageCounts = await _context.CareerStageSkills
+            .GroupBy(css => css.SkillId)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+
+        return View(skills);
+    }
+
+    public IActionResult CreateSkill()
+    {
+        return View(new Skill { Status = 1, EstimatedHours = 10, Difficulty = "Medium", SkillType = "Hard Skill" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateSkill(Skill skill)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(skill);
+        }
+
+        skill.CreatedAt = DateTime.Now;
+        skill.CreatedBy = User.Identity?.Name ?? "Admin";
+
+        _context.Skills.Add(skill);
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Thêm kỹ năng thành công!";
+        return RedirectToAction(nameof(Skills));
+    }
+
+    public async Task<IActionResult> EditSkill(int id)
+    {
+        var skill = await _context.Skills.FindAsync(id);
+        if (skill == null)
+        {
+            return NotFound();
+        }
+        return View(skill);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditSkill(int id, Skill skill)
+    {
+        if (id != skill.Id)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(skill);
+        }
+
+        try
+        {
+            var existingSkill = await _context.Skills.FindAsync(id);
+            if (existingSkill == null)
+            {
+                return NotFound();
+            }
+
+            existingSkill.Name = skill.Name;
+            existingSkill.Description = skill.Description;
+            existingSkill.SkillType = skill.SkillType;
+            existingSkill.Difficulty = skill.Difficulty;
+            existingSkill.EstimatedHours = skill.EstimatedHours;
+            existingSkill.Status = skill.Status;
+            existingSkill.UpdatedAt = DateTime.Now;
+            existingSkill.UpdatedBy = User.Identity?.Name ?? "Admin";
+
+            _context.Skills.Update(existingSkill);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Cập nhật kỹ năng thành công!";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "Lỗi khi cập nhật kỹ năng: " + ex.Message;
+        }
+
+        return RedirectToAction(nameof(Skills));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteSkill(int id)
+    {
+        var skill = await _context.Skills.FindAsync(id);
+        if (skill == null)
+        {
+            return NotFound();
+        }
+
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // 1. Delete from CareerPathSkills
+            var pathSkills = await _context.CareerPathSkills.Where(cps => cps.SkillId == id).ToListAsync();
+            _context.CareerPathSkills.RemoveRange(pathSkills);
+
+            // 2. Delete from CareerStageSkills
+            var stageSkills = await _context.CareerStageSkills.Where(css => css.SkillId == id).ToListAsync();
+            _context.CareerStageSkills.RemoveRange(stageSkills);
+
+            // 3. Delete from UserSkills
+            var userSkills = await _context.UserSkills.Where(us => us.SkillId == id).ToListAsync();
+            _context.UserSkills.RemoveRange(userSkills);
+
+            // 4. Nullify SkillId in Resources
+            var resources = await _context.Resources.Where(r => r.SkillId == id).ToListAsync();
+            foreach (var res in resources)
+            {
+                res.SkillId = null;
+            }
+
+            // 5. Delete Skill
+            _context.Skills.Remove(skill);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["Success"] = "Đã xóa kỹ năng thành công!";
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            TempData["Error"] = "Lỗi khi xóa kỹ năng: " + ex.Message;
+        }
+
+        return RedirectToAction(nameof(Skills));
+    }
 }
