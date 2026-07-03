@@ -1,4 +1,6 @@
+using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Career_Guidance_Platform.Models;
 using Career_Guidance_Platform.Data;
@@ -7,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Career_Guidance_Platform.Models.ViewModels;
 
 
 namespace Career_Guidance_Platform.Controllers;
@@ -435,6 +438,15 @@ public class AdminController : Controller
             .OrderByDescending(c => c.Id)
             .ToListAsync();
 
+        // Pass statistics to display on the index view (e.g. stage count, skill count)
+        ViewBag.StageCounts = await _context.CareerStages
+            .GroupBy(cs => cs.CareerPathId)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+
+        ViewBag.SkillCounts = await _context.CareerPathSkills
+            .GroupBy(cps => cps.CareerPathId)
+            .ToDictionaryAsync(g => g.Key, g => g.Count());
+
         return View(careerPaths);
     }
 
@@ -446,7 +458,18 @@ public class AdminController : Controller
             "Name"
         );
 
-        return View();
+        ViewBag.ParentPaths = new SelectList(
+            await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+            "Id",
+            "Title"
+        );
+
+        ViewBag.Skills = await _context.Skills
+            .Where(s => s.Status == 1)
+            .OrderBy(s => s.Name)
+            .ToListAsync();
+
+        return View(new CareerPath { Status = 1 });
     }
 
     [HttpPost]
@@ -462,12 +485,24 @@ public class AdminController : Controller
                 careerPath.CategoryId
             );
 
+            ViewBag.ParentPaths = new SelectList(
+                await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
+                "Id",
+                "Title",
+                careerPath.ParentPathId
+            );
+
+            ViewBag.Skills = await _context.Skills
+                .Where(s => s.Status == 1)
+                .OrderBy(s => s.Name)
+                .ToListAsync();
+
             return View(careerPath);
         }
 
         careerPath.Status = 1;
         careerPath.CreatedAt = DateTime.Now;
-        careerPath.CreatedBy = "Admin";
+        careerPath.CreatedBy = User.Identity?.Name ?? "Admin";
 
         _context.CareerPaths.Add(careerPath);
         await _context.SaveChangesAsync();
@@ -477,12 +512,23 @@ public class AdminController : Controller
 
     public async Task<IActionResult> EditCareerPath(int id)
     {
-        var careerPath = await _context.CareerPaths.FindAsync(id);
+        var careerPath = await _context.CareerPaths
+            .Include(cp => cp.CareerPathSkills)
+            .FirstOrDefaultAsync(cp => cp.Id == id);
 
         if (careerPath == null)
         {
             return NotFound();
         }
+
+        var stages = await _context.CareerStages
+            .Include(cs => cs.CareerStageSkills)
+                .ThenInclude(css => css.Skill)
+            .Where(cs => cs.CareerPathId == id)
+            .OrderBy(cs => cs.SequenceOrder)
+            .ToListAsync();
+
+        ViewBag.Stages = stages;
 
         ViewBag.Categories = new SelectList(
             await _context.Categories.Where(c => c.Status == 1).ToListAsync(),
@@ -490,6 +536,18 @@ public class AdminController : Controller
             "Name",
             careerPath.CategoryId
         );
+
+        ViewBag.ParentPaths = new SelectList(
+            await _context.CareerPaths.Where(c => c.Status == 1 && c.Id != id).ToListAsync(),
+            "Id",
+            "Title",
+            careerPath.ParentPathId
+        );
+
+        ViewBag.Skills = await _context.Skills
+            .Where(s => s.Status == 1)
+            .OrderBy(s => s.Name)
+            .ToListAsync();
 
         return View(careerPath);
     }
@@ -512,16 +570,179 @@ public class AdminController : Controller
                 careerPath.CategoryId
             );
 
+            ViewBag.ParentPaths = new SelectList(
+                await _context.CareerPaths.Where(c => c.Status == 1 && c.Id != id).ToListAsync(),
+                "Id",
+                "Title",
+                careerPath.ParentPathId
+            );
+
+            ViewBag.Skills = await _context.Skills
+                .Where(s => s.Status == 1)
+                .OrderBy(s => s.Name)
+                .ToListAsync();
+
             return View(careerPath);
         }
 
         careerPath.UpdatedAt = DateTime.Now;
-        careerPath.UpdatedBy = "Admin";
+        careerPath.UpdatedBy = User.Identity?.Name ?? "Admin";
 
         _context.CareerPaths.Update(careerPath);
         await _context.SaveChangesAsync();
 
         return RedirectToAction(nameof(CareerPaths));
+    }
+
+    [HttpPost]
+    [Route("Admin/SaveCareerPath")]
+    public async Task<IActionResult> SaveCareerPath([FromBody] SaveCareerPathDto dto)
+    {
+        if (dto == null)
+        {
+            return Json(new { success = false, message = "Dữ liệu không hợp lệ." });
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Title))
+        {
+            return Json(new { success = false, message = "Tên Lộ trình không được để trống." });
+        }
+
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            CareerPath? careerPath;
+            if (dto.Id > 0)
+            {
+                careerPath = await _context.CareerPaths.FindAsync(dto.Id);
+                if (careerPath == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy Lộ trình nghề nghiệp." });
+                }
+            }
+            else
+            {
+                careerPath = new CareerPath
+                {
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = User.Identity?.Name ?? "Admin"
+                };
+                _context.CareerPaths.Add(careerPath);
+            }
+
+            // Update basic fields
+            careerPath.Title = dto.Title;
+            careerPath.CategoryId = dto.CategoryId;
+            careerPath.ParentPathId = dto.ParentPathId;
+            careerPath.Content = dto.Content;
+            careerPath.SalaryMin = dto.SalaryMin;
+            careerPath.SalaryMax = dto.SalaryMax;
+            careerPath.JobOutlook = dto.JobOutlook;
+            careerPath.Status = dto.Status;
+            careerPath.UpdatedAt = DateTime.Now;
+            careerPath.UpdatedBy = User.Identity?.Name ?? "Admin";
+
+            // Save first if new
+            if (dto.Id == 0)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            // Update general CareerPathSkills
+            var existingPathSkills = await _context.CareerPathSkills
+                .Where(cps => cps.CareerPathId == careerPath.Id)
+                .ToListAsync();
+            _context.CareerPathSkills.RemoveRange(existingPathSkills);
+
+            if (dto.Skills != null)
+            {
+                foreach (var sk in dto.Skills)
+                {
+                    _context.CareerPathSkills.Add(new CareerPathSkill
+                    {
+                        CareerPathId = careerPath.Id,
+                        SkillId = sk.SkillId,
+                        ImportanceLevel = sk.ImportanceLevel
+                    });
+                }
+            }
+
+            // Update Stages
+            var existingStages = await _context.CareerStages
+                .Include(cs => cs.CareerStageSkills)
+                .Where(cs => cs.CareerPathId == careerPath.Id)
+                .ToListAsync();
+
+            var dtoStageIds = dto.Stages.Where(s => s.Id > 0).Select(s => s.Id).ToList();
+            var stagesToRemove = existingStages.Where(s => !dtoStageIds.Contains(s.Id)).ToList();
+
+            foreach (var stToRemove in stagesToRemove)
+            {
+                _context.CareerStageSkills.RemoveRange(stToRemove.CareerStageSkills);
+                _context.CareerStages.Remove(stToRemove);
+            }
+
+            if (dto.Stages != null)
+            {
+                foreach (var stageDto in dto.Stages)
+                {
+                    CareerStage? stage;
+                    if (stageDto.Id > 0)
+                    {
+                        stage = existingStages.FirstOrDefault(s => s.Id == stageDto.Id);
+                        if (stage == null)
+                        {
+                            stage = new CareerStage { CareerPathId = careerPath.Id };
+                            _context.CareerStages.Add(stage);
+                        }
+                    }
+                    else
+                    {
+                        stage = new CareerStage { CareerPathId = careerPath.Id };
+                        _context.CareerStages.Add(stage);
+                    }
+
+                    stage.Title = stageDto.Title;
+                    stage.Description = stageDto.Description;
+                    stage.SequenceOrder = stageDto.SequenceOrder;
+
+                    // Save stage to get Id if new
+                    if (stage.Id == 0)
+                    {
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // Update stage skills
+                    var existingStageSkills = await _context.CareerStageSkills
+                        .Where(css => css.CareerStageId == stage.Id)
+                        .ToListAsync();
+                    _context.CareerStageSkills.RemoveRange(existingStageSkills);
+
+                    if (stageDto.Skills != null)
+                    {
+                        foreach (var skillDto in stageDto.Skills)
+                        {
+                            _context.CareerStageSkills.Add(new CareerStageSkill
+                            {
+                                CareerStageId = stage.Id,
+                                SkillId = skillDto.SkillId,
+                                ProficiencyRequired = skillDto.ProficiencyRequired
+                            });
+                        }
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Json(new { success = true, message = "Lưu lộ trình nghề nghiệp thành công!" });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return Json(new { success = false, message = "Có lỗi xảy ra: " + ex.Message });
+        }
     }
 
     [HttpPost]
@@ -535,8 +756,99 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        _context.CareerPaths.Remove(careerPath);
-        await _context.SaveChangesAsync();
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // 1. Delete OptionCareerPaths
+            var optionCareerPaths = await _context.OptionCareerPaths
+                .Where(o => o.CareerPathId == id)
+                .ToListAsync();
+            _context.OptionCareerPaths.RemoveRange(optionCareerPaths);
+
+            // 2. Delete TestResultScores
+            var testResultScores = await _context.TestResultScores
+                .Where(s => s.CareerPathId == id)
+                .ToListAsync();
+            _context.TestResultScores.RemoveRange(testResultScores);
+
+            // 3. Delete SuccessStories
+            var successStories = await _context.SuccessStories
+                .Where(s => s.CareerPathId == id)
+                .ToListAsync();
+            _context.SuccessStories.RemoveRange(successStories);
+
+            // 4. Delete CareerPathCourses
+            var courses = await _context.CareerPathCourses
+                .Where(c => c.CareerPathId == id)
+                .ToListAsync();
+            _context.CareerPathCourses.RemoveRange(courses);
+
+            // 5. Delete CareerPathSkills
+            var pathSkills = await _context.CareerPathSkills
+                .Where(ps => ps.CareerPathId == id)
+                .ToListAsync();
+            _context.CareerPathSkills.RemoveRange(pathSkills);
+
+            // 6. Delete CareerStages and their skills
+            var stages = await _context.CareerStages
+                .Include(cs => cs.CareerStageSkills)
+                .Where(cs => cs.CareerPathId == id)
+                .ToListAsync();
+            foreach (var stage in stages)
+            {
+                _context.CareerStageSkills.RemoveRange(stage.CareerStageSkills);
+            }
+            _context.CareerStages.RemoveRange(stages);
+
+            // 7. Nullify references in Goals
+            var goals = await _context.Goals
+                .Where(g => g.CareerPathId == id)
+                .ToListAsync();
+            foreach (var goal in goals)
+            {
+                goal.CareerPathId = null;
+            }
+
+            // 8. Nullify references in JobPostings
+            var jobs = await _context.JobPostings
+                .Where(j => j.CareerPathId == id)
+                .ToListAsync();
+            foreach (var job in jobs)
+            {
+                job.CareerPathId = null;
+            }
+
+            // 9. Nullify references in TestResults
+            var testResults = await _context.TestResults
+                .Where(t => t.RecommendedCareerPathId == id)
+                .ToListAsync();
+            foreach (var tr in testResults)
+            {
+                tr.RecommendedCareerPathId = null;
+            }
+
+            // 10. Nullify ParentPathId in child CareerPaths
+            var childPaths = await _context.CareerPaths
+                .Where(c => c.ParentPathId == id)
+                .ToListAsync();
+            foreach (var child in childPaths)
+            {
+                child.ParentPathId = null;
+            }
+
+            // Remove CareerPath
+            _context.CareerPaths.Remove(careerPath);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["Success"] = "Đã xóa lộ trình nghề nghiệp thành công!";
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            TempData["Error"] = "Lỗi khi xóa lộ trình nghề nghiệp: " + ex.Message;
+        }
 
         return RedirectToAction(nameof(CareerPaths));
     }
