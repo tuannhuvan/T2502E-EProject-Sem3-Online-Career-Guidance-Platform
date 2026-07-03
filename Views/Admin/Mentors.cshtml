@@ -1,125 +1,110 @@
-﻿@{
+@model IEnumerable<Career_Guidance_Platform.Models.MentorProfile>
+@{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Mentors";
+    ViewData["Title"] = "Quản lý Cố vấn (Mentors)";
 }
 
 <div class="page-header d-print-none mb-3">
     <div class="row g-2 align-items-center">
         <div class="col">
-            <div class="page-pretitle">Management</div>
-            <h2 class="page-title">Mentor CRUD Demo</h2>
+            <div class="page-pretitle">Hệ thống</div>
+            <h2 class="page-title">Quản lý & Duyệt Hồ sơ Cố vấn</h2>
         </div>
     </div>
 </div>
 
-<div class="row row-cards">
-    <div class="col-lg-5">
-        <form class="card">
-            <div class="card-header">
-                <h3 class="card-title">Mentor Form</h3>
-            </div>
-
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Full Name</label>
-                    <input class="form-control is-invalid" placeholder="Nguyễn Văn An" />
-                    <div class="invalid-feedback">Name is required</div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Expertise</label>
-                    <select class="form-select">
-                        <option>.NET Developer</option>
-                        <option>UI/UX Designer</option>
-                        <option>Business Analyst</option>
-                        <option>Data Analyst</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Gender</label>
-
-                    <label class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="gender" checked />
-                        <span class="form-check-label">Male</span>
-                    </label>
-
-                    <label class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="gender" />
-                        <span class="form-check-label">Female</span>
-                    </label>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Available Date</label>
-                    <input type="date" class="form-control" />
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Avatar Upload</label>
-                    <input type="file" class="form-control" />
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Bio / CKEditor Demo</label>
-                    <textarea rows="5" class="form-control">Senior mentor with 8 years of experience...</textarea>
-                </div>
-
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" checked />
-                    <span class="form-check-label">Verified Mentor</span>
-                </label>
-            </div>
-
-            <div class="card-footer text-end">
-                <button type="button" class="btn btn-secondary">Cancel</button>
-                <button type="button" class="btn btn-primary">Save Mentor</button>
-            </div>
-        </form>
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+}
 
-    <div class="col-lg-7">
+<div class="row row-cards">
+    <div class="col-lg-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Mentor List</h3>
+                <h3 class="card-title">Danh sách Đăng ký Cố vấn</h3>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-vcenter card-table">
                     <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Expertise</th>
-                        <th>Rating</th>
-                        <th>Status</th>
-                        <th></th>
+                        <th>Họ và tên</th>
+                        <th>Lĩnh vực / Chuyên môn</th>
+                        <th>Kinh nghiệm</th>
+                        <th>Điểm Đánh giá</th>
+                        <th>Trạng thái</th>
+                        <th class="w-1">Hành động</th>
                     </tr>
                     </thead>
 
                     <tbody>
-                    <tr>
-                        <td>Nguyễn Văn An</td>
-                        <td>.NET Developer</td>
-                        <td>4.9</td>
-                        <td><span class="badge bg-green-lt">Verified</span></td>
-                        <td><a class="btn btn-sm btn-outline-primary">Edit</a></td>
-                    </tr>
-
-                    <tr>
-                        <td>Trần Mai Linh</td>
-                        <td>UI/UX Designer</td>
-                        <td>4.8</td>
-                        <td><span class="badge bg-green-lt">Verified</span></td>
-                        <td><a class="btn btn-sm btn-outline-primary">Edit</a></td>
-                    </tr>
-
-                    <tr>
-                        <td>Phạm Minh Huy</td>
-                        <td>Business Analyst</td>
-                        <td>4.7</td>
-                        <td><span class="badge bg-yellow-lt">Pending</span></td>
-                        <td><a class="btn btn-sm btn-outline-primary">Edit</a></td>
-                    </tr>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var mentor in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex py-1 align-items-center">
+                                        <span class="avatar me-2" style="background-image: url(https://api.dicebear.com/7.x/initials/svg?seed=@(mentor.User?.FullName))"></span>
+                                        <div class="flex-fill">
+                                            <div class="font-weight-medium">@mentor.User?.FullName</div>
+                                            <div class="text-secondary">@mentor.User?.Email</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-weight-medium">@mentor.JobTitle</span>
+                                    <div class="text-secondary font-size-sm">@mentor.Specialization</div>
+                                </td>
+                                <td>
+                                    <div style="max-width: 250px;" class="text-truncate" title="@mentor.Biography">
+                                        @mentor.Biography
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-yellow">★</span> @mentor.Rating.ToString("0.0")
+                                </td>
+                                <td>
+                                    @if (mentor.IsVerified)
+                                    {
+                                        <span class="badge bg-green-lt">Đã duyệt (Verified)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-lt">Chờ duyệt (Pending)</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-list flex-nowrap">
+                                        @if (!mentor.IsVerified)
+                                        {
+                                            <form asp-controller="Admin" asp-action="ApproveMentor" asp-route-id="@mentor.UserId" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-success">Duyệt hồ sơ</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-controller="Admin" asp-action="RejectMentor" asp-route-id="@mentor.UserId" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Hủy duyệt</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-secondary py-4">Chưa có cố vấn nào đăng ký trên hệ thống.</td>
+                        </tr>
+                    }
                     </tbody>
                 </table>
             </div>

@@ -1,0 +1,96 @@
+@model IEnumerable<Career_Guidance_Platform.Models.GroupMentoringSession>
+@{
+    ViewData["Title"] = "Hội thảo Cố vấn Nhóm";
+    var registeredSessionIds = ViewBag.RegisteredSessionIds as IEnumerable<int> ?? new List<int>();
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #ecfeff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #e2e8f0; padding: 50px 24px; text-align: center;">
+    <span class="page-badge" style="background: #ecfeff; color: #0891b2; border: 1px solid #cffafe; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;">HỌC NHÓM & HỘI THẢO</span>
+    <h1 style="font-size: 32px; font-weight: 900; color: #0f172a; margin: 12px 0 6px;">Hội thảo Cố vấn nhóm (Group Mentoring)</h1>
+    <p style="color: #64748b; font-size: 15px; max-width: 600px; margin: 0 auto; line-height: 1.5;">Tham gia các buổi hội thảo chia sẻ trực tuyến từ các Cố vấn, giải đáp thắc mắc chung theo nhóm và tương tác với các thành viên khác.</p>
+</section>
+
+<section class="content-section" style="max-width: 1000px; margin: 0 auto; padding: 40px 24px;">
+
+    @if (TempData["GroupSuccess"] != null)
+    {
+        <div style="background: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; padding: 16px; border-radius: 12px; margin-bottom: 30px; font-weight: 600;">
+            🎉 @TempData["GroupSuccess"]
+        </div>
+    }
+    @if (TempData["GroupWarning"] != null)
+    {
+        <div style="background: #fef3c7; border: 1px solid #fde68a; color: #b45309; padding: 16px; border-radius: 12px; margin-bottom: 30px; font-weight: 600;">
+            ⚠️ @TempData["GroupWarning"]
+        </div>
+    }
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0;">Các buổi hội thảo sắp diễn ra</h2>
+        <a asp-controller="Mentorship" asp-action="Index" class="btn secondary-btn" style="padding: 8px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 13px;">
+            ← Về Danh bạ Cố vấn
+        </a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var session in Model)
+            {
+                bool isRegistered = registeredSessionIds.Contains(session.Id);
+                bool isFull = session.Registrations.Count >= session.MaxParticipants;
+
+                <div class="info-card" style="padding: 28px; border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.01);">
+                    <div style="flex-grow: 1; padding-right: 30px;">
+                        <span style="font-size: 11px; font-weight: 700; color: #0891b2; background: #ecfeff; padding: 2px 8px; border-radius: 6px; margin-bottom: 8px; display: inline-block;">
+                            HỘI THẢO CHUYÊN ĐỀ
+                        </span>
+                        
+                        <h3 style="font-size: 20px; color: #0f172a; margin: 0 0 8px; font-weight: 800;">@session.Title</h3>
+                        
+                        <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">@session.Description</p>
+                        
+                        <div style="display: flex; gap: 24px; font-size: 13px; color: #475569;">
+                            <div>👤 Cố vấn: <strong>@session.Mentor?.FullName</strong></div>
+                            <div>📅 Thời gian: <strong>@session.ScheduledTime.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                            <div>👥 Số lượng: <strong>@session.Registrations.Count / @session.MaxParticipants thành viên</strong></div>
+                        </div>
+                    </div>
+
+                    <div style="flex-shrink: 0; min-width: 150px; text-align: right;">
+                        @if (isRegistered)
+                        {
+                            <span style="display: inline-block; padding: 10px 20px; border-radius: 10px; background: #dcfce7; color: #15803d; font-weight: 700; font-size: 13.5px;">
+                                ✔ Đã đăng ký
+                            </span>
+                            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Phòng họp: <a href="@session.MeetingUrl" target="_blank" style="color: #0891b2; text-decoration: underline;">Link Zoom ↗</a></div>
+                        }
+                        else if (isFull)
+                        {
+                            <span style="display: inline-block; padding: 10px 20px; border-radius: 10px; background: #f3f4f6; color: #9ca3af; font-weight: 700; font-size: 13.5px;">
+                                🚫 Đã hết chỗ
+                            </span>
+                        }
+                        else
+                        {
+                            <form asp-controller="Mentorship" asp-action="RegisterGroupSession" method="post" style="margin: 0;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="sessionId" value="@session.Id" />
+                                <button type="submit" class="btn primary-btn" style="padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 13.5px; border: none; cursor: pointer;">
+                                    Đăng ký ngay
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="info-card" style="text-align: center; padding: 50px; border-radius: 20px; border: 1px dashed #cbd5e1; background: #f8fafc;">
+                <p style="color: #64748b; font-style: italic; margin: 0;">Hiện tại chưa có buổi tư vấn nhóm nào được lên lịch. Vui lòng quay lại sau.</p>
+            </div>
+        }
+    </div>
+
+</section>

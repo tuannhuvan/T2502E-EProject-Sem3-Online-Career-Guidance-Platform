@@ -157,7 +157,18 @@
                 <div class="profile-dropdown-content">
                     <div class="dropdown-header-info">
                         <strong>@UserManager.GetUserName(User)</strong>
-                        <p>Học viên</p>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <p>Quản trị viên</p>
+                        }
+                        else if (User.IsInRole("Mentor"))
+                        {
+                            <p>Cố vấn</p>
+                        }
+                        else
+                        {
+                            <p>Học viên</p>
+                        }
                     </div>
                     <div class="dropdown-divider"></div>
                     <a asp-controller="Manage" asp-action="Index">👤 Thông tin cá nhân</a>
@@ -165,6 +176,10 @@
                     @if (User.IsInRole("Admin"))
                     {
                         <a asp-controller="Admin" asp-action="Dashboard" class="admin-link">🛡️ Admin Panel</a>
+                    }
+                    @if (User.IsInRole("Mentor"))
+                    {
+                        <a asp-controller="Mentorship" asp-action="Dashboard">💼 Mentor Dashboard</a>
                     }
                     <div class="dropdown-divider"></div>
                     <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" style="margin: 0;">
@@ -209,7 +224,7 @@
             <a asp-controller="Home" asp-action="CareerTest">Đánh giá nghề nghiệp</a>
             <a asp-controller="Home" asp-action="CareerPath">Gợi ý lộ trình</a>
             <a asp-controller="Home" asp-action="Training">Đào tạo</a>
-            <a asp-controller="Home" asp-action="Mentors">Cố vấn</a>
+            <a asp-controller="Mentorship" asp-action="Index">Cố vấn</a>
             <a asp-controller="Home" asp-action="Jobs">Việc làm</a>
         </div>
 
