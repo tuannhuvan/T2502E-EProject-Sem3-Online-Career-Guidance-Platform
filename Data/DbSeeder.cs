@@ -64,6 +64,50 @@ namespace Career_Guidance_Platform.Data
                 }
             }
 
+            // 3.5. Seed Mentor User & Profile
+            var mentorEmail = "mentor@careerpath.vn";
+            var mentorUser = await userManager.FindByEmailAsync(mentorEmail);
+            if (mentorUser == null)
+            {
+                mentorUser = new User
+                {
+                    UserName = mentorEmail,
+                    Email = mentorEmail,
+                    FullName = "Trần Văn Cố Vấn",
+                    Role = "Mentor",
+                    EmailConfirmed = true,
+                    Status = 1
+                };
+                var result = await userManager.CreateAsync(mentorUser, "Mentor@123456");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(mentorUser, "Mentor");
+                }
+            }
+
+            var mentorProfile = await context.MentorProfiles.FirstOrDefaultAsync(mp => mp.UserId == mentorUser.Id);
+            if (mentorProfile == null)
+            {
+                mentorProfile = new MentorProfile
+                {
+                    UserId = mentorUser.Id,
+                    JobTitle = "Senior .NET Developer",
+                    Company = "FPT Software",
+                    Specialization = "ASP.NET Core, C#, Clean Architecture",
+                    Biography = "Hơn 8 năm kinh nghiệm phát triển phần mềm và định hướng nghề nghiệp cho các thế hệ học viên trẻ.",
+                    AvailabilityJson = "Thứ 2, Thứ 4: 19:00 - 21:00",
+                    LinkedInUrl = "https://linkedin.com/in/mentor-demo",
+                    Rating = 5.0m,
+                    IsActive = true,
+                    IsVerified = true,
+                    HourlyRate = 150000m,
+                    ExperienceDescription = "Từng tham gia các dự án lớn về Tài chính và Hành chính công của FPT Software. Đào tạo thành công hơn 200 mentees.",
+                    Expertise = "C#, Backend Development, Cloud Azure"
+                };
+                context.MentorProfiles.Add(mentorProfile);
+                await context.SaveChangesAsync();
+            }
+
             // 4. Seed QuestionType
             var singleChoiceType = await context.Set<QuestionType>().FirstOrDefaultAsync(qt => qt.Name == "Single Choice");
             if (singleChoiceType == null)

@@ -27,7 +27,46 @@ public class AdminController : Controller
     }
     public IActionResult Dashboard() => View();
     public IActionResult Users() => View();
-    public IActionResult Mentors() => View();
+    
+    public async Task<IActionResult> Mentors()
+    {
+        var mentors = await _context.MentorProfiles
+            .Include(m => m.User)
+            .ToListAsync();
+        return View(mentors);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveMentor(int id)
+    {
+        var profile = await _context.MentorProfiles.FindAsync(id);
+        if (profile == null)
+        {
+            return NotFound();
+        }
+
+        profile.IsVerified = true;
+        await _context.SaveChangesAsync();
+        TempData["Success"] = "Đã phê duyệt hồ sơ cố vấn thành công!";
+        return RedirectToAction(nameof(Mentors));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectMentor(int id)
+    {
+        var profile = await _context.MentorProfiles.FindAsync(id);
+        if (profile == null)
+        {
+            return NotFound();
+        }
+
+        profile.IsVerified = false;
+        await _context.SaveChangesAsync();
+        TempData["Success"] = "Đã thu hồi phê duyệt hồ sơ cố vấn!";
+        return RedirectToAction(nameof(Mentors));
+    }
     
     public async Task<IActionResult> CareerTests()
     {
