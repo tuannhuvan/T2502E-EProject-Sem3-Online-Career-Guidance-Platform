@@ -24,14 +24,16 @@ namespace Career_Guidance_Platform.Controllers
             _emailSender = emailSender;
         }
 
-        public IActionResult Login()
+        public IActionResult Login(string? returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
                 var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
@@ -53,6 +55,11 @@ namespace Career_Guidance_Platform.Controllers
                             return RedirectToAction("GetResultDetail", "CareerTest", new { id = testResult.Id });
                         }
                     }
+
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
                     return RedirectToAction("Index", "Home");
                 }
 
@@ -62,14 +69,16 @@ namespace Career_Guidance_Platform.Controllers
             return View(model);
         }
 
-        public IActionResult Register()
+        public IActionResult Register(string? returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
                 var user = new User { UserName = model.Email, Email = model.Email, FullName = model.FullName };
@@ -92,6 +101,11 @@ namespace Career_Guidance_Platform.Controllers
                             HttpContext.Session.Remove("TestResultId");
                             return RedirectToAction("GetResultDetail", "CareerTest", new { id = testResult.Id });
                         }
+                    }
+
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
                     }
                     return RedirectToAction("Index", "Home");
                 }
