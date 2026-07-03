@@ -38,12 +38,20 @@
                 <tr>
                     <td>@item.Id</td>
                     <td>
-                        <strong>@item.Title</strong>
-                        <div class="text-muted small">
+                        <strong style="font-size: 15px; color: #1e293b;">@item.Title</strong>
+                        <div class="text-muted small my-1">
                             @(item.Content?.Length > 120 ? item.Content.Substring(0, 120) + "..." : item.Content)
                         </div>
+                        <div class="d-flex gap-2 mt-1">
+                            <span class="badge bg-purple-lite text-purple">
+                                <i class="ti ti-timeline me-1"></i> @(ViewBag.StageCounts.ContainsKey(item.Id) ? ViewBag.StageCounts[item.Id] : 0) Giai đoạn
+                            </span>
+                            <span class="badge bg-indigo-lite text-indigo">
+                                <i class="ti ti-bulb me-1"></i> @(ViewBag.SkillCounts.ContainsKey(item.Id) ? ViewBag.SkillCounts[item.Id] : 0) Kỹ năng yêu cầu
+                            </span>
+                        </div>
                     </td>
-                    <td>@item.Category?.Name</td>
+                    <td><span class="badge bg-azure-lite text-azure">@item.Category?.Name</span></td>
                     <td>
                         @if (item.Status == 1)
                         {
