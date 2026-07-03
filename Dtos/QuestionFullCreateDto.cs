@@ -2,7 +2,7 @@ namespace Career_Guidance_Platform.Dtos.Question;
 
 public class QuestionFullCreateDto
 {
-    public int CareerTestId  { get; set; }
+    public int TestId  { get; set; }
     public int QuestionTypeId { get; set; }
     public string Content { get; set; } = string.Empty;
 

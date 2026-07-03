@@ -1,6 +1,9 @@
 using Career_Guidance_Platform.Data;
 using Career_Guidance_Platform.Models;
+using Career_Guidance_Platform.Repository;
+using Career_Guidance_Platform.Repository.Interfaces;
 using Career_Guidance_Platform.Service;
+using Career_Guidance_Platform.Service.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +21,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddIdentity<User, IdentityRole<int>>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();;
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IQuestiontestRepository, QuestiontestRepository>();
+builder.Services.AddScoped<IQuestiontestService, QuestiontestService>();
 var app = builder.Build();
 
 // Apply migrations on startup

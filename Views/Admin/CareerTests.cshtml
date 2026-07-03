@@ -1,4 +1,6 @@
-﻿@{
+﻿
+@model IEnumerable<Career_Guidance_Platform.Dtos.Question.QuestionFullDto>
+@{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Career Tests";
 }
@@ -26,7 +28,8 @@
                 <option value="Value">Value</option>
             </select>
 
-            <button class="btn btn-primary"
+            <button asp-action="Create"
+                class="btn btn-primary"
                     id="btnAddQuestion"
                     type="button"
                     data-bs-toggle="modal"
@@ -44,94 +47,109 @@
                 <th>Question</th>
                 <th>Type</th>
                 <th>Options</th>
-                <th>Status</th>
                 <th class="text-end">Actions</th>
             </tr>
             </thead>
 
             <tbody id="questionTableBody">
-            <tr>
-                <td class="question-test">Holland Test</td>
+             @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
 
-                <td class="question-content">Bạn thích lập trình phần mềm?</td>
+                        <td>
+                            @item.TestTitle
+                        </td>
 
-                <td class="question-type">Interest</td>
+                        <td>
+                            @item.Content
+                        </td>
 
-                <td class="question-options"
-                    data-option1="Rất thích"
-                    data-career1="Web Developer"
-                    data-weight1="5"
-                    data-option2="Thích"
-                    data-career2="Web Developer"
-                    data-weight2="4"
-                    data-option3="Bình thường"
-                    data-career3="Data Analyst"
-                    data-weight3="3"
-                    data-option4="Không thích"
-                    data-career4="UI/UX Designer"
-                    data-weight4="1">
-                    4 Options
-                </td>
+                        <td>
+                            @item.QuestionTypeTitle
+                        </td>
 
-                <td class="question-status">
-                    <span class="badge bg-green-lt">Active</span>
-                </td>
+                        <td>
+                            <span class="badge bg-blue-lt">
+                                @(item.Options?.Count ?? 0) Options
+                            </span>
+                        </td>
+                        <td>
+                            
+                            <a asp-action="Edit"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
 
-                <td class="text-end">
-                    <div class="btn-list justify-content-end">
-                        <button class="btn btn-sm btn-outline-primary btn-edit-question" type="button">
-                            Edit
-                        </button>
+                            <a asp-action="Delete"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Delete this question?');">
+                                Delete
+                            </a>
 
-                        <button class="btn btn-sm btn-outline-danger btn-delete-question" type="button">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
+                        </td>
 
-            <tr>
-                <td class="question-test">MBTI Test</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
 
-                <td class="question-content">Bạn thích phân tích dữ liệu?</td>
+                    <td colspan="5" class="text-center">
+                        No questions found.
+                    </td>
 
-                <td class="question-type">Skill</td>
+                </tr>
+            }
 
-                <td class="question-options"
-                    data-option1="Rất thích"
-                    data-career1="Data Analyst"
-                    data-weight1="5"
-                    data-option2="Thích"
-                    data-career2="Data Analyst"
-                    data-weight2="4"
-                    data-option3="Bình thường"
-                    data-career3="Business Analyst"
-                    data-weight3="3"
-                    data-option4="Không thích"
-                    data-career4="Web Developer"
-                    data-weight4="1">
-                    4 Options
-                </td>
-
-                <td class="question-status">
-                    <span class="badge bg-green-lt">Active</span>
-                </td>
-
-                <td class="text-end">
-                    <div class="btn-list justify-content-end">
-                        <button class="btn btn-sm btn-outline-primary btn-edit-question" type="button">
-                            Edit
-                        </button>
-
-                        <button class="btn btn-sm btn-outline-danger btn-delete-question" type="button">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
             </tbody>
+
         </table>
+
     </div>
+
+</div>
+><div class="d-flex justify-content-between align-items-center mt-3">
+
+    <span>
+        Page @ViewBag.CurrentPage / @ViewBag.TotalPages
+    </span>
+
+    <div>
+
+        @if (ViewBag.CurrentPage > 1)
+        {
+            <a asp-action="CareerTests"
+               asp-route-page="@(ViewBag.CurrentPage - 1)"
+               class="btn btn-outline-primary btn-sm">
+                Previous
+            </a>
+        }
+
+        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+        {
+            <a asp-action="CareerTests"
+               asp-route-page="@i"
+               class="btn @(i == ViewBag.CurrentPage ? "btn-primary" : "btn-outline-primary") btn-sm">
+                @i
+            </a>
+        }
+
+        @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+        {
+            <a asp-action="CareerTests"
+               asp-route-page="@(ViewBag.CurrentPage + 1)"
+               class="btn btn-outline-primary btn-sm">
+                Next
+            </a>
+        }
+
+    </div>
+
 </div>
 
 <div class="modal modal-blur fade"

@@ -32,17 +32,36 @@ public class AdminController : Controller
     public IActionResult Dashboard() => View();
     public IActionResult Users() => View();
     public IActionResult Mentors() => View();
-    
-    public async Task<IActionResult> CareerTests()
+ 
+    /*public async Task<IActionResult> CareerTests()
     {
         var tests = await _context.Tests.ToListAsync();
         return View(tests);
-    }
+    }*/
     public IActionResult Jobs() => View();
     public IActionResult Reports() => View();
     public IActionResult Settings() => View();
     public IActionResult Terms() => View();
+    public async Task<IActionResult> CareerTests(int page = 1)
+    {
+        const int pageSize = 5;
 
+        var data = await _Questiontestservice.GetAllAsync();
+
+        var totalItems = data.Count;
+        var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+        var questions = data
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+
+        return View(questions);
+    }
+    /*
     // GET: Admin/TestDetails/5
     public async Task<IActionResult> TestDetails(int? id)
     {
@@ -165,6 +184,7 @@ public class AdminController : Controller
         }
         return RedirectToAction(nameof(CareerTests));
     }
+    */
 
     // GET: Admin/Categories
     public async Task<IActionResult> Categories()
@@ -618,7 +638,7 @@ public class AdminController : Controller
     ///
       
     // ================= INDEX =================
-    public async Task<IActionResult> getquestion()
+    public async Task<IActionResult> Questiontest()
     {
         var data = await _Questiontestservice.GetAllAsync();
         return View(data);
@@ -650,7 +670,7 @@ public class AdminController : Controller
     public async Task<IActionResult> Create(QuestionFullCreateDto dto)
     {
         await _Questiontestservice.CreateAsync(dto);
-        return RedirectToAction("Index");
+        return RedirectToAction(nameof(CareerTests));
     }
 
     // ================= EDIT =================
@@ -665,7 +685,7 @@ public class AdminController : Controller
             _context.Tests,
             "Id",
             "Title",
-            data.CareerTestId
+            data.TestId
         );
 
         ViewBag.QuestionTypes = new SelectList(
@@ -694,7 +714,7 @@ public class AdminController : Controller
     public async Task<IActionResult> Delete(int id)
     {
         await _Questiontestservice.DeleteAsync(id);
-        return RedirectToAction("Index");
+        return RedirectToAction(nameof(CareerTests));
     }
 
     // ================= DETAILS =================

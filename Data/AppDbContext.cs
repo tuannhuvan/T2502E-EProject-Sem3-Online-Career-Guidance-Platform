@@ -24,7 +24,7 @@ namespace Career_Guidance_Platform.Data
         public DbSet<CommunityPost> CommunityPosts { get; set; }
         public DbSet<Resource> Resources { get; set; }
         
-        
+        public DbSet<QuestionType> QuestionTypes { get; set; }
         public DbSet<UserCourseProgress> UserCourseProgresses { get; set; }
         
         public DbSet<CareerPathCourse> CareerPathCourses { get; set; }
