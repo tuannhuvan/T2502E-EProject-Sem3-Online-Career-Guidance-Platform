@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Career_Guidance_Platform.Models;
 using Career_Guidance_Platform.Data;
 using System.Linq;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -853,113 +854,238 @@ public class AdminController : Controller
         return RedirectToAction(nameof(CareerPaths));
     }
     
-    // crud resources
-    public async Task<IActionResult> Resources()
-    {
-        var resources = await _context.Resources
-            .Include(r => r.CareerPath)
-            .OrderByDescending(r => r.Id)
-            .ToListAsync();
+    // ==========================================
+// CRUD RESOURCES with Parent-Child Support
+// ==========================================
 
-        return View(resources);
+public async Task<IActionResult> Resources(int? categoryId)
+{
+    var query = _context.Resources
+        .Include(r => r.Category)
+        .Include(r => r.ParentResource)
+        .Include(r => r.ChildResources)
+        .AsQueryable();
+
+    if (categoryId.HasValue)
+    {
+        query = query.Where(r => r.CategoryId == categoryId);
     }
 
-    public async Task<IActionResult> CreateResource()
+    var resources = await query
+        .Where(r => r.Status == 1)
+        .OrderByDescending(r => r.CreatedAt)
+        .ToListAsync();
+
+    ViewBag.Categories = await _context.Categories
+        .Where(c => c.Status == 1)
+        .OrderBy(c => c.Name)
+        .ToListAsync();
+    
+    ViewBag.SelectedCategoryId = categoryId;
+
+    return View(resources);
+}
+
+public async Task<IActionResult> CreateResource()
+{
+    await LoadResourceDropdownData();
+    return View();
+}
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> CreateResource(Resource resource)
+{
+    ValidateResourceModel(resource);
+
+    if (!ModelState.IsValid)
     {
-        ViewBag.CareerPaths = new SelectList(
-            await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
-            "Id",
-            "Title"
-        );
-
-        return View();
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateResource(Resource resource)
-    {
-        if (!ModelState.IsValid)
-        {
-            ViewBag.CareerPaths = new SelectList(
-                await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
-                "Id",
-                "Title",
-                resource.PathId
-            );
-
-            return View(resource);
-        }
-
-        resource.Status = 1;
-        _context.Resources.Add(resource);
-        await _context.SaveChangesAsync();
-
-        return RedirectToAction(nameof(Resources));
-    }
-
-    public async Task<IActionResult> EditResource(int id)
-    {
-        var resource = await _context.Resources.FindAsync(id);
-
-        if (resource == null)
-        {
-            return NotFound();
-        }
-
-        ViewBag.CareerPaths = new SelectList(
-            await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
-            "Id",
-            "Title",
-            resource.PathId
-        );
-
+        await LoadResourceDropdownData();
         return View(resource);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditResource(int id, Resource resource)
+    try
     {
-        if (id != resource.Id)
-        {
-            return NotFound();
-        }
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.Identity?.Name ?? "Admin";
+        resource.CreatedBy = userId;
+        resource.CreatedAt = DateTime.Now;
+        resource.Status = 1;
+        resource.PathId = resource.PathId == 0 ? 0 : resource.PathId;
 
-        if (!ModelState.IsValid)
-        {
-            ViewBag.CareerPaths = new SelectList(
-                await _context.CareerPaths.Where(c => c.Status == 1).ToListAsync(),
-                "Id",
-                "Title",
-                resource.PathId
-            );
-
-            return View(resource);
-        }
-
-        _context.Resources.Update(resource);
+        _context.Resources.Add(resource);
         await _context.SaveChangesAsync();
 
+        TempData["SuccessMessage"] = "Lưu resource thành công!";
         return RedirectToAction(nameof(Resources));
     }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteResource(int id)
+    catch (Exception ex)
     {
-        var resource = await _context.Resources.FindAsync(id);
+        ModelState.AddModelError("", $"Lỗi khi lưu resource: {ex.Message}");
+        await LoadResourceDropdownData();
+        return View(resource);
+    }
+}
 
-        if (resource == null)
+public async Task<IActionResult> EditResource(int id)
+{
+    var resource = await _context.Resources.FindAsync(id);
+
+    if (resource == null)
+    {
+        return NotFound();
+    }
+
+    await LoadResourceDropdownData(resource.Id);
+    return View(resource);
+}
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> EditResource(int id, Resource resource)
+{
+    if (id != resource.Id)
+    {
+        return NotFound();
+    }
+
+    ValidateResourceModel(resource);
+
+    if (!ModelState.IsValid)
+    {
+        await LoadResourceDropdownData(resource.Id);
+        return View(resource);
+    }
+
+    try
+    {
+        var existingResource = await _context.Resources.FindAsync(id);
+        if (existingResource == null)
         {
             return NotFound();
         }
 
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.Identity?.Name ?? "Admin";
+
+        existingResource.Title = resource.Title;
+        existingResource.Description = resource.Description;
+        existingResource.ResourceType = resource.ResourceType;
+        existingResource.Url = resource.Url;
+        existingResource.CategoryId = resource.CategoryId;
+        existingResource.ParentResourceId = resource.ParentResourceId;
+        existingResource.PathId = resource.PathId == 0 ? 0 : resource.PathId;
+        existingResource.UpdatedAt = DateTime.Now;
+        existingResource.UpdatedBy = userId;
+
+        _context.Resources.Update(existingResource);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Cập nhật resource thành công!";
+        return RedirectToAction(nameof(Resources));
+    }
+    catch (Exception ex)
+    {
+        ModelState.AddModelError("", $"Lỗi khi cập nhật resource: {ex.Message}");
+        await LoadResourceDropdownData(resource.Id);
+        return View(resource);
+    }
+}
+
+public async Task<IActionResult> DeleteResource(int id)
+{
+    var resource = await _context.Resources
+        .Include(r => r.Category)
+        .Include(r => r.ParentResource)
+        .Include(r => r.ChildResources)
+        .FirstOrDefaultAsync(r => r.Id == id);
+
+    if (resource == null)
+    {
+        return NotFound();
+    }
+
+    return View(resource);
+}
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+[ActionName("DeleteResource")]
+public async Task<IActionResult> DeleteResourceConfirmed(int id)
+{
+    var resource = await _context.Resources
+        .Include(r => r.ChildResources)
+        .FirstOrDefaultAsync(r => r.Id == id);
+
+    if (resource == null)
+    {
+        return NotFound();
+    }
+
+    if (resource.ChildResources.Any())
+    {
+        TempData["ErrorMessage"] = "Không thể xóa resource này vì nó có các resource con liên kết. Vui lòng xóa các resource con trước.";
+        return RedirectToAction(nameof(DeleteResource), new { id = id });
+    }
+
+    try
+    {
         _context.Resources.Remove(resource);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction(nameof(Resources));
+        TempData["SuccessMessage"] = "Xóa resource thành công!";
     }
+    catch (Exception ex)
+    {
+        TempData["ErrorMessage"] = $"Lỗi khi xóa resource: {ex.Message}";
+    }
+
+    return RedirectToAction(nameof(Resources));
+}
+
+private void ValidateResourceModel(Resource resource)
+{
+    if (string.IsNullOrWhiteSpace(resource.Title))
+    {
+        ModelState.AddModelError(nameof(resource.Title), "Tên resource là bắt buộc");
+    }
+
+    if (string.IsNullOrWhiteSpace(resource.ResourceType))
+    {
+        ModelState.AddModelError(nameof(resource.ResourceType), "Loại resource là bắt buộc");
+    }
+
+    if (!string.IsNullOrWhiteSpace(resource.Url) && !Uri.TryCreate(resource.Url, UriKind.Absolute, out _))
+    {
+        ModelState.AddModelError(nameof(resource.Url), "URL không hợp lệ");
+    }
+}
+
+private async Task LoadResourceDropdownData(int? currentResourceId = null)
+{
+    ViewBag.Categories = new SelectList(
+        await _context.Categories
+            .Where(c => c.Status == 1)
+            .OrderBy(c => c.Name)
+            .ToListAsync(),
+        "Id",
+        "Name"
+    );
+
+    ViewBag.CareerPaths = new SelectList(
+        await _context.CareerPaths
+            .Where(c => c.Status == 1)
+            .OrderBy(c => c.Title)
+            .ToListAsync(),
+        "Id",
+        "Title"
+    );
+
+    var parentResources = await _context.Resources
+        .Where(r => r.Status == 1 && (currentResourceId == null || r.Id != currentResourceId))
+        .OrderBy(r => r.Title)
+        .ToListAsync();
+
+    ViewBag.ParentResources = new SelectList(parentResources, "Id", "Title");
+}
 
     // ==========================================
     // CRUD SKILLS (MANAGEMENT)

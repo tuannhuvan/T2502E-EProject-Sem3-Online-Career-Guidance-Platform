@@ -1,0 +1,133 @@
+@model Resource
+
+@{
+    ViewData["Title"] = "Xóa Resource";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title text-danger">Xóa Resource</h2>
+            <div class="text-muted mt-1">@Model?.Title</div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-danger">
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <h5>
+                <i class="ti ti-alert-triangle"></i> Xác nhận xóa Resource
+            </h5>
+            <p class="mb-0">Bạn có chắc chắn muốn xóa resource sau không? Hành động này không thể hoàn tác.</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td class="w-50"><strong>ID:</strong></td>
+                                <td><span class="badge bg-secondary">@Model?.Id</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tên:</strong></td>
+                                <td>@Model?.Title</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Loại:</strong></td>
+                                <td><span class="badge bg-blue-lt">@Model?.ResourceType</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Danh mục:</strong></td>
+                                <td>
+                                    @if (Model?.Category != null)
+                                    {
+                                        <span class="badge bg-yellow-lt">@Model?.Category.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                            </tr>
+                            @if (!string.IsNullOrEmpty(Model?.Description))
+                            {
+                                <tr>
+                                    <td><strong>Mô tả:</strong></td>
+                                    <td>
+                                        <small class="text-muted">@Model?.Description</small>
+                                    </td>
+                                </tr>
+                            }
+                            <tr>
+                                <td><strong>Người tạo:</strong></td>
+                                <td>
+                                    <small class="text-muted">
+                                        @Model?.CreatedBy (@Model?.CreatedAt.ToString("dd/MM/yyyy HH:mm"))
+                                    </small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (Model?.ChildResources != null && Model.ChildResources.Any())
+                {
+                    <div class="alert alert-danger mt-3">
+                        <h6><i class="ti ti-ban"></i> ⚠️ Không thể xóa</h6>
+                        <p class="mb-2">
+                            Resource này có <strong>@Model.ChildResources.Count resource con</strong>:
+                        </p>
+                        <ul class="mb-0">
+                            @foreach (var child in Model.ChildResources.Take(10))
+                            {
+                                <li>@child.Title</li>
+                            }
+                            @if (Model.ChildResources.Count > 10)
+                            {
+                                <li><em>... và @(Model.ChildResources.Count - 10) resource khác</em></li>
+                            }
+                        </ul>
+                        <p class="mt-2 mb-0">
+                            <strong>Vui lòng xóa các resource con trước.</strong>
+                        </p>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a asp-controller="Admin" asp-action="Resources" class="btn btn-secondary">
+                            <i class="ti ti-arrow-left me-1"></i> Quay lại
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <form asp-controller="Admin" asp-action="DeleteResource" asp-route-id="@Model?.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn xóa resource này?');">
+                                <i class="ti ti-trash me-1"></i> Xóa Resource
+                            </button>
+                            <a asp-controller="Admin" asp-action="Resources" class="btn btn-secondary">
+                                <i class="ti ti-x me-1"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                }
+            </div>
+
+            <div class="col-md-4">
+                <div class="alert alert-info">
+                    <h6><i class="ti ti-info-circle"></i> Lưu ý quan trọng</h6>
+                    <ul class="small mb-0">
+                        <li>Xóa là <strong>vĩnh viễn</strong></li>
+                        <li>Nếu có resource con, xóa chúng trước</li>
+                        <li>Dữ liệu không thể phục hồi</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,190 @@
+@model Resource
+
+@{
+    ViewData["Title"] = "Chỉnh sửa Resource";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="fas fa-edit"></i> Chỉnh sửa Resource</h1>
+            <p class="text-muted">Cập nhật thông tin resource</p>
+        </div>
+    </div>
+
+    <form method="post" class="row">
+        <input type="hidden" asp-for="Id" />
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Thông tin Resource</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewData.ModelState.ErrorCount > 0)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <h5><i class="fas fa-exclamation-triangle"></i> Vui lòng sửa các lỗi sau:</h5>
+                            <ul class="mb-0">
+                                @foreach (var modelState in ViewData.ModelState.Values)
+                                {
+                                    @foreach (var error in modelState.Errors)
+                                    {
+                                        <li>@error.ErrorMessage</li>
+                                    }
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <!-- Tên Resource -->
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">
+                            <i class="fas fa-heading"></i> Tên Resource 
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Title" type="text" class="form-control" 
+                               placeholder="Nhập tên resource" required />
+                        <span asp-validation-for="Title" class="invalid-feedback d-block"></span>
+                    </div>
+
+                    <!-- Mô tả -->
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">
+                            <i class="fas fa-align-left"></i> Mô tả
+                        </label>
+                        <textarea asp-for="Description" class="form-control" rows="4" 
+                                  placeholder="Nhập mô tả chi tiết..."></textarea>
+                    </div>
+
+                    <!-- Loại Resource -->
+                    <div class="mb-3">
+                        <label asp-for="ResourceType" class="form-label">
+                            <i class="fas fa-tag"></i> Loại Resource 
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="ResourceType" class="form-select" required>
+                            <option value="">-- Chọn loại resource --</option>
+                            <option value="Khóa học" selected="@(Model?.ResourceType == "Khóa học")">📚 Khóa học</option>
+                            <option value="Website" selected="@(Model?.ResourceType == "Website")">🌐 Website</option>
+                            <option value="Tài liệu" selected="@(Model?.ResourceType == "Tài liệu")">📄 Tài liệu</option>
+                            <option value="Video" selected="@(Model?.ResourceType == "Video")">🎥 Video</option>
+                            <option value="Bài viết" selected="@(Model?.ResourceType == "Bài viết")">✍️ Bài viết</option>
+                        </select>
+                        <span asp-validation-for="ResourceType" class="invalid-feedback d-block"></span>
+                    </div>
+
+                    <!-- Link -->
+                    <div class="mb-3">
+                        <label asp-for="Url" class="form-label">
+                            <i class="fas fa-link"></i> Link liên kết
+                        </label>
+                        <input asp-for="Url" type="url" class="form-control" 
+                               placeholder="https://example.com" />
+                    </div>
+
+                    <!-- Danh mục -->
+                    <div class="mb-3">
+                        <label for="CategoryId" class="form-label">
+                            <i class="fas fa-folder"></i> Danh mục Resource
+                        </label>
+                        <select id="CategoryId" name="CategoryId" class="form-select">
+                            <option value="">-- Chọn danh mục --</option>
+                            @foreach (var category in ViewBag.Categories)
+                            {
+                                <option value="@category.Value" 
+                                        selected="@(Model?.CategoryId.ToString() == category.Value)">
+                                    @category.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Resource Cha -->
+                    <div class="mb-3">
+                        <label for="ParentResourceId" class="form-label">
+                            <i class="fas fa-sitemap"></i> Resource Cha
+                        </label>
+                        <select id="ParentResourceId" name="ParentResourceId" class="form-select">
+                            <option value="">-- Không có (Resource độc lập) --</option>
+                            @foreach (var parentResource in ViewBag.ParentResources)
+                            {
+                                <option value="@parentResource.Value" 
+                                        selected="@(Model?.ParentResourceId.ToString() == parentResource.Value)">
+                                    @parentResource.Text
+                                </option>
+                            }
+                        </select>
+                        <small class="text-muted">Chọn một Resource cha nếu resource này là con của resource khác</small>
+                    </div>
+
+                    <!-- Metadata -->
+                    <div class="row mt-4 pt-3 border-top">
+                        <div class="col-md-6">
+                            <p>
+                                <small class="text-muted">
+                                    <strong>Tạo bởi:</strong> @Model?.CreatedBy<br />
+                                    <strong>Ngày tạo:</strong> @Model?.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </small>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            @if (Model?.UpdatedAt.HasValue == true)
+                            {
+                                <p>
+                                    <small class="text-muted">
+                                        <strong>Cập nhật bởi:</strong> @Model?.UpdatedBy<br />
+                                        <strong>Ngày cập nhật:</strong> @Model?.UpdatedAt?.ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-warning btn-lg">
+                    <i class="fas fa-save"></i> Cập nhật Resource
+                </button>
+                <a href="@Url.Action("Index")" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Hủy
+                </a>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="col-lg-4">
+            <div class="card bg-light shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Thông tin</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>ID Resource:</strong> @Model?.Id
+                        </small>
+                    </div>
+
+                    @if (Model?.ChildResources != null && Model.ChildResources.Any())
+                    {
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-sitemap"></i> Resource con</h6>
+                            <p class="mb-0 text-muted">Resource này có @Model.ChildResources.Count resource con</p>
+                            <ul class="mt-2 mb-0">
+                                @foreach (var child in Model.ChildResources)
+                                {
+                                    <li><small>@child.Title</small></li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

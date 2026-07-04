@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Career_Guidance_Platform.Models.Resource>
+﻿@model IEnumerable<Resource>
 
 @{
     ViewData["Title"] = "Quản lý Resources";
@@ -9,14 +9,55 @@
     <div class="row align-items-center">
         <div class="col">
             <h2 class="page-title">Quản lý Resources</h2>
-            <div class="text-muted mt-1">Tài liệu học tập theo Career Path</div>
+            <div class="text-muted mt-1">Khóa học, Website, Tài liệu học tập</div>
         </div>
         <div class="col-auto">
             <a asp-controller="Admin" asp-action="CreateResource" class="btn btn-primary">
-                <i class="ti ti-plus me-1"></i>
-                Thêm Resource
+                <i class="ti ti-plus me-1"></i> Thêm Resource
             </a>
         </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="ti ti-check"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="ti ti-alert-circle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Filter -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" action="@Url.Action("Resources")" class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label">Lọc theo Danh mục</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">-- Tất cả danh mục --</option>
+                    @foreach (var category in ViewBag.Categories)
+                    {
+                        <option value="@category.Id" selected="@(ViewBag.SelectedCategoryId == category.Id ? "selected" : "")">
+                            @category.Name
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-info w-100">
+                    <i class="ti ti-search me-1"></i> Tìm kiếm
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -24,74 +65,91 @@
     <div class="table-responsive">
         <table class="table table-vcenter card-table">
             <thead>
-            <tr>
-                <th>ID</th>
-                <th>Career Path</th>
-                <th>Resource</th>
-                <th>Type</th>
-                <th>URL</th>
-                <th>Status</th>
-                <th class="text-end">Actions</th>
-            </tr>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên Resource</th>
+                    <th>Loại</th>
+                    <th>Danh mục</th>
+                    <th>Resource Cha</th>
+                    <th>Link</th>
+                    <th>Người tạo</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
             </thead>
             <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.Id</td>
-
-                    <td>@item.CareerPath?.Title</td>
-
-                    <td>
-                        <strong>@item.Title</strong>
-                    </td>
-
-                    <td>
-                        <span class="badge bg-blue-lt">@item.ResourceType</span>
-                    </td>
-
-                    <td>
-                        @if (!string.IsNullOrEmpty(item.Url))
-                        {
-                            <a href="@item.Url" target="_blank" class="text-primary">
-                                Open
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><span class="badge bg-secondary">@item.Id</span></td>
+                        <td>
+                            <strong>@item.Title</strong>
+                            @if (!string.IsNullOrEmpty(item.Description))
+                            {
+                                <br />
+                                <small class="text-muted">@item.Description.Substring(0, Math.Min(50, item.Description.Length))...</small>
+                            }
+                        </td>
+                        <td><span class="badge bg-blue-lt">@item.ResourceType</span></td>
+                        <td>
+                            @if (item.Category != null)
+                            {
+                                <span class="badge bg-yellow-lt">@item.Category.Name</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.ParentResource != null)
+                            {
+                                <span class="badge bg-green-lt">@item.ParentResource.Title</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Độc lập</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.Url))
+                            {
+                                <a href="@item.Url" target="_blank" class="text-primary">
+                                    <i class="ti ti-external-link"></i>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td><small class="text-muted">@item.CreatedBy</small></td>
+                        <td>
+                            @if (item.Status == 1)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-controller="Admin"
+                               asp-action="EditResource"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-warning">
+                                <i class="ti ti-edit"></i> Sửa
                             </a>
-                        }
-                    </td>
-
-                    <td>
-                        @if (item.Status == 1)
-                        {
-                            <span class="badge bg-success">Active</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">Inactive</span>
-                        }
-                    </td>
-
-                    <td class="text-end">
-                        <a asp-controller="Admin"
-                           asp-action="EditResource"
-                           asp-route-id="@item.Id"
-                           class="btn btn-sm btn-warning">
-                            Edit
-                        </a>
-
-                        <form asp-controller="Admin"
-                              asp-action="DeleteResource"
-                              asp-route-id="@item.Id"
-                              method="post"
-                              style="display:inline;"
-                              onsubmit="return confirm('Bạn có chắc muốn xóa tài liệu này?');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-danger">
-                                Delete
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            }
+                            <a asp-controller="Admin"
+                               asp-action="DeleteResource"
+                               asp-route-id="@item.Id"
+                               class="btn btn-sm btn-danger">
+                                <i class="ti ti-trash"></i> Xóa
+                            </a>
+                        </td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
