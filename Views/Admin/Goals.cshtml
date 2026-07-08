@@ -1,0 +1,160 @@
+@model List<Career_Guidance_Platform.Models.Goal>
+
+@{
+    ViewData["Title"] = "Quản lý Goals";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header">
+    <div class="container-xl">
+        <h2 class="page-title">Quản lý Goals</h2>
+        <div class="text-muted">Theo dõi và quản lý mục tiêu nghề nghiệp của người dùng.</div>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="container-xl">
+
+        <form method="get" class="card mb-3">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <input name="search" value="@ViewBag.Search" class="form-control"
+                               placeholder="Tìm goal, user, email..." />
+                    </div>
+
+                    <div class="col-md-3">
+                        <select name="type" class="form-select">
+                            <option value="">Tất cả loại</option>
+                            <option value="ShortTerm" selected="@(ViewBag.Type == "ShortTerm")">Ngắn hạn</option>
+                            <option value="LongTerm" selected="@(ViewBag.Type == "LongTerm")">Dài hạn</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <select name="status" class="form-select">
+                            <option value="">Đang hoạt động</option>
+                            <option value="1" selected="@(ViewBag.Status == 1)">Active</option>
+                            <option value="0" selected="@(ViewBag.Status == 0)">Inactive</option>
+                            <option value="3" selected="@(ViewBag.Status == 3)">Deleted</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100">Lọc</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Goal</th>
+                        <th>Career Path</th>
+                        <th>Loại</th>
+                        <th>Progress</th>
+                        <th>Milestone</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-4">
+                                Không có Goal nào.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var goal in Model)
+                        {
+                            var total = goal.GoalMilestones?.Count ?? 0;
+                            var completed = goal.GoalMilestones?.Count(m => m.Status == "Completed") ?? 0;
+
+                            <tr>
+                                <td>@goal.Id</td>
+
+                                <td>
+                                    <div class="fw-bold">@goal.Student?.FullName</div>
+                                    <div class="text-muted small">@goal.Student?.Email</div>
+                                </td>
+
+                                <td>
+                                    <div class="fw-bold">@goal.Title</div>
+                                    <div class="text-muted small">@goal.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                </td>
+
+                                <td>@(goal.CareerPath?.Title ?? "-")</td>
+
+                                <td>
+                                    @if (goal.GoalType == "LongTerm")
+                                    {
+                                        <span class="badge bg-purple-lt">Dài hạn</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-blue-lt">Ngắn hạn</span>
+                                    }
+                                </td>
+
+                                <td style="min-width:150px;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-fill">
+                                            <div class="progress-bar" style="width:@goal.Progress%"></div>
+                                        </div>
+                                        <strong>@goal.Progress%</strong>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-green-lt">@completed / @total</span>
+                                </td>
+
+                                <td>@(goal.TargetDate?.ToString("dd/MM/yyyy") ?? "-")</td>
+
+                                <td>
+                                    @if (goal.Status == 1)
+                                    {
+                                        <span class="badge bg-green-lt">Active</span>
+                                    }
+                                    else if (goal.Status == 3)
+                                    {
+                                        <span class="badge bg-red-lt">Deleted</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-lt">Inactive</span>
+                                    }
+                                </td>
+
+                                <td class="text-end">
+                                    <a asp-action="GoalDetails" asp-route-id="@goal.Id" class="btn btn-sm btn-info">
+                                        View
+                                    </a>
+                                    <a asp-action="EditGoal" asp-route-id="@goal.Id" class="btn btn-sm btn-warning">
+                                        Edit
+                                    </a>
+                                    <a asp-action="DeleteGoal" asp-route-id="@goal.Id" class="btn btn-sm btn-danger">
+                                        Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

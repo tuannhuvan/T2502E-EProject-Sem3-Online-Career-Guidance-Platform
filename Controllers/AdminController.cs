@@ -1107,4 +1107,148 @@ public class AdminController : Controller
 
         return RedirectToAction(nameof(Skills));
     }
+    // GET: /Admin/Goals
+    public async Task<IActionResult> Goals(string? search, string? type, int? status)
+    {
+        var query = _context.Goals
+            .Include(g => g.Student)
+            .Include(g => g.CareerPath)
+            .Include(g => g.GoalMilestones)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(g =>
+                g.Title.Contains(search) ||
+                g.Student!.FullName.Contains(search) ||
+                g.Student.Email!.Contains(search));
+        }
+
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            query = query.Where(g => g.GoalType == type);
+        }
+
+        if (status.HasValue)
+        {
+            query = query.Where(g => g.Status == status.Value);
+        }
+        else
+        {
+            query = query.Where(g => g.Status != 3);
+        }
+
+        var goals = await query
+            .OrderByDescending(g => g.CreatedAt)
+            .ToListAsync();
+
+        ViewBag.Search = search;
+        ViewBag.Type = type;
+        ViewBag.Status = status;
+
+        return View(goals);
+    }
+
+    // GET: /Admin/GoalDetails/5
+    public async Task<IActionResult> GoalDetails(int id)
+    {
+        var goal = await _context.Goals
+            .Include(g => g.Student)
+            .Include(g => g.CareerPath)
+            .Include(g => g.GoalMilestones)
+                .ThenInclude(m => m.Skill)
+            .FirstOrDefaultAsync(g => g.Id == id);
+
+        if (goal == null) return NotFound();
+
+        return View(goal);
+    }
+
+    // GET: /Admin/EditGoal/5
+    public async Task<IActionResult> EditGoal(int id)
+    {
+        var goal = await _context.Goals
+            .FirstOrDefaultAsync(g => g.Id == id);
+
+        if (goal == null) return NotFound();
+
+        await LoadAdminGoalData();
+        return View(goal);
+    }
+
+    // POST: /Admin/EditGoal/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditGoal(int id, Goal input)
+    {
+        if (id != input.Id) return NotFound();
+
+        var goal = await _context.Goals.FirstOrDefaultAsync(g => g.Id == id);
+
+        if (goal == null) return NotFound();
+
+        if (!ModelState.IsValid)
+        {
+            await LoadAdminGoalData();
+            return View(input);
+        }
+
+        goal.Title = input.Title;
+        goal.GoalType = input.GoalType;
+        goal.CareerPathId = input.CareerPathId;
+        goal.Progress = input.Progress;
+        goal.TargetDate = input.TargetDate;
+        goal.Status = input.Status;
+        goal.UpdatedAt = DateTime.Now;
+        goal.UpdatedBy = User.Identity?.Name ?? "Admin";
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Cập nhật Goal thành công!";
+        return RedirectToAction(nameof(Goals));
+    }
+
+    // GET: /Admin/DeleteGoal/5
+    public async Task<IActionResult> DeleteGoal(int id)
+    {
+        var goal = await _context.Goals
+            .Include(g => g.Student)
+            .Include(g => g.CareerPath)
+            .FirstOrDefaultAsync(g => g.Id == id);
+
+        if (goal == null) return NotFound();
+
+        return View(goal);
+    }
+
+    // POST: /Admin/DeleteGoal/5
+    [HttpPost, ActionName("DeleteGoal")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteGoalConfirmed(int id)
+    {
+        var goal = await _context.Goals.FirstOrDefaultAsync(g => g.Id == id);
+
+        if (goal == null) return NotFound();
+
+        goal.Status = 3;
+        goal.UpdatedAt = DateTime.Now;
+        goal.UpdatedBy = User.Identity?.Name ?? "Admin";
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Xóa Goal thành công!";
+        return RedirectToAction(nameof(Goals));
+    }
+
+    private async Task LoadAdminGoalData()
+    {
+        ViewBag.CareerPaths = new SelectList(
+            await _context.CareerPaths
+                .Where(c => c.Status == 1)
+                .OrderBy(c => c.Title)
+                .ToListAsync(),
+            "Id",
+            "Title"
+        );
+    }
 }
