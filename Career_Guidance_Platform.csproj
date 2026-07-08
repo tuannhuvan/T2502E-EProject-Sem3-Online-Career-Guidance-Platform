@@ -25,4 +25,8 @@
       <Folder Include="Service\Interfaces\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Views\Goals\Index.cshtml" />
+    </ItemGroup>
+
 </Project>
