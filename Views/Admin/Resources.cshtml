@@ -1,19 +1,19 @@
-﻿@model IEnumerable<Resource>
-
+@model IEnumerable<Career_Guidance_Platform.Models.Resource>
 @{
-    ViewData["Title"] = "Quản lý Resources";
+    ViewData["Title"] = "Resources";
     Layout = "_AdminLayout";
 }
 
-<div class="page-header d-print-none">
+<div class="page-header d-print-none mb-3">
     <div class="row align-items-center">
         <div class="col">
-            <h2 class="page-title">Quản lý Resources</h2>
-            <div class="text-muted mt-1">Khóa học, Website, Tài liệu học tập</div>
+            <div class="page-pretitle">Management</div>
+            <h2 class="page-title">Resources</h2>
+            <div class="text-muted mt-1">Manage online courses, websites, documents, and reference materials</div>
         </div>
-        <div class="col-auto">
+        <div class="col-auto ms-auto">
             <a asp-controller="Admin" asp-action="CreateResource" class="btn btn-primary">
-                <i class="ti ti-plus me-1"></i> Thêm Resource
+                <i class="ti ti-plus me-1"></i> Add Resource
             </a>
         </div>
     </div>
@@ -35,119 +35,168 @@
     </div>
 }
 
-<!-- Filter -->
+<!-- Optimized Filter Bar (Single Row) -->
 <div class="card mb-3">
-    <div class="card-body">
-        <form method="get" action="@Url.Action("Resources")" class="row g-3">
-            <div class="col-md-8">
-                <label class="form-label">Lọc theo Danh mục</label>
+    <div class="card-body py-3">
+        <form method="get" action="@Url.Action("Resources")" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-icon">
+                    <span class="input-icon-addon">
+                        <i class="ti ti-search text-muted"></i>
+                    </span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by title, description..." value="@ViewBag.Search" />
+                </div>
+            </div>
+            
+            <div class="col-md-3">
                 <select name="categoryId" class="form-select">
-                    <option value="">-- Tất cả danh mục --</option>
-                    @foreach (var category in ViewBag.Categories)
+                    <option value="">All Categories</option>
+                    @{
+                        var categories = ViewBag.Categories as IEnumerable<Career_Guidance_Platform.Models.Category>;
+                    }
+                    @if (categories != null)
                     {
-                        <option value="@category.Id" selected="@(ViewBag.SelectedCategoryId == category.Id ? "selected" : "")">
-                            @category.Name
-                        </option>
+                        foreach (var category in categories)
+                        {
+                            <option value="@category.Id" selected="@(ViewBag.SelectedCategoryId == category.Id ? "selected" : null)">
+                                @category.Name
+                            </option>
+                        }
                     }
                 </select>
             </div>
-            <div class="col-md-4">
-                <label>&nbsp;</label>
-                <button type="submit" class="btn btn-info w-100">
-                    <i class="ti ti-search me-1"></i> Tìm kiếm
+            
+            <div class="col-md-3">
+                <select name="skillId" class="form-select">
+                    <option value="">All Skills</option>
+                    @{
+                        var skills = ViewBag.Skills as IEnumerable<Career_Guidance_Platform.Models.Skill>;
+                    }
+                    @if (skills != null)
+                    {
+                        foreach (var skill in skills)
+                        {
+                            <option value="@skill.Id" selected="@(ViewBag.SelectedSkillId == skill.Id ? "selected" : null)">
+                                @skill.Name
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="ti ti-filter me-1"></i> Filter
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-<div class="card mt-3">
+<!-- Optimized Resources Table -->
+<div class="card mt-2">
     <div class="table-responsive">
-        <table class="table table-vcenter card-table">
+        <table class="table table-vcenter card-table align-middle">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Tên Resource</th>
-                    <th>Loại</th>
-                    <th>Danh mục</th>
-                    <th>Resource Cha</th>
-                    <th>Link</th>
-                    <th>Người tạo</th>
-                    <th>Status</th>
-                    <th class="text-end">Actions</th>
+                    <th>Resource Details</th>
+                    <th width="120">Type</th>
+                    <th>Category & Skill</th>
+                    <th>Hierarchy</th>
+                    <th width="100">Status</th>
+                    <th width="150" class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="badge bg-secondary-lt text-secondary me-2">#@item.Id</span>
+                                    <strong class="text-dark" style="font-size: 15px;">@item.Title</strong>
+                                    @if (!string.IsNullOrEmpty(item.Url))
+                                    {
+                                        <a href="@item.Url" target="_blank" class="ms-2 text-primary" title="Open Link">
+                                            <i class="ti ti-external-link small"></i>
+                                        </a>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <div class="text-muted small mb-1 text-truncate" style="max-width: 480px;">
+                                        @item.Description
+                                    </div>
+                                }
+                                <div class="text-muted small" style="font-size: 11px;">
+                                    Created by <span class="text-secondary">@item.CreatedBy</span> on @item.CreatedAt.ToString("dd/MM/yyyy")
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-blue-lt">@item.ResourceType</span>
+                            </td>
+                            <td>
+                                @if (item.Category != null)
+                                {
+                                    <div class="mb-1"><span class="badge bg-yellow-lt">@item.Category.Name</span></div>
+                                }
+                                @if (item.Skill != null)
+                                {
+                                    <div><span class="badge bg-purple-lt">@item.Skill.Name</span></div>
+                                }
+                                @if (item.Category == null && item.Skill == null)
+                                {
+                                    <span class="text-muted small">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.ParentResource != null)
+                                {
+                                    <div class="small text-secondary">Child of:</div>
+                                    <div class="font-weight-medium small text-truncate" style="max-width: 150px;" title="@item.ParentResource.Title">
+                                        @item.ParentResource.Title
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-lt text-secondary">Independent</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Status == 1)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-list flex-nowrap justify-content-end">
+                                    <a asp-controller="Admin"
+                                       asp-action="EditResource"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="ti ti-edit"></i> Edit
+                                    </a>
+                                    <a asp-controller="Admin"
+                                       asp-action="DeleteResource"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-danger">
+                                        <i class="ti ti-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
                 {
                     <tr>
-                        <td><span class="badge bg-secondary">@item.Id</span></td>
-                        <td>
-                            <strong>@item.Title</strong>
-                            @if (!string.IsNullOrEmpty(item.Description))
-                            {
-                                <br />
-                                <small class="text-muted">@item.Description.Substring(0, Math.Min(50, item.Description.Length))...</small>
-                            }
-                        </td>
-                        <td><span class="badge bg-blue-lt">@item.ResourceType</span></td>
-                        <td>
-                            @if (item.Category != null)
-                            {
-                                <span class="badge bg-yellow-lt">@item.Category.Name</span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">-</span>
-                            }
-                        </td>
-                        <td>
-                            @if (item.ParentResource != null)
-                            {
-                                <span class="badge bg-green-lt">@item.ParentResource.Title</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Độc lập</span>
-                            }
-                        </td>
-                        <td>
-                            @if (!string.IsNullOrEmpty(item.Url))
-                            {
-                                <a href="@item.Url" target="_blank" class="text-primary">
-                                    <i class="ti ti-external-link"></i>
-                                </a>
-                            }
-                            else
-                            {
-                                <span class="text-muted">-</span>
-                            }
-                        </td>
-                        <td><small class="text-muted">@item.CreatedBy</small></td>
-                        <td>
-                            @if (item.Status == 1)
-                            {
-                                <span class="badge bg-success">Active</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Inactive</span>
-                            }
-                        </td>
-                        <td class="text-end">
-                            <a asp-controller="Admin"
-                               asp-action="EditResource"
-                               asp-route-id="@item.Id"
-                               class="btn btn-sm btn-warning">
-                                <i class="ti ti-edit"></i> Sửa
-                            </a>
-                            <a asp-controller="Admin"
-                               asp-action="DeleteResource"
-                               asp-route-id="@item.Id"
-                               class="btn btn-sm btn-danger">
-                                <i class="ti ti-trash"></i> Xóa
-                            </a>
-                        </td>
+                        <td colspan="6" class="text-center text-muted py-4">No resources found matching the criteria.</td>
                     </tr>
                 }
             </tbody>

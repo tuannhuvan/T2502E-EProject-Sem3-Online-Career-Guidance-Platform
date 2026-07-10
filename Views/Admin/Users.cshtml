@@ -1,4 +1,5 @@
-﻿@{
+@model IEnumerable<Career_Guidance_Platform.Models.User>
+@{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Users";
 }
@@ -78,62 +79,54 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
-                <th>Career Goal</th>
                 <th>Status</th>
                 <th width="150">Actions</th>
             </tr>
             </thead>
 
             <tbody id="userTableBody">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var user in Model)
+                {
+                    var displayRole = user.Role == "Student" ? "User" : user.Role;
+                    var displayStatus = user.Status == 1 ? "Active" : (user.Status == 2 ? "Pending" : "Blocked");
+                    var badgeClass = user.Status == 1 ? "bg-green-lt" : (user.Status == 2 ? "bg-yellow-lt" : "bg-red-lt");
+                    <tr class="user-row">
+                        <td>
+                            <input type="checkbox" class="form-check-input">
+                        </td>
+                        <td>@user.FullName</td>
+                        <td>@user.Email</td>
+                        <td>@displayRole</td>
+                        <td>
+                            <span class="badge @badgeClass">@displayStatus</span>
+                        </td>
+                        <td class="table-actions">
+                            <button class="btn btn-sm btn-outline-primary me-1"
+                                    data-id="@user.Id"
+                                    data-fullname="@user.FullName"
+                                    data-email="@user.Email"
+                                    data-role="@displayRole"
+                                    data-status="@displayStatus"
+                                    onclick="openEditUserModal(this)">
+                                Edit
+                            </button>
 
-            <tr>
-                <td>
-                    <input type="checkbox" class="form-check-input">
-                </td>
-                <td>Nguyễn Minh Anh</td>
-                <td>minhanh@gmail.com</td>
-                <td>User</td>
-                <td>Software Engineer</td>
-                <td>
-                    <span class="badge bg-green-lt">Active</span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary"
-                            onclick="openEditUserModal(this)">
-                        Edit
-                    </button>
-
-                    <button class="btn btn-sm btn-outline-danger"
-                            onclick="deleteUser(this)">
-                        Delete
-                    </button>
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <input type="checkbox" class="form-check-input">
-                </td>
-                <td>Trần Hà Linh</td>
-                <td>halinh@gmail.com</td>
-                <td>User</td>
-                <td>UI/UX Designer</td>
-                <td>
-                    <span class="badge bg-green-lt">Active</span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary"
-                            onclick="openEditUserModal(this)">
-                        Edit
-                    </button>
-
-                    <button class="btn btn-sm btn-outline-danger"
-                            onclick="deleteUser(this)">
-                        Delete
-                    </button>
-                </td>
-            </tr>
-
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteUser(@user.Id)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">No users found in database.</td>
+                </tr>
+            }
             </tbody>
 
         </table>
@@ -142,7 +135,7 @@
 
     <div class="card-footer">
         <span id="entryText">
-            Showing 1 to 2 entries
+            Showing 1 to @(Model?.Count() ?? 0) entries
         </span>
     </div>
 
@@ -173,7 +166,7 @@
             <div class="modal-body">
 
                 <input type="hidden"
-                       id="editingRowIndex">
+                       id="editingUserId">
 
                 <div class="row">
 
@@ -222,14 +215,17 @@
                         </select>
                     </div>
 
-                    <div class="col-12">
+                    <div class="col-12 mb-3" id="passwordGroup">
                         <label class="form-label">
-                            Career Goal
+                            Password <span class="text-muted">(Default: User@123456)</span>
                         </label>
-
-                        <input id="careerGoalInput"
-                               class="form-control">
+                        <input id="passwordInput"
+                               type="password"
+                               class="form-control"
+                               placeholder="Enter password or leave blank for default">
                     </div>
+
+
 
                 </div>
 

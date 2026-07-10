@@ -1,46 +1,109 @@
-﻿@{
+@model IEnumerable<Career_Guidance_Platform.Models.JobPosting>
+@{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Jobs";
 }
 
-<h2 class="page-title mb-3">Jobs</h2>
-
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Job Listings</h3>
-        <div class="card-actions">
-            <a href="#" class="btn btn-primary">Add Job</a>
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Management</div>
+            <h2 class="page-title">Job Listings</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            <a asp-controller="Admin" asp-action="CreateJob" class="btn btn-primary">
+                <i class="ti ti-plus me-1"></i> Add Job
+            </a>
         </div>
     </div>
+</div>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card">
     <div class="table-responsive">
         <table class="table card-table table-vcenter">
             <thead>
             <tr>
-                <th>Job</th>
+                <th>Job Title</th>
                 <th>Company</th>
+                <th>Career Path</th>
+                <th>Location / Experience</th>
                 <th>Type</th>
+                <th>Salary</th>
                 <th>Deadline</th>
                 <th>Status</th>
+                <th width="150" class="text-end">Actions</th>
             </tr>
             </thead>
 
             <tbody>
-            <tr>
-                <td>Junior .NET Developer</td>
-                <td>ABC Technology</td>
-                <td>Full-time</td>
-                <td>30/06/2026</td>
-                <td><span class="badge bg-green-lt">Active</span></td>
-            </tr>
-
-            <tr>
-                <td>UI/UX Intern</td>
-                <td>Creative Studio</td>
-                <td>Internship</td>
-                <td>25/06/2026</td>
-                <td><span class="badge bg-green-lt">Active</span></td>
-            </tr>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var job in Model)
+                {
+                    <tr>
+                        <td><strong>@job.Title</strong></td>
+                        <td>@job.CompanyName</td>
+                        <td>
+                            @if (job.CareerPath != null)
+                            {
+                                <span class="badge bg-purple-lt">@job.CareerPath.Title</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="small">Loc: @(job.Location ?? "N/A")</div>
+                            <div class="small text-muted">Exp: @(job.ExperienceLevel ?? "N/A")</div>
+                        </td>
+                        <td><span class="badge bg-blue-lt">@job.JobType</span></td>
+                        <td>@job.Salary.ToString("N0") VND</td>
+                        <td>@(job.ExpiredAt?.ToString("dd/MM/yyyy") ?? "No Deadline")</td>
+                        <td>
+                            @if (job.Status == 1)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-controller="Admin" asp-action="EditJob" asp-route-id="@job.Id" class="btn btn-sm btn-outline-primary me-1">
+                                Edit
+                            </a>
+                            <form asp-controller="Admin" asp-action="DeleteJob" asp-route-id="@job.Id" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this job posting?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-3">No jobs found in database.</td>
+                </tr>
+            }
             </tbody>
         </table>
     </div>
