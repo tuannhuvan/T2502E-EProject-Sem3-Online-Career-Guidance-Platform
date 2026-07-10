@@ -1,0 +1,124 @@
+@model Career_Guidance_Platform.Models.JobPosting
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Edit Job Posting";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Edit Job Posting</h2>
+            <div class="text-muted mt-1">Update job listing information</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form asp-controller="Admin" asp-action="EditJob" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="CreatedAt" />
+            <input type="hidden" asp-for="CreatedBy" />
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <div asp-validation-summary="All" class="text-danger small"></div>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Job Title</label>
+                    <input asp-for="Title" class="form-control" required />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Company Name</label>
+                    <input asp-for="CompanyName" class="form-control" />
+                    <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Job Type</label>
+                    <select asp-for="JobType" class="form-select">
+                        <option value="FullTime">Full Time</option>
+                        <option value="PartTime">Part Time</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Contract">Contract</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Location</label>
+                    <input asp-for="Location" class="form-control" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Experience Level</label>
+                    <input asp-for="ExperienceLevel" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Salary (VND)</label>
+                    <input asp-for="Salary" type="number" class="form-control" />
+                    <span asp-validation-for="Salary" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Application URL</label>
+                    <input asp-for="ApplicationUrl" type="url" class="form-control" />
+                    <span asp-validation-for="ApplicationUrl" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Career Path</label>
+                    <select asp-for="CareerPathId" asp-items="ViewBag.CareerPaths" class="form-select">
+                        <option value="">-- No Linked Path --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Deadline</label>
+                    <input asp-for="ExpiredAt" type="date" class="form-control" value="@(Model.ExpiredAt?.ToString("yyyy-MM-dd"))" />
+                    <span asp-validation-for="ExpiredAt" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Job Description</label>
+                <textarea asp-for="Description" class="form-control" rows="6"></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ti ti-device-floppy me-1"></i> Update Job
+                </button>
+                <a asp-controller="Admin" asp-action="Jobs" class="btn btn-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -16,7 +16,7 @@
 
 <div class="card mt-3">
     <div class="card-body">
-        <form asp-controller="Admin" asp-action="EditResource" asp-route-id="@Model.Id" method="post">
+        <form asp-controller="Admin" asp-action="EditResource" asp-route-id="@Model!.Id" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="CreatedAt" />
@@ -131,6 +131,25 @@
                                 </option>
                             }
                         </select>
+                    </div>
+
+                    <!-- Kỹ Năng Liên Kết (Skill) -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-bulb"></i> Kỹ Năng Liên Kết (Skill)
+                        </label>
+                        <select asp-for="SkillId" class="form-select">
+                            <option value="">-- Chọn kỹ năng liên kết (Không bắt buộc) --</option>
+                            @foreach (var skill in ViewBag.Skills as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>())
+                            {
+                                <option value="@skill.Value" selected="@(Model?.SkillId?.ToString() == skill.Value ? "selected" : "")">
+                                    @skill.Text
+                                </option>
+                            }
+                        </select>
+                        <small class="text-muted">
+                            Lựa chọn kỹ năng mà tài nguyên này hỗ trợ học tập hoặc rèn luyện.
+                        </small>
                     </div>
 
                     <!-- Metadata -->

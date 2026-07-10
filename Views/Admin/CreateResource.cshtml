@@ -129,6 +129,23 @@
                             Ví dụ: Video "Giới thiệu C#" có thể là con của khóa học "Lập trình C#"
                         </small>
                     </div>
+
+                    <!-- Kỹ Năng Liên Kết (Skill) -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-bulb"></i> Kỹ Năng Liên Kết (Skill)
+                        </label>
+                        <select asp-for="SkillId" class="form-select">
+                            <option value="">-- Chọn kỹ năng liên kết (Không bắt buộc) --</option>
+                            @foreach (var skill in ViewBag.Skills as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>())
+                            {
+                                <option value="@skill.Value">@skill.Text</option>
+                            }
+                        </select>
+                        <small class="text-muted">
+                            Lựa chọn kỹ năng mà tài nguyên này hỗ trợ học tập hoặc rèn luyện.
+                        </small>
+                    </div>
                 </div>
 
                 <div class="col-md-4">

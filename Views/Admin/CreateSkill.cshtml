@@ -59,6 +59,37 @@
             </div>
 
             <div class="mb-3">
+                <label class="form-label">Tài nguyên liên kết (Resources)</label>
+                <div class="border rounded p-3 bg-light" style="max-height: 220px; overflow-y: auto;">
+                    @{
+                        var resources = ViewBag.Resources as IEnumerable<Career_Guidance_Platform.Models.Resource>;
+                    }
+                    @if (resources != null && resources.Any())
+                    {
+                        foreach (var res in resources)
+                        {
+                            <label class="form-check mb-2">
+                                <input type="checkbox" name="selectedResourceIds" value="@res.Id" class="form-check-input" />
+                                <span class="form-check-label text-dark">
+                                    <span class="badge bg-blue-lt me-1">@res.ResourceType</span>
+                                    <strong>@res.Title</strong>
+                                    @if (res.Category != null)
+                                    {
+                                        <span class="text-muted small">(@res.Category.Name)</span>
+                                    }
+                                </span>
+                            </label>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted small">Không có tài nguyên khả dụng.</span>
+                    }
+                </div>
+                <small class="text-muted">Chọn các tài nguyên học tập hỗ trợ cho kỹ năng này.</small>
+            </div>
+
+            <div class="mb-3">
                 <label class="form-label">Trạng thái hoạt động</label>
                 <select asp-for="Status" class="form-select">
                     <option value="1">Active</option>
