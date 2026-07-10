@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Career_Guidance_Platform.Models.ViewModels;
-
+using Microsoft.AspNetCore.Identity;
 
 namespace Career_Guidance_Platform.Controllers;
 
@@ -19,18 +19,175 @@ namespace Career_Guidance_Platform.Controllers;
 public class AdminController : Controller
 {
     private readonly AppDbContext _context;
+    private readonly UserManager<User> _userManager;
+    private readonly RoleManager<IdentityRole<int>> _roleManager;
 
-    public AdminController(AppDbContext context)
+    public AdminController(
+        AppDbContext context,
+        UserManager<User> userManager,
+        RoleManager<IdentityRole<int>> roleManager)
     {
         _context = context;
+        _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     public IActionResult Index()
     {
         return RedirectToAction("Dashboard");
     }
-    public IActionResult Dashboard() => View();
-    public IActionResult Users() => View();
+
+    public async Task<IActionResult> Dashboard()
+    {
+        ViewBag.TotalUsers = await _context.Users.CountAsync();
+        ViewBag.TotalMentors = await _context.MentorProfiles.CountAsync();
+        ViewBag.VerifiedMentors = await _context.MentorProfiles.CountAsync(m => m.IsVerified);
+        ViewBag.TotalTests = await _context.TestResults.CountAsync();
+        ViewBag.TotalJobs = await _context.JobPostings.CountAsync();
+
+        // Top Career Paths from test results
+        var pathStats = await _context.TestResults
+            .Include(tr => tr.RecommendedCareerPath)
+            .Where(tr => tr.RecommendedCareerPathId != null)
+            .GroupBy(tr => tr.RecommendedCareerPath!.Title)
+            .Select(g => new { PathTitle = g.Key, Count = g.Count() })
+            .OrderByDescending(g => g.Count)
+            .Take(5)
+            .ToListAsync();
+
+        ViewBag.PathLabels = pathStats.Select(x => x.PathTitle).ToList();
+        ViewBag.PathCounts = pathStats.Select(x => x.Count).ToList();
+
+        // Recent Test Results
+        var recentResults = await _context.TestResults
+            .Include(tr => tr.User)
+            .Include(tr => tr.RecommendedCareerPath)
+            .OrderByDescending(tr => tr.DateTaken)
+            .Take(5)
+            .ToListAsync();
+
+        ViewBag.RecentResults = recentResults;
+
+        return View();
+    }
+
+    public async Task<IActionResult> Users()
+    {
+        var users = await _context.Users.ToListAsync();
+        return View(users);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateUser([FromBody] UserAdminDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.FullName))
+        {
+            return Json(new { success = false, message = "Invalid input data." });
+        }
+
+        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+        if (existingUser != null)
+        {
+            return Json(new { success = false, message = "Email already exists." });
+        }
+
+        var statusVal = dto.Status == "Active" ? 1 : (dto.Status == "Pending" ? 2 : 0);
+        var dbRole = dto.Role == "User" ? "Student" : dto.Role;
+
+        var user = new User
+        {
+            UserName = dto.Email,
+            Email = dto.Email,
+            FullName = dto.FullName,
+            Role = dbRole,
+            Status = statusVal,
+            EmailConfirmed = true
+        };
+
+        var password = string.IsNullOrWhiteSpace(dto.Password) ? "User@123456" : dto.Password;
+        var result = await _userManager.CreateAsync(user, password);
+
+        if (result.Succeeded)
+        {
+            if (!await _roleManager.RoleExistsAsync(dbRole))
+            {
+                await _roleManager.CreateAsync(new IdentityRole<int> { Name = dbRole });
+            }
+            await _userManager.AddToRoleAsync(user, dbRole);
+            return Json(new { success = true, message = "User created successfully." });
+        }
+
+        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+        return Json(new { success = false, message = $"Failed to create user: {errors}" });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> EditUser([FromBody] UserAdminDto dto)
+    {
+        if (dto == null || dto.Id <= 0 || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.FullName))
+        {
+            return Json(new { success = false, message = "Invalid input data." });
+        }
+
+        var user = await _userManager.FindByIdAsync(dto.Id.ToString());
+        if (user == null)
+        {
+            return Json(new { success = false, message = "User not found." });
+        }
+
+        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+        if (existingUser != null && existingUser.Id != user.Id)
+        {
+            return Json(new { success = false, message = "Email already in use by another user." });
+        }
+
+        var oldRole = user.Role;
+        var dbRole = dto.Role == "User" ? "Student" : dto.Role;
+        var statusVal = dto.Status == "Active" ? 1 : (dto.Status == "Pending" ? 2 : 0);
+
+        user.Email = dto.Email;
+        user.UserName = dto.Email;
+        user.FullName = dto.FullName;
+        user.Role = dbRole;
+        user.Status = statusVal;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+            if (oldRole != dbRole)
+            {
+                await _userManager.RemoveFromRoleAsync(user, oldRole);
+                if (!await _roleManager.RoleExistsAsync(dbRole))
+                {
+                    await _roleManager.CreateAsync(new IdentityRole<int> { Name = dbRole });
+                }
+                await _userManager.AddToRoleAsync(user, dbRole);
+            }
+            return Json(new { success = true, message = "User updated successfully." });
+        }
+
+        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+        return Json(new { success = false, message = $"Failed to update user: {errors}" });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user == null)
+        {
+            return Json(new { success = false, message = "User not found." });
+        }
+
+        var result = await _userManager.DeleteAsync(user);
+        if (result.Succeeded)
+        {
+            return Json(new { success = true, message = "User deleted successfully." });
+        }
+
+        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+        return Json(new { success = false, message = $"Failed to delete user: {errors}" });
+    }
     
     public async Task<IActionResult> Mentors()
     {
@@ -77,7 +234,133 @@ public class AdminController : Controller
         var tests = await _context.Tests.ToListAsync();
         return View(tests);
     }
-    public IActionResult Jobs() => View();
+    public async Task<IActionResult> Jobs()
+    {
+        var jobs = await _context.JobPostings.Include(j => j.CareerPath).ToListAsync();
+        return View(jobs);
+    }
+
+    public async Task<IActionResult> CreateJob()
+    {
+        ViewBag.CareerPaths = new SelectList(
+            await _context.CareerPaths.Where(cp => cp.Status == 1).OrderBy(cp => cp.Title).ToListAsync(),
+            "Id",
+            "Title"
+        );
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateJob(JobPosting job)
+    {
+        if (ModelState.IsValid)
+        {
+            job.CreatedAt = DateTime.Now;
+            job.CreatedBy = User.Identity?.Name ?? "Admin";
+            job.Status = 1;
+            _context.JobPostings.Add(job);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Job created successfully.";
+            return RedirectToAction(nameof(Jobs));
+        }
+
+        ViewBag.CareerPaths = new SelectList(
+            await _context.CareerPaths.Where(cp => cp.Status == 1).OrderBy(cp => cp.Title).ToListAsync(),
+            "Id",
+            "Title",
+            job.CareerPathId
+        );
+        return View(job);
+    }
+
+    public async Task<IActionResult> EditJob(int id)
+    {
+        var job = await _context.JobPostings.FindAsync(id);
+        if (job == null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.CareerPaths = new SelectList(
+            await _context.CareerPaths.Where(cp => cp.Status == 1).OrderBy(cp => cp.Title).ToListAsync(),
+            "Id",
+            "Title",
+            job.CareerPathId
+        );
+        return View(job);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditJob(int id, JobPosting job)
+    {
+        if (id != job.Id)
+        {
+            return NotFound();
+        }
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                var existingJob = await _context.JobPostings.FindAsync(id);
+                if (existingJob == null)
+                {
+                    return NotFound();
+                }
+
+                existingJob.Title = job.Title;
+                existingJob.CompanyName = job.CompanyName;
+                existingJob.JobType = job.JobType;
+                existingJob.Location = job.Location;
+                existingJob.ExperienceLevel = job.ExperienceLevel;
+                existingJob.ApplicationUrl = job.ApplicationUrl;
+                existingJob.Salary = job.Salary;
+                existingJob.Description = job.Description;
+                existingJob.ExpiredAt = job.ExpiredAt;
+                existingJob.CareerPathId = job.CareerPathId;
+                existingJob.Status = job.Status;
+                existingJob.UpdatedAt = DateTime.Now;
+                existingJob.UpdatedBy = User.Identity?.Name ?? "Admin";
+
+                _context.JobPostings.Update(existingJob);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Job updated successfully.";
+                return RedirectToAction(nameof(Jobs));
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Error updating job: {ex.Message}");
+            }
+        }
+
+        ViewBag.CareerPaths = new SelectList(
+            await _context.CareerPaths.Where(cp => cp.Status == 1).OrderBy(cp => cp.Title).ToListAsync(),
+            "Id",
+            "Title",
+            job.CareerPathId
+        );
+        return View(job);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteJob(int id)
+    {
+        var job = await _context.JobPostings.FindAsync(id);
+        if (job != null)
+        {
+            _context.JobPostings.Remove(job);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Job deleted successfully.";
+        }
+        else
+        {
+            TempData["Error"] = "Job not found.";
+        }
+        return RedirectToAction(nameof(Jobs));
+    }
     public IActionResult Reports() => View();
     public IActionResult Settings() => View();
     public IActionResult Terms() => View();
@@ -858,17 +1141,30 @@ public class AdminController : Controller
 // CRUD RESOURCES with Parent-Child Support
 // ==========================================
 
-public async Task<IActionResult> Resources(int? categoryId)
+public async Task<IActionResult> Resources(int? categoryId, int? skillId, string? search)
 {
     var query = _context.Resources
         .Include(r => r.Category)
         .Include(r => r.ParentResource)
         .Include(r => r.ChildResources)
+        .Include(r => r.Skill)
         .AsQueryable();
 
     if (categoryId.HasValue)
     {
         query = query.Where(r => r.CategoryId == categoryId);
+    }
+
+    if (skillId.HasValue)
+    {
+        query = query.Where(r => r.SkillId == skillId);
+    }
+
+    if (!string.IsNullOrWhiteSpace(search))
+    {
+        var cleanSearch = search.Trim().ToLower();
+        query = query.Where(r => (r.Title != null && r.Title.ToLower().Contains(cleanSearch)) || 
+                                 (r.Description != null && r.Description.ToLower().Contains(cleanSearch)));
     }
 
     var resources = await query
@@ -880,8 +1176,15 @@ public async Task<IActionResult> Resources(int? categoryId)
         .Where(c => c.Status == 1)
         .OrderBy(c => c.Name)
         .ToListAsync();
+
+    ViewBag.Skills = await _context.Skills
+        .Where(s => s.Status == 1)
+        .OrderBy(s => s.Name)
+        .ToListAsync();
     
     ViewBag.SelectedCategoryId = categoryId;
+    ViewBag.SelectedSkillId = skillId;
+    ViewBag.Search = search;
 
     return View(resources);
 }
@@ -973,6 +1276,7 @@ public async Task<IActionResult> EditResource(int id, Resource resource)
         existingResource.CategoryId = resource.CategoryId;
         existingResource.ParentResourceId = resource.ParentResourceId;
         existingResource.PathId = resource.PathId == 0 ? 0 : resource.PathId;
+        existingResource.SkillId = resource.SkillId;
         existingResource.UpdatedAt = DateTime.Now;
         existingResource.UpdatedBy = userId;
 
@@ -1079,6 +1383,15 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
         "Title"
     );
 
+    ViewBag.Skills = new SelectList(
+        await _context.Skills
+            .Where(s => s.Status == 1)
+            .OrderBy(s => s.Name)
+            .ToListAsync(),
+        "Id",
+        "Name"
+    );
+
     var parentResources = await _context.Resources
         .Where(r => r.Status == 1 && (currentResourceId == null || r.Id != currentResourceId))
         .OrderBy(r => r.Title)
@@ -1094,6 +1407,7 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
     public async Task<IActionResult> Skills()
     {
         var skills = await _context.Skills
+            .Include(s => s.Resources)
             .OrderByDescending(s => s.Id)
             .ToListAsync();
 
@@ -1108,17 +1422,25 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
         return View(skills);
     }
 
-    public IActionResult CreateSkill()
+    public async Task<IActionResult> CreateSkill()
     {
+        ViewBag.Resources = await _context.Resources
+            .Where(r => r.Status == 1)
+            .OrderBy(r => r.Title)
+            .ToListAsync();
         return View(new Skill { Status = 1, EstimatedHours = 10, Difficulty = "Medium", SkillType = "Hard Skill" });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateSkill(Skill skill)
+    public async Task<IActionResult> CreateSkill(Skill skill, int[]? selectedResourceIds)
     {
         if (!ModelState.IsValid)
         {
+            ViewBag.Resources = await _context.Resources
+                .Where(r => r.Status == 1)
+                .OrderBy(r => r.Title)
+                .ToListAsync();
             return View(skill);
         }
 
@@ -1127,6 +1449,18 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
 
         _context.Skills.Add(skill);
         await _context.SaveChangesAsync();
+
+        if (selectedResourceIds != null && selectedResourceIds.Length > 0)
+        {
+            var resourcesToUpdate = await _context.Resources
+                .Where(r => selectedResourceIds.Contains(r.Id))
+                .ToListAsync();
+            foreach (var res in resourcesToUpdate)
+            {
+                res.SkillId = skill.Id;
+            }
+            await _context.SaveChangesAsync();
+        }
 
         TempData["Success"] = "Thêm kỹ năng thành công!";
         return RedirectToAction(nameof(Skills));
@@ -1139,12 +1473,20 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
         {
             return NotFound();
         }
+        ViewBag.Resources = await _context.Resources
+            .Where(r => r.Status == 1)
+            .OrderBy(r => r.Title)
+            .ToListAsync();
+        ViewBag.CurrentResourceIds = await _context.Resources
+            .Where(r => r.SkillId == id)
+            .Select(r => r.Id)
+            .ToListAsync();
         return View(skill);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditSkill(int id, Skill skill)
+    public async Task<IActionResult> EditSkill(int id, Skill skill, int[]? selectedResourceIds)
     {
         if (id != skill.Id)
         {
@@ -1153,6 +1495,14 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
 
         if (!ModelState.IsValid)
         {
+            ViewBag.Resources = await _context.Resources
+                .Where(r => r.Status == 1)
+                .OrderBy(r => r.Title)
+                .ToListAsync();
+            ViewBag.CurrentResourceIds = await _context.Resources
+                .Where(r => r.SkillId == id)
+                .Select(r => r.Id)
+                .ToListAsync();
             return View(skill);
         }
 
@@ -1174,6 +1524,27 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
             existingSkill.UpdatedBy = User.Identity?.Name ?? "Admin";
 
             _context.Skills.Update(existingSkill);
+            await _context.SaveChangesAsync();
+
+            // Handle resource association updates
+            var currentAssociated = await _context.Resources.Where(r => r.SkillId == id).ToListAsync();
+            foreach (var res in currentAssociated)
+            {
+                if (selectedResourceIds == null || !selectedResourceIds.Contains(res.Id))
+                {
+                    res.SkillId = null;
+                }
+            }
+
+            if (selectedResourceIds != null && selectedResourceIds.Length > 0)
+            {
+                var targetResources = await _context.Resources.Where(r => selectedResourceIds.Contains(r.Id)).ToListAsync();
+                foreach (var res in targetResources)
+                {
+                    res.SkillId = id;
+                }
+            }
+
             await _context.SaveChangesAsync();
             TempData["Success"] = "Cập nhật kỹ năng thành công!";
         }
