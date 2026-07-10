@@ -1,0 +1,167 @@
+@model Resource
+
+@{
+    ViewData["Title"] = "Thêm mới Resource";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="fas fa-plus-circle"></i> Thêm mới Resource</h1>
+            <p class="text-muted">Tạo một resource mới (khóa học, website, hoặc tài liệu)</p>
+        </div>
+    </div>
+
+    <form method="post" class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Thông tin Resource</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewData.ModelState.ErrorCount > 0)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <h5><i class="fas fa-exclamation-triangle"></i> Vui lòng sửa các lỗi sau:</h5>
+                            <ul class="mb-0">
+                                @foreach (var modelState in ViewData.ModelState.Values)
+                                {
+                                    @foreach (var error in modelState.Errors)
+                                    {
+                                        <li>@error.ErrorMessage</li>
+                                    }
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <!-- Tên Resource (Required) -->
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">
+                            <i class="fas fa-heading"></i> Tên Resource 
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Title" type="text" class="form-control" 
+                               placeholder="Nhập tên resource (vd: Lập trình C#, Design Thinking...)" 
+                               required />
+                        <span asp-validation-for="Title" class="invalid-feedback d-block"></span>
+                        <small class="text-muted">Tên này sẽ được hiển thị cho người học</small>
+                    </div>
+
+                    <!-- Mô tả -->
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">
+                            <i class="fas fa-align-left"></i> Mô tả
+                        </label>
+                        <textarea asp-for="Description" class="form-control" rows="4" 
+                                  placeholder="Nhập mô tả chi tiết về resource này..."></textarea>
+                        <small class="text-muted">Không bắt buộc, nhưng rất hữu ích để người dùng hiểu được nội dung</small>
+                    </div>
+
+                    <!-- Loại Resource (Required) -->
+                    <div class="mb-3">
+                        <label asp-for="ResourceType" class="form-label">
+                            <i class="fas fa-tag"></i> Loại Resource 
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="ResourceType" class="form-select" required>
+                            <option value="">-- Chọn loại resource --</option>
+                            <option value="Khóa học">📚 Khóa học</option>
+                            <option value="Website">🌐 Website</option>
+                            <option value="Tài liệu">📄 Tài liệu</option>
+                            <option value="Video">🎥 Video</option>
+                            <option value="Bài viết">✍️ Bài viết</option>
+                        </select>
+                        <span asp-validation-for="ResourceType" class="invalid-feedback d-block"></span>
+                    </div>
+
+                    <!-- Link -->
+                    <div class="mb-3">
+                        <label asp-for="Url" class="form-label">
+                            <i class="fas fa-link"></i> Link liên kết
+                        </label>
+                        <input asp-for="Url" type="url" class="form-control" 
+                               placeholder="https://example.com" />
+                        <small class="text-muted">Không bắt buộc. Để trống nếu resource không có link</small>
+                    </div>
+
+                    <!-- Danh mục -->
+                    <div class="mb-3">
+                        <label for="CategoryId" class="form-label">
+                            <i class="fas fa-folder"></i> Danh mục Resource
+                        </label>
+                        <select id="CategoryId" name="CategoryId" class="form-select">
+                            <option value="">-- Chọn danh mục --</option>
+                            @foreach (var category in ViewBag.Categories)
+                            {
+                                <option value="@category.Value">@category.Text</option>
+                            }
+                        </select>
+                        <small class="text-muted">Chọn danh mục như: Công nghệ thông tin, Thiết kế, Kỹ năng mềm...</small>
+                    </div>
+
+                    <!-- Resource Cha (Parent) -->
+                    <div class="mb-3">
+                        <label for="ParentResourceId" class="form-label">
+                            <i class="fas fa-sitemap"></i> Resource Cha
+                        </label>
+                        <select id="ParentResourceId" name="ParentResourceId" class="form-select">
+                            <option value="">-- Không có (Resource độc lập) --</option>
+                            @foreach (var parentResource in ViewBag.ParentResources)
+                            {
+                                <option value="@parentResource.Value">@parentResource.Text</option>
+                            }
+                        </select>
+                        <small class="text-muted">
+                            Chọn một Resource cha nếu resource này là con của resource khác. 
+                            Ví dụ: Một video bài học là con của một khóa học.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Lưu Resource
+                </button>
+                <a href="@Url.Action("Index")" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Hủy
+                </a>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="col-lg-4">
+            <div class="card bg-light shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Hướng dẫn</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Các trường bắt buộc:</h6>
+                    <ul class="mb-3">
+                        <li><strong>Tên Resource</strong> - Tên rõ ràng, dễ hiểu</li>
+                        <li><strong>Loại Resource</strong> - Khóa học, Website, v.v.</li>
+                    </ul>
+
+                    <h6>Mối quan hệ Cha - Con:</h6>
+                    <p class="text-muted mb-3">
+                        Nếu resource này là một phần của resource khác, hãy chọn resource cha. 
+                        Ví dụ: Video "Giới thiệu C#" có thể là con của khóa học "Lập trình C#".
+                    </p>
+
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>💡 Mẹo:</strong> Hãy điền đầy đủ thông tin để người dùng 
+                            có thể tìm kiếm và học tập hiệu quả hơn.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
