@@ -147,21 +147,7 @@ function clearOptions() {
 }
 
 function applyFilters() {
-    const keyword = document.getElementById("searchInput").value.toLowerCase();
-    const typeFilter = document.getElementById("filterType").value;
-    const rows = document.querySelectorAll("#questionTableBody tr.question-row");
-
-    rows.forEach(row => {
-        const text = row.querySelector(".question-content").innerText.toLowerCase();
-        const type = row.querySelector(".question-options").getAttribute("data-test-type") || "";
-
-        const matchSearch = text.includes(keyword);
-        const matchType = typeFilter === "" || type === typeFilter;
-
-        if (matchSearch && matchType) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
-        }
-    });
+    const search = document.getElementById("searchInput").value.trim();
+    const type = document.getElementById("filterType").value;
+    window.location.href = `/Admin/CareerTests?page=1&search=${encodeURIComponent(search)}&type=${encodeURIComponent(type)}`;
 }

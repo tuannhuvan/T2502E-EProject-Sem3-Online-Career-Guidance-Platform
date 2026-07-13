@@ -31,19 +31,20 @@
                 <input type="text"
                        id="searchInput"
                        class="form-control"
-                       placeholder="Search question content..."
-                       onkeyup="applyFilters()">
+                       placeholder="Search question content (Press Enter)..."
+                       value="@ViewBag.Search"
+                       onkeyup="if(event.key === 'Enter') applyFilters()">
             </div>
 
             <div class="col-md-4">
                 <select class="form-select"
                         id="filterType"
                         onchange="applyFilters()">
-                    <option value="">All Types</option>
-                    <option value="Interests">Interests</option>
-                    <option value="Skills">Skills</option>
-                    <option value="Personality">Personality</option>
-                    <option value="Values">Values</option>
+                    <option value="" selected="@(string.IsNullOrEmpty(ViewBag.Type) ? "selected" : null)">All Types</option>
+                    <option value="Interests" selected="@(ViewBag.Type == "Interests" ? "selected" : null)">Interests</option>
+                    <option value="Skills" selected="@(ViewBag.Type == "Skills" ? "selected" : null)">Skills</option>
+                    <option value="Personality" selected="@(ViewBag.Type == "Personality" ? "selected" : null)">Personality</option>
+                    <option value="Values" selected="@(ViewBag.Type == "Values" ? "selected" : null)">Values</option>
                 </select>
             </div>
 
@@ -140,6 +141,47 @@
             }
             </tbody>
         </table>
+    </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        @{
+            int startEntry = ViewBag.TotalItems == 0 ? 0 : (ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1;
+            int endEntry = Math.Min(ViewBag.CurrentPage * ViewBag.PageSize, ViewBag.TotalItems);
+        }
+        <p class="m-0 text-muted">Showing <span>@startEntry</span> to <span>@endEntry</span> of <span>@ViewBag.TotalItems</span> entries</p>
+        <ul class="pagination m-0 ms-auto" id="paginationUl">
+            <!-- Prev Button -->
+            <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="@(ViewBag.CurrentPage == 1 ? "#" : Url.Action("CareerTests", "Admin", new { page = ViewBag.CurrentPage - 1, search = ViewBag.Search, type = ViewBag.Type }))" tabindex="-1" aria-disabled="@(ViewBag.CurrentPage == 1)">
+                    <i class="ti ti-chevron-left"></i> prev
+                </a>
+            </li>
+
+            <!-- Page Numbers -->
+            @{
+                int maxButtons = 5;
+                int startPage = Math.Max(1, ViewBag.CurrentPage - maxButtons / 2);
+                int endPage = Math.Min(ViewBag.TotalPages, startPage + maxButtons - 1);
+                
+                if (endPage - startPage + 1 < maxButtons)
+                {
+                    startPage = Math.Max(1, endPage - maxButtons + 1);
+                }
+            }
+
+            @for (int i = startPage; i <= endPage; i++)
+            {
+                <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("CareerTests", "Admin", new { page = i, search = ViewBag.Search, type = ViewBag.Type })">@i</a>
+                </li>
+            }
+
+            <!-- Next Button -->
+            <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="@(ViewBag.CurrentPage == ViewBag.TotalPages ? "#" : Url.Action("CareerTests", "Admin", new { page = ViewBag.CurrentPage + 1, search = ViewBag.Search, type = ViewBag.Type }))">
+                    next <i class="ti ti-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
     </div>
 </div>
 
@@ -289,5 +331,5 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/admin/career-tests.js"></script>
+    <script src="~/js/admin/career-tests.js" asp-append-version="true"></script>
 }
