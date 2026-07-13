@@ -43,10 +43,10 @@ public class HomeController : Controller
 
         var random = new Random();
         
-        var interestsPool = allQuestions.Where(q => q.QuestionType.Name == "Interests").OrderBy(q => random.Next()).Take(5).ToList();
-        var skillsPool = allQuestions.Where(q => q.QuestionType.Name == "Skills").OrderBy(q => random.Next()).Take(5).ToList();
-        var valuesPool = allQuestions.Where(q => q.QuestionType.Name == "Values").OrderBy(q => random.Next()).Take(5).ToList();
-        var personalityPool = allQuestions.Where(q => q.QuestionType.Name == "Personality").OrderBy(q => random.Next()).Take(5).ToList();
+        var interestsPool = allQuestions.Where(q => q.TestType == "Interests").OrderBy(q => random.Next()).Take(5).ToList();
+        var skillsPool = allQuestions.Where(q => q.TestType == "Skills").OrderBy(q => random.Next()).Take(5).ToList();
+        var valuesPool = allQuestions.Where(q => q.TestType == "Values").OrderBy(q => random.Next()).Take(5).ToList();
+        var personalityPool = allQuestions.Where(q => q.TestType == "Personality").OrderBy(q => random.Next()).Take(5).ToList();
 
         var selectedQuestions = interestsPool
             .Concat(skillsPool)
@@ -61,11 +61,11 @@ public class HomeController : Controller
             Questions = selectedQuestions.Select(qt => new TakeTestQuestionVm
             {
                 QuestionId = qt.Id,
-                Group = qt.QuestionType.Name == "Interests" ? "Sở thích"
-                        : qt.QuestionType.Name == "Skills" ? "Kỹ năng"
-                        : qt.QuestionType.Name == "Values" ? "Giá trị"
-                        : qt.QuestionType.Name == "Personality" ? "Tính cách"
-                        : qt.QuestionType.Name,
+                Group = qt.TestType == "Interests" ? "Sở thích"
+                        : qt.TestType == "Skills" ? "Kỹ năng"
+                        : qt.TestType == "Values" ? "Giá trị"
+                        : qt.TestType == "Personality" ? "Tính cách"
+                        : qt.TestType,
                 Content = qt.Content,
                 Options = qt.QuestionOptions.Select(opt => new TakeTestOptionVm
                 {
