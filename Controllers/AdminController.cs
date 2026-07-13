@@ -229,14 +229,39 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Mentors));
     }
     
-    public async Task<IActionResult> CareerTests()
+    public async Task<IActionResult> CareerTests(int page = 1, string? search = null, string? type = null)
     {
-        var questions = await _context.QuestionTests
+        if (page < 1) page = 1;
+        int pageSize = 10;
+
+        var query = _context.QuestionTests
             .Include(q => q.Test)
             .Include(q => q.QuestionOptions)
                 .ThenInclude(o => o.OptionCareerPaths)
                     .ThenInclude(ocp => ocp.CareerPath)
+            .AsQueryable();
+
+        // Apply server-side filters
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.Trim().ToLower();
+            query = query.Where(q => q.Content.ToLower().Contains(searchLower));
+        }
+
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            query = query.Where(q => q.TestType == type);
+        }
+
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+        if (totalPages < 1) totalPages = 1;
+        if (page > totalPages) page = totalPages;
+
+        var questions = await query
             .OrderByDescending(q => q.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
         ViewBag.Tests = await _context.Tests
@@ -246,6 +271,13 @@ public class AdminController : Controller
         ViewBag.CareerPaths = await _context.CareerPaths
             .OrderBy(cp => cp.Title)
             .ToListAsync();
+
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.Search = search;
+        ViewBag.Type = type;
 
         return View(questions);
     }
