@@ -149,12 +149,14 @@
                                 <div class="mt-1 small text-muted">CareerPath Manager</div>
                             </div>
                         </a>
-
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                            <a class="dropdown-item" href="#">Profile</a>
+                            <a class="dropdown-item" href="/">Profile</a>
                             <a class="dropdown-item" asp-controller="Admin" asp-action="Settings">Settings</a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" asp-controller="Home" asp-action="Index">Logout Demo</a>
+                            <form id="logoutForm" asp-controller="Account" asp-action="Logout" method="post" style="display:none;">
+                                @Html.AntiForgeryToken()
+                            </form>
+                            <a class="dropdown-item" href="javascript:void(0);" onclick="document.getElementById('logoutForm').submit();">Logout</a>
                         </div>
                     </div>
                 </div>
@@ -177,8 +179,8 @@
 </div>
 
 <script src="@("https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js")"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
