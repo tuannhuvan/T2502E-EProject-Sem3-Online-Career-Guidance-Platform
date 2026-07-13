@@ -28,9 +28,18 @@
                 <span style="font-size: 13px; color: #64748b;">Tỷ lệ phản hồi từ Mentor</span>
             </div>
         </div>
-        <button class="btn primary-btn" onclick="showToast('Tính năng tạo bài viết đang được phát triển. Vui lòng đăng nhập để sử dụng.', 'info')" style="border-radius: 12px; font-weight: 700; height: 48px; border: none; padding: 0 24px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
-            <span>✍️</span> Tạo thảo luận mới
-        </button>
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <button class="btn primary-btn" onclick="openCreatePostModal()" style="border-radius: 12px; font-weight: 700; height: 48px; border: none; padding: 0 24px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+                <span>✍️</span> Tạo thảo luận mới
+            </button>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Home/Community" class="btn primary-btn" style="border-radius: 12px; font-weight: 700; height: 48px; border: none; padding: 0 24px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; box-sizing: border-box; line-height: 48px;">
+                <span>✍️</span> Đăng nhập để thảo luận
+            </a>
+        }
     </div>
 
     <!-- Forum Layout -->
@@ -46,7 +55,7 @@
                     </div>
                     
                     <h3 style="font-size: 20px; color: #020617; margin: 0 0 10px; line-height: 1.4;">
-                        <a href="#" onclick="showToast('Chi tiết bài đăng đang tải...', 'info')" style="color: inherit; text-decoration: none; font-weight: 700;">@post.Title</a>
+                        <a asp-controller="Home" asp-action="PostDetails" asp-route-id="@post.Id" style="color: inherit; text-decoration: none; font-weight: 700;">@post.Title</a>
                     </h3>
                     
                     <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">@post.Content</p>
@@ -57,7 +66,7 @@
                         </div>
                         <div style="display: flex; gap: 20px; color: #64748b;">
                             <span style="display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="showToast('Đã thích bài viết!', 'success')">👍 @post.LikesCount</span>
-                            <span style="display: flex; align-items: center; gap: 4px; cursor: pointer;">💬 @post.RepliesCount Phản hồi</span>
+                            <a asp-controller="Home" asp-action="PostDetails" asp-route-id="@post.Id" style="display: flex; align-items: center; gap: 4px; text-decoration: none; color: inherit;">💬 @post.RepliesCount Phản hồi</a>
                         </div>
                     </div>
                 </div>
@@ -83,3 +92,61 @@
         </div>
     </div>
 </section>
+
+<!-- Create Post Modal -->
+<div id="createPostModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div class="info-card" style="background-color: #ffffff; padding: 32px; border-radius: 24px; max-width: 600px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); margin: auto;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 20px; color: #0f172a; font-weight: 800;">Tạo thảo luận mới</h3>
+            <span style="font-size: 24px; color: #94a3b8; cursor: pointer; font-weight: 700;" onclick="closeCreatePostModal()">&times;</span>
+        </div>
+
+        <form asp-controller="Home" asp-action="CreatePost" method="post">
+            @Html.AntiForgeryToken()
+
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Tiêu đề thảo luận</label>
+                <input type="text" name="title" required placeholder="Nhập tiêu đề ngắn gọn, rõ nghĩa..." style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white;" />
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Chuyên mục</label>
+                <select name="category" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white;">
+                    <option value="Hỏi đáp">Hỏi đáp & Thắc mắc</option>
+                    <option value="Góc chia sẻ">Góc chia sẻ kinh nghiệm</option>
+                    <option value="Tài nguyên học tập">Tài nguyên & Tài liệu</option>
+                    <option value="Góp ý hệ thống">Góc góp ý & Phản hồi</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Nội dung thảo luận</label>
+                <textarea name="content" required placeholder="Mô tả chi tiết câu hỏi hoặc chia sẻ của bạn tại đây..." style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 150px; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" class="btn secondary-btn" style="border-radius: 10px; font-weight: 700; padding: 10px 20px;" onclick="closeCreatePostModal()">Hủy bỏ</button>
+                <button type="submit" class="btn" style="background: #4f46e5; color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 700; cursor: pointer;">Đăng bài viết</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openCreatePostModal() {
+        document.getElementById("createPostModal").style.display = "flex";
+    }
+
+    function closeCreatePostModal() {
+        document.getElementById("createPostModal").style.display = "none";
+    }
+
+    // Close when clicking outside modal
+    window.onclick = function(event) {
+        var modal = document.getElementById("createPostModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
