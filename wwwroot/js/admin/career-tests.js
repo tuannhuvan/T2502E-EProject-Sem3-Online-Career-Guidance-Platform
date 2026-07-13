@@ -1,31 +1,13 @@
-let currentRow = null;
-
-document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("btnAddQuestion")?.addEventListener("click", openAddModal);
-    document.getElementById("btnSaveQuestion")?.addEventListener("click", saveQuestion);
-    document.getElementById("searchInput")?.addEventListener("keyup", applyFilters);
-    document.getElementById("filterType")?.addEventListener("change", applyFilters);
-
-    document.addEventListener("click", function (e) {
-        const editBtn = e.target.closest(".btn-edit-question");
-        const deleteBtn = e.target.closest(".btn-delete-question");
-
-        if (editBtn) {
-            openEditModal(editBtn);
-        }
-
-        if (deleteBtn) {
-            deleteQuestion(deleteBtn);
-        }
-    });
-});
-
 function openAddModal() {
-    currentRow = null;
-
     document.getElementById("modalTitle").innerText = "Create Question";
-    document.getElementById("testInput").value = "Holland Test";
-    document.getElementById("groupInput").value = "Interest";
+    document.getElementById("editingQuestionId").value = "";
+    
+    // Set default values for first item in dropdowns or fallback
+    const testSelect = document.getElementById("testInput");
+    if (testSelect.options.length > 0) {
+        testSelect.selectedIndex = 0;
+    }
+    document.getElementById("groupInput").value = "Interests";
     document.getElementById("questionInput").value = "";
     document.getElementById("statusInput").value = "Active";
 
@@ -33,190 +15,139 @@ function openAddModal() {
 }
 
 function openEditModal(btn) {
-    currentRow = btn.closest("tr");
+    const row = btn.closest("tr");
+    if (!row) return;
 
-    if (!currentRow) return;
-
-    const test =
-        currentRow.querySelector(".question-test")?.innerText.trim() || "Holland Test";
-
-    const question =
-        currentRow.querySelector(".question-content")?.innerText.trim() || "";
-
-    const type =
-        currentRow.querySelector(".question-type")?.innerText.trim() || "Interest";
-
-    const status =
-        currentRow.querySelector(".question-status")?.innerText.trim() || "Active";
-
-    const optionCell =
-        currentRow.querySelector(".question-options");
+    const questionId = row.getAttribute("data-id");
+    const question = row.querySelector(".question-content")?.innerText.trim() || "";
+    
+    const optionCell = row.querySelector(".question-options");
+    const testId = optionCell.getAttribute("data-test-id");
+    const testType = optionCell.getAttribute("data-test-type") || "Interests";
+    const status = optionCell.getAttribute("data-status") || "Active";
 
     document.getElementById("modalTitle").innerText = "Edit Question";
-    document.getElementById("testInput").value = test;
+    document.getElementById("editingQuestionId").value = questionId;
+    document.getElementById("testInput").value = testId;
     document.getElementById("questionInput").value = question;
-    document.getElementById("groupInput").value = type;
+    document.getElementById("groupInput").value = testType;
     document.getElementById("statusInput").value = status;
 
-    for (let i = 1; i <= 4; i++) {
-        document.querySelectorAll(".option-input")[i - 1].value =
-            optionCell?.dataset[`option${i}`] || "";
+    const optionsData = JSON.parse(optionCell.getAttribute("data-options") || "[]");
 
-        document.querySelectorAll(".career-path-input")[i - 1].value =
-            optionCell?.dataset[`career${i}`] || "";
-
-        document.querySelectorAll(".weight-input")[i - 1].value =
-            optionCell?.dataset[`weight${i}`] || "";
-    }
-
-    const modal = bootstrap.Modal.getOrCreateInstance(
-        document.getElementById("questionModal")
-    );
-
-    modal.show();
-}
-
-function saveQuestion() {
-    const test = document.getElementById("testInput").value;
-    const question = document.getElementById("questionInput").value.trim();
-    const type = document.getElementById("groupInput").value;
-    const status = document.getElementById("statusInput").value;
-
-    if (!question) {
-        alert("Please enter question content.");
-        return;
-    }
-
-    const options = collectOptions();
-    const optionCount = options.filter(x => x.content !== "").length;
-
-    const badgeClass =
-        status === "Active"
-            ? "bg-green-lt"
-            : "bg-red-lt";
-
-    const rowHtml = `
-        <td class="question-test">${escapeHtml(test)}</td>
-
-        <td class="question-content">${escapeHtml(question)}</td>
-
-        <td class="question-type">${escapeHtml(type)}</td>
-
-        <td class="question-options"
-            data-option1="${escapeAttr(options[0].content)}"
-            data-career1="${escapeAttr(options[0].career)}"
-            data-weight1="${escapeAttr(options[0].weight)}"
-            data-option2="${escapeAttr(options[1].content)}"
-            data-career2="${escapeAttr(options[1].career)}"
-            data-weight2="${escapeAttr(options[1].weight)}"
-            data-option3="${escapeAttr(options[2].content)}"
-            data-career3="${escapeAttr(options[2].career)}"
-            data-weight3="${escapeAttr(options[2].weight)}"
-            data-option4="${escapeAttr(options[3].content)}"
-            data-career4="${escapeAttr(options[3].career)}"
-            data-weight4="${escapeAttr(options[3].weight)}">
-            ${optionCount} Options
-        </td>
-
-        <td class="question-status">
-            <span class="badge ${badgeClass}">
-                ${escapeHtml(status)}
-            </span>
-        </td>
-
-        <td class="text-end">
-            <div class="btn-list justify-content-end">
-                <button class="btn btn-sm btn-outline-primary btn-edit-question" type="button">
-                    Edit
-                </button>
-
-                <button class="btn btn-sm btn-outline-danger btn-delete-question" type="button">
-                    Delete
-                </button>
-            </div>
-        </td>
-    `;
-
-    if (currentRow) {
-        currentRow.innerHTML = rowHtml;
-    } else {
-        const tr = document.createElement("tr");
-        tr.innerHTML = rowHtml;
-        document.getElementById("questionTableBody").appendChild(tr);
-    }
-
-    bootstrap.Modal
-        .getOrCreateInstance(document.getElementById("questionModal"))
-        .hide();
-
-    applyFilters();
-}
-
-function deleteQuestion(btn) {
-    if (confirm("Delete this question?")) {
-        btn.closest("tr")?.remove();
-    }
-}
-
-function collectOptions() {
     const optionInputs = document.querySelectorAll(".option-input");
     const careerInputs = document.querySelectorAll(".career-path-input");
     const weightInputs = document.querySelectorAll(".weight-input");
 
-    const options = [];
+    clearOptions();
 
     for (let i = 0; i < 4; i++) {
-        options.push({
-            content: optionInputs[i]?.value.trim() || "",
-            career: careerInputs[i]?.value || "",
-            weight: weightInputs[i]?.value || ""
-        });
+        if (optionsData[i]) {
+            optionInputs[i].value = optionsData[i].content || "";
+            careerInputs[i].value = optionsData[i].career || "";
+            weightInputs[i].value = optionsData[i].weight || "";
+        }
+    }
+}
+
+function saveQuestion() {
+    const content = document.getElementById("questionInput").value.trim();
+    const testId = document.getElementById("testInput").value;
+    const testType = document.getElementById("groupInput").value;
+    const status = document.getElementById("statusInput").value;
+    const editingId = document.getElementById("editingQuestionId").value;
+
+    if (!content) {
+        alert("Please enter the question content.");
+        return;
     }
 
-    return options;
+    const optionInputs = document.querySelectorAll(".option-input");
+    const careerInputs = document.querySelectorAll(".career-path-input");
+    const weightInputs = document.querySelectorAll(".weight-input");
+    const options = [];
+
+    let hasEmptyOptionContent = false;
+    for (let i = 0; i < 4; i++) {
+        const text = optionInputs[i].value.trim();
+        if (text) {
+            const pathVal = careerInputs[i].value;
+            const weightVal = weightInputs[i].value;
+            
+            options.push({
+                content: text,
+                careerPathId: pathVal ? parseInt(pathVal) : null,
+                weight: weightVal ? parseInt(weightVal) : 1
+            });
+        }
+    }
+
+    if (options.length === 0) {
+        alert("Please provide at least one answer option.");
+        return;
+    }
+
+    const payload = {
+        testId: parseInt(testId),
+        content: content,
+        testType: testType,
+        status: status,
+        options: options
+    };
+
+    if (editingId) {
+        payload.id = parseInt(editingId);
+    }
+
+    fetch('/Admin/SaveQuestion', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to save question.');
+    });
+}
+
+function deleteQuestion(id) {
+    if (confirm("Are you sure you want to delete this question? This action will permanently remove all linked answers and options.")) {
+        fetch('/Admin/DeleteQuestion?id=' + id, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to delete question.');
+        });
+    }
 }
 
 function clearOptions() {
-    document.querySelectorAll(".option-input")
-        .forEach(input => input.value = "");
-
-    document.querySelectorAll(".career-path-input")
-        .forEach(select => select.value = "");
-
-    document.querySelectorAll(".weight-input")
-        .forEach(input => input.value = "");
+    document.querySelectorAll(".option-input").forEach(input => input.value = "");
+    document.querySelectorAll(".career-path-input").forEach(select => select.value = "");
+    document.querySelectorAll(".weight-input").forEach(input => input.value = "");
 }
 
 function applyFilters() {
-    const keyword =
-        document.getElementById("searchInput").value.toLowerCase();
-
-    const typeFilter =
-        document.getElementById("filterType").value;
-
-    document.querySelectorAll("#questionTableBody tr")
-        .forEach(row => {
-            const rowText = row.innerText.toLowerCase();
-            const rowType = row.querySelector(".question-type")?.innerText.trim();
-
-            const matchSearch = rowText.includes(keyword);
-            const matchType = typeFilter === "" || rowType === typeFilter;
-
-            row.style.display = matchSearch && matchType ? "" : "none";
-        });
-}
-
-function escapeHtml(value) {
-    if (!value) return "";
-
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-function escapeAttr(value) {
-    return escapeHtml(value);
+    const search = document.getElementById("searchInput").value.trim();
+    const type = document.getElementById("filterType").value;
+    window.location.href = `/Admin/CareerTests?page=1&search=${encodeURIComponent(search)}&type=${encodeURIComponent(type)}`;
 }

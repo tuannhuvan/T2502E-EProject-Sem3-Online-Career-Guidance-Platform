@@ -229,10 +229,200 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Mentors));
     }
     
-    public async Task<IActionResult> CareerTests()
+    public async Task<IActionResult> CareerTests(int page = 1, string? search = null, string? type = null)
     {
-        var tests = await _context.Tests.ToListAsync();
-        return View(tests);
+        if (page < 1) page = 1;
+        int pageSize = 10;
+
+        var query = _context.QuestionTests
+            .Include(q => q.Test)
+            .Include(q => q.QuestionOptions)
+                .ThenInclude(o => o.OptionCareerPaths)
+                    .ThenInclude(ocp => ocp.CareerPath)
+            .AsQueryable();
+
+        // Apply server-side filters
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.Trim().ToLower();
+            query = query.Where(q => q.Content.ToLower().Contains(searchLower));
+        }
+
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            query = query.Where(q => q.TestType == type);
+        }
+
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+        if (totalPages < 1) totalPages = 1;
+        if (page > totalPages) page = totalPages;
+
+        var questions = await query
+            .OrderByDescending(q => q.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        ViewBag.Tests = await _context.Tests
+            .OrderBy(t => t.Title)
+            .ToListAsync();
+
+        ViewBag.CareerPaths = await _context.CareerPaths
+            .OrderBy(cp => cp.Title)
+            .ToListAsync();
+
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalItems = totalItems;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.Search = search;
+        ViewBag.Type = type;
+
+        return View(questions);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveQuestion([FromBody] Career_Guidance_Platform.Models.ViewModels.QuestionAdminDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Content))
+        {
+            return Json(new { success = false, message = "Question content cannot be empty." });
+        }
+
+        var test = await _context.Tests.FindAsync(dto.TestId);
+        if (test == null)
+        {
+            return Json(new { success = false, message = "Target Test does not exist." });
+        }
+
+        var singleChoiceType = await _context.Set<QuestionType>().FirstOrDefaultAsync(qt => qt.Name == "Single Choice");
+        if (singleChoiceType == null)
+        {
+            singleChoiceType = new QuestionType { Name = "Single Choice", Description = "Chọn một đáp án" };
+            _context.Set<QuestionType>().Add(singleChoiceType);
+            await _context.SaveChangesAsync();
+        }
+
+        QuestionTest question;
+        bool isNew = false;
+
+        if (dto.Id.HasValue && dto.Id.Value > 0)
+        {
+            question = await _context.QuestionTests
+                .Include(q => q.QuestionOptions)
+                    .ThenInclude(o => o.OptionCareerPaths)
+                .FirstOrDefaultAsync(q => q.Id == dto.Id.Value);
+
+            if (question == null)
+            {
+                return Json(new { success = false, message = "Question not found for editing." });
+            }
+
+            question.UpdatedAt = DateTime.Now;
+            question.UpdatedBy = User.Identity?.Name ?? "Admin";
+        }
+        else
+        {
+            question = new QuestionTest
+            {
+                CreatedAt = DateTime.Now,
+                CreatedBy = User.Identity?.Name ?? "Admin"
+            };
+            isNew = true;
+        }
+
+        question.TestId = dto.TestId;
+        question.QuestionTypeId = singleChoiceType.Id;
+        question.Content = dto.Content;
+        question.TestType = dto.TestType;
+        question.Status = dto.Status == "Active" ? 1 : 0;
+
+        if (isNew)
+        {
+            _context.QuestionTests.Add(question);
+        }
+
+        await _context.SaveChangesAsync();
+
+        // Update options
+        if (!isNew)
+        {
+            foreach (var opt in question.QuestionOptions)
+            {
+                _context.Set<OptionCareerPath>().RemoveRange(opt.OptionCareerPaths);
+            }
+            _context.QuestionOptions.RemoveRange(question.QuestionOptions);
+            await _context.SaveChangesAsync();
+        }
+
+        if (dto.Options != null)
+        {
+            foreach (var optDto in dto.Options)
+            {
+                if (string.IsNullOrWhiteSpace(optDto.Content)) continue;
+
+                var option = new QuestionOption
+                {
+                    QuestionId = question.Id,
+                    Content = optDto.Content,
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = User.Identity?.Name ?? "Admin",
+                    Status = 1
+                };
+
+                _context.QuestionOptions.Add(option);
+                await _context.SaveChangesAsync();
+
+                if (optDto.CareerPathId.HasValue && optDto.CareerPathId.Value > 0)
+                {
+                    var optPath = new OptionCareerPath
+                    {
+                        OptionId = option.Id,
+                        CareerPathId = optDto.CareerPathId.Value,
+                        Weight = optDto.Weight,
+                        CreatedAt = DateTime.Now,
+                        CreatedBy = User.Identity?.Name ?? "Admin",
+                        Status = 1
+                    };
+                    _context.Set<OptionCareerPath>().Add(optPath);
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        return Json(new { success = true, message = "Question saved successfully!" });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteQuestion(int id)
+    {
+        var question = await _context.QuestionTests
+            .Include(q => q.QuestionOptions)
+                .ThenInclude(o => o.OptionCareerPaths)
+            .FirstOrDefaultAsync(q => q.Id == id);
+
+        if (question == null)
+        {
+            return Json(new { success = false, message = "Question not found." });
+        }
+
+        var hasAnswers = await _context.TestAnswers.AnyAsync(ta => ta.QuestionId == id);
+        if (hasAnswers)
+        {
+            return Json(new { success = false, message = "Cannot delete this question. Users have already answered it." });
+        }
+
+        foreach (var opt in question.QuestionOptions)
+        {
+            _context.Set<OptionCareerPath>().RemoveRange(opt.OptionCareerPaths);
+        }
+        _context.QuestionOptions.RemoveRange(question.QuestionOptions);
+        _context.QuestionTests.Remove(question);
+
+        await _context.SaveChangesAsync();
+
+        return Json(new { success = true, message = "Question deleted successfully!" });
     }
     public async Task<IActionResult> Jobs()
     {

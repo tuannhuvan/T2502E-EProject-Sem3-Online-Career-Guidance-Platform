@@ -28,8 +28,6 @@ function openEditUserModal(button) {
     // Hide password group during editing
     document.getElementById('passwordGroup').style.display = 'none';
 
-    const modal = new bootstrap.Modal(document.getElementById('userModal'));
-    modal.show();
 }
 
 function saveUser() {

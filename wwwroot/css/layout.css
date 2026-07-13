@@ -129,6 +129,18 @@
     display: inline-block;
 }
 
+/* Invisible bridge to cover hover gap between trigger and menu */
+.user-profile-dropdown::before {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: transparent;
+    z-index: 105;
+}
+
 .profile-trigger-btn {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
