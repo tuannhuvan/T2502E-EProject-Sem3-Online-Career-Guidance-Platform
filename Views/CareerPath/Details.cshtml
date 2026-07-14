@@ -1,15 +1,38 @@
-@model Career_Guidance_Platform.Models.CareerPath
+@inject Microsoft.AspNetCore.Identity.UserManager<Career_Guidance_Platform.Models.User> UserManager
 @{
     ViewData["Title"] = "Chi tiết Lộ trình: " + Model.Title;
+    var currentUser = await UserManager.GetUserAsync(User);
+    var isPremium = currentUser?.IsPremium == true || User.IsInRole("Admin") || User.IsInRole("Mentor");
+    var testCount = currentUser?.TestAttemptsCount ?? 0;
+    var isLimitReached = !isPremium && testCount >= 3;
 }
 
 <section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
-    <span class="page-badge">🎯 Bản đồ sự nghiệp</span>
+    <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+        <span class="page-badge">🎯 Bản đồ sự nghiệp</span>
+        @if (isPremium)
+        {
+            <span class="page-badge" style="background: #eff6ff; color: #3b82f6; border-color: #bfdbfe;">💎 Premium Account</span>
+        }
+    </div>
     <h1>@Model.Title</h1>
     <p>Lộ trình phát triển năng lực toàn diện được thiết kế bởi các chuyên gia trong ngành giúp bạn đi đúng hướng.</p>
 </section>
 
 <section class="content-section" style="max-width: 1100px;">
+    @if (isLimitReached)
+    {
+        <div class="premium-upgrade-banner" style="background: linear-gradient(135deg, #fffbeb 0%, #fef08a 100%); border: 1px solid #eab308; border-left: 6px solid #eab308; padding: 20px 24px; border-radius: 16px; margin-bottom: 30px; color: #854d0e; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px -10px rgba(234,179,8,0.15); width: 100%;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="font-size: 32px;">⚠️</span>
+                <div style="text-align: left;">
+                    <h4 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 800;">Gói thành viên Free đã đạt giới hạn</h4>
+                    <p style="margin: 0; font-size: 13.5px; opacity: 0.9;">Bạn đã hết lượt làm bài miễn phí. Hãy nâng cấp Premium để tiếp tục lộ trình học tập và xem toàn bộ học liệu.</p>
+                </div>
+            </div>
+            <a href="/Home/UpgradePremium" class="btn primary-btn" style="background: #0f172a; border-color: #0f172a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 13px; white-space: nowrap;">Nâng cấp VIP ngay</a>
+        </div>
+    }
     <!-- Overview Card -->
     <div class="info-card" style="margin-bottom: 40px; border-left: 6px solid #4f46e5;">
         <h2 style="font-size: 24px; color: #020617; margin-bottom: 12px;">Tổng quan nghề nghiệp</h2>
@@ -139,7 +162,7 @@
 <div id="floatingSelectionBar" class="floating-selection-bar hidden">
     <div class="floating-content">
         <span class="count-badge">💡 Đã chọn <strong id="selectedSkillsCount">0</strong> kỹ năng</span>
-        <button onclick="addSelectedSkillsToGoals()" class="btn primary-btn btn-sm">🎯 Thêm vào Mục tiêu</button>
+        <button @(isPremium ? "" : "disabled") onclick="@(isPremium ? "addSelectedSkillsToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn btn-sm">🎯 @(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
         <button onclick="clearSkillSelection()" class="btn secondary-btn btn-sm" style="color: white; border-color: rgba(255,255,255,0.3); background: transparent;">Hủy</button>
     </div>
 </div>
@@ -173,10 +196,12 @@
         </div>
         
         <div class="modal-footer">
-            <button id="btnAddSingleGoal" onclick="addCurrentSkillToGoals()" class="btn secondary-btn">🎯 Thêm vào Mục tiêu</button>
+            <button id="btnAddSingleGoal" @(isPremium ? "" : "disabled") onclick="@(isPremium ? "addCurrentSkillToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn secondary-btn">🎯 @(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
             <form id="startLearningForm" method="post" action="/Goal/StartLearning" style="margin: 0;">
                 <input type="hidden" name="skillId" id="startLearningSkillId" value="" />
-                <button type="submit" class="btn primary-btn">🚀 Bắt đầu học ngay</button>
+                <button type="@(isPremium ? "submit" : "button")" onclick="@(isPremium ? "" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn" style="@(isPremium ? "" : "background: #cbd5e1; border-color: #cbd5e1; color: #64748b;")">
+                    @(isPremium ? "🚀 Bắt đầu học ngay" : "🔒 Bắt đầu học ngay (Premium)")
+                </button>
             </form>
         </div>
     </div>

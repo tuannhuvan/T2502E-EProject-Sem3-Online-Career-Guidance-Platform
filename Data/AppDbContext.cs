@@ -30,6 +30,7 @@ namespace Career_Guidance_Platform.Data
         
         public DbSet<CareerPathCourse> CareerPathCourses { get; set; }
         public DbSet<Resume> Resumes { get; set; }
+        public DbSet<PaymentHistory> PaymentHistories { get; set; }
 
         public DbSet<Skill> Skills { get; set; }
         public DbSet<CareerPathSkill> CareerPathSkills { get; set; }

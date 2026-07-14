@@ -2,6 +2,7 @@ using Career_Guidance_Platform.Data;
 using Career_Guidance_Platform.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Career_Guidance_Platform.Filters;
 
 namespace Career_Guidance_Platform.Controllers
 {
@@ -50,6 +51,7 @@ namespace Career_Guidance_Platform.Controllers
         }
 
         // Trang Roadmap
+        [TypeFilter(typeof(PremiumAccessFilter))]
         public async Task<IActionResult> Roadmap(int id)
         {
             var careerPath = await _context.CareerPaths

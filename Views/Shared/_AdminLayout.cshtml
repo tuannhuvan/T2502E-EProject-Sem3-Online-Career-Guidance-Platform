@@ -1,5 +1,9 @@
+@{
+    var langCookie = Context.Request.Cookies["selected_lang"];
+    var isEn = langCookie == "en";
+}
 <!doctype html>
-<html lang="vi">
+<html lang="@(isEn ? "en" : "vi")">
 <head>
     <meta charset="utf-8"/>
     <title>@ViewData["Title"] - CareerPath Admin</title>
@@ -33,55 +37,55 @@
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Dashboard">
                             <span class="nav-link-icon"><i class="ti ti-dashboard"></i></span>
-                            <span class="nav-link-title">Dashboard</span>
+                            <span class="nav-link-title">@(isEn ? "Dashboard" : "Bảng điều khiển")</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Users">
                             <span class="nav-link-icon"><i class="ti ti-users"></i></span>
-                            <span class="nav-link-title">Users</span>
+                            <span class="nav-link-title">@(isEn ? "Users" : "Người dùng")</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Mentors">
                             <span class="nav-link-icon"><i class="ti ti-user-star"></i></span>
-                            <span class="nav-link-title">Mentors</span>
+                            <span class="nav-link-title">@(isEn ? "Mentors" : "Cố vấn")</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="CareerTests">
                             <span class="nav-link-icon"><i class="ti ti-clipboard-check"></i></span>
-                            <span class="nav-link-title">Career Tests</span>
+                            <span class="nav-link-title">@(isEn ? "Career Tests" : "Bài trắc nghiệm")</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Categories">
                             <span class="nav-link-icon"><i class="ti ti-category"></i></span>
-                            <span class="nav-link-title">Categories</span>
+                            <span class="nav-link-title">@(isEn ? "Categories" : "Chuyên mục")</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Jobs">
                             <span class="nav-link-icon"><i class="ti ti-briefcase"></i></span>
-                            <span class="nav-link-title">Jobs</span>
+                            <span class="nav-link-title">@(isEn ? "Jobs" : "Việc làm")</span>
                         </a>
                     </li>
                     
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="CareerPaths">
                             <span class="nav-link-icon"><i class="ti ti-route"></i></span>
-                            <span class="nav-link-title">Career Paths</span>
+                            <span class="nav-link-title">@(isEn ? "Career Paths" : "Lộ trình nghề nghiệp")</span>
                         </a>
                     </li>
                     
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Skills">
                             <span class="nav-link-icon"><i class="ti ti-bulb"></i></span>
-                            <span class="nav-link-title">Skills</span>
+                            <span class="nav-link-title">@(isEn ? "Skills" : "Kỹ năng")</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -90,7 +94,7 @@
                                 <i class="ti ti-target"></i>
                             </span>
                             <span class="nav-link-title">
-                                Goals
+                                @(isEn ? "Goals" : "Mục tiêu")
                             </span>
                         </a>
                     </li>
@@ -98,7 +102,7 @@
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Resources">
                             <span class="nav-link-icon"><i class="ti ti-books"></i></span>
-                            <span class="nav-link-title">Resources</span>
+                            <span class="nav-link-title">@(isEn ? "Resources" : "Học liệu")</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -106,28 +110,28 @@
                             <span class="nav-link-icon">
                                 <i class="ti ti-school"></i>
                             </span>
-                            <span class="nav-link-title">Courses</span>
+                            <span class="nav-link-title">@(isEn ? "Courses" : "Khóa học")</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Reports">
                             <span class="nav-link-icon"><i class="ti ti-chart-bar"></i></span>
-                            <span class="nav-link-title">Reports</span>
+                            <span class="nav-link-title">@(isEn ? "Reports" : "Báo cáo")</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Settings">
                             <span class="nav-link-icon"><i class="ti ti-settings"></i></span>
-                            <span class="nav-link-title">Settings</span>
+                            <span class="nav-link-title">@(isEn ? "Settings" : "Cài đặt")</span>
                         </a>
                     </li>
 
                     <li class="nav-item mt-3">
                         <a class="nav-link" asp-controller="Home" asp-action="Index">
                             <span class="nav-link-icon"><i class="ti ti-arrow-left"></i></span>
-                            <span class="nav-link-title">Back to Website</span>
+                            <span class="nav-link-title">@(isEn ? "Back to Website" : "Quay lại trang chủ")</span>
                         </a>
                     </li>
 
@@ -141,22 +145,32 @@
         <header class="navbar navbar-expand-md d-print-none">
             <div class="container-xl">
                 <div class="navbar-nav flex-row order-md-last ms-auto">
+                    <!-- Language Selector for Admin -->
+                    <div class="language-selector" style="display: flex; gap: 10px; margin-right: 15px; align-items: center;">
+                        <a href="javascript:void(0)" onclick="changeSystemLanguage('vi')" title="Tiếng Việt" style="text-decoration: none; font-size: 20px; opacity: 0.5; transition: all 0.2s;" id="lang-vi">
+                            <span>🇻🇳</span>
+                        </a>
+                        <a href="javascript:void(0)" onclick="changeSystemLanguage('en')" title="English" style="text-decoration: none; font-size: 20px; opacity: 0.5; transition: all 0.2s;" id="lang-en">
+                            <span>🇬🇧</span>
+                        </a>
+                    </div>
+
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown">
                             <span class="avatar avatar-sm">AD</span>
                             <div class="d-none d-xl-block ps-2">
                                 <div>Admin</div>
-                                <div class="mt-1 small text-muted">CareerPath Manager</div>
+                                <div class="mt-1 small text-muted">@(isEn ? "CareerPath Manager" : "Quản trị viên")</div>
                             </div>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                            <a class="dropdown-item" href="/">Profile</a>
-                            <a class="dropdown-item" asp-controller="Admin" asp-action="Settings">Settings</a>
+                            <a class="dropdown-item" href="/">@(isEn ? "Profile" : "Thông tin cá nhân")</a>
+                            <a class="dropdown-item" asp-controller="Admin" asp-action="Settings">@(isEn ? "Settings" : "Cài đặt")</a>
                             <div class="dropdown-divider"></div>
                             <form id="logoutForm" asp-controller="Account" asp-action="Logout" method="post" style="display:none;">
                                 @Html.AntiForgeryToken()
                             </form>
-                            <a class="dropdown-item" href="javascript:void(0);" onclick="document.getElementById('logoutForm').submit();">Logout</a>
+                            <a class="dropdown-item" href="javascript:void(0);" onclick="document.getElementById('logoutForm').submit();">@(isEn ? "Logout" : "Đăng xuất")</a>
                         </div>
                     </div>
                 </div>
@@ -182,5 +196,80 @@
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 @await RenderSectionAsync("Scripts", required: false)
+
+<style>
+    /* Google Translate Hiding Styles */
+    iframe.goog-te-banner-frame {
+        display: none !important;
+    }
+    .goog-te-balloon-frame {
+        display: none !important;
+    }
+    #google_translate_element, .skiptranslate {
+        display: none !important;
+    }
+    body {
+        top: 0 !important;
+    }
+    .language-selector a.active-lang {
+        opacity: 1 !important;
+        transform: scale(1.25);
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+    }
+</style>
+
+<!-- Google Translate Widget Elements -->
+<div id="google_translate_element" style="display:none;"></div>
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'vi',
+            includedLanguages: 'en,vi',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script>
+    function changeSystemLanguage(lang) {
+        let domain = window.location.hostname;
+        if (lang === 'en') {
+            document.cookie = "googtrans=/vi/en; path=/; domain=" + domain;
+            document.cookie = "googtrans=/vi/en; path=/";
+            document.cookie = "selected_lang=en; path=/; domain=" + domain;
+            document.cookie = "selected_lang=en; path=/";
+        } else {
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + domain;
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+            document.cookie = "selected_lang=vi; path=/; domain=" + domain;
+            document.cookie = "selected_lang=vi; path=/";
+        }
+        window.location.reload();
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Highlight active flag based on Cookie
+        let match = document.cookie.match(new RegExp('(^| )selected_lang=([^;]+)'));
+        let currentLang = match ? match[2] : 'vi';
+        
+        let flagVi = document.getElementById('lang-vi');
+        let flagEn = document.getElementById('lang-en');
+        if (flagVi && flagEn) {
+            if (currentLang === 'en') {
+                flagVi.style.opacity = '0.4';
+                flagVi.classList.remove('active-lang');
+                flagEn.style.opacity = '1';
+                flagEn.classList.add('active-lang');
+            } else {
+                flagVi.style.opacity = '1';
+                flagVi.classList.add('active-lang');
+                flagEn.style.opacity = '0.4';
+                flagEn.classList.remove('active-lang');
+            }
+        }
+    });
+</script>
 </body>
 </html>

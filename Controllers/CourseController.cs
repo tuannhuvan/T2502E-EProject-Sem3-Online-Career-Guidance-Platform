@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Career_Guidance_Platform.Filters;
 
 namespace Career_Guidance_Platform.Controllers
 {
@@ -17,6 +18,7 @@ namespace Career_Guidance_Platform.Controllers
         }
 
         // /Course/Detail/1
+        [TypeFilter(typeof(PremiumAccessFilter))]
         public async Task<IActionResult> Detail(int id)
         {
             var course = await _context.CareerPathCourses
@@ -64,6 +66,7 @@ namespace Career_Guidance_Platform.Controllers
 
         // /Course/Start/1
         [Authorize]
+        [TypeFilter(typeof(PremiumAccessFilter))]
         public async Task<IActionResult> Start(int id)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
