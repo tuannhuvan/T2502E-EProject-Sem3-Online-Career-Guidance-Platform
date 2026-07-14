@@ -4,6 +4,7 @@ using Career_Guidance_Platform.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Career_Guidance_Platform.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714071928_AddPremiumFieldsToUser")]
+    partial class AddPremiumFieldsToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1235,49 +1238,6 @@ namespace Career_Guidance_Platform.Migrations
                     b.HasIndex("OptionId");
 
                     b.ToTable("option_career_paths");
-                });
-
-            modelBuilder.Entity("Career_Guidance_Platform.Models.PaymentHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(65,30)")
-                        .HasColumnName("amount");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("currency");
-
-                    b.Property<string>("PaymentStatus")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("payment_status");
-
-                    b.Property<string>("PaypalOrderId")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("paypal_order_id");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("payment_histories");
                 });
 
             modelBuilder.Entity("Career_Guidance_Platform.Models.PeerConnection", b =>
@@ -2698,17 +2658,6 @@ namespace Career_Guidance_Platform.Migrations
                     b.Navigation("CareerPath");
 
                     b.Navigation("QuestionOption");
-                });
-
-            modelBuilder.Entity("Career_Guidance_Platform.Models.PaymentHistory", b =>
-                {
-                    b.HasOne("Career_Guidance_Platform.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Career_Guidance_Platform.Models.PeerConnection", b =>

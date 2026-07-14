@@ -29,6 +29,12 @@ public class User : IdentityUser<int>
     [Column("status")]
     public int Status { get; set; } = 1;
 
+    [Column("is_premium")]
+    public bool IsPremium { get; set; } = false;
+
+    [Column("test_attempts_count")]
+    public int TestAttemptsCount { get; set; } = 0;
+
     public ICollection<TestResult> TestResults { get; set; } = new List<TestResult>();
     public ICollection<Goal> Goals { get; set; } = new List<Goal>();
     public MentorProfile? MentorProfile { get; set; }
