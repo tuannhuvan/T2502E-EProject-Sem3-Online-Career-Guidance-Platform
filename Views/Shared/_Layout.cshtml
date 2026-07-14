@@ -128,6 +128,25 @@
             line-height: 1.5;
             margin: 0;
         }
+
+        /* Google Translate Hiding Styles */
+        iframe.goog-te-banner-frame {
+            display: none !important;
+        }
+        .goog-te-balloon-frame {
+            display: none !important;
+        }
+        #google_translate_element, .skiptranslate {
+            display: none !important;
+        }
+        body {
+            top: 0 !important;
+        }
+        .language-selector a.active-lang {
+            opacity: 1 !important;
+            transform: scale(1.25);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+        }
     </style>
 </head>
 <body>
@@ -148,6 +167,16 @@
     </nav>
 
     <div class="nav-actions">
+        <!-- Language Selector -->
+        <div class="language-selector" style="display: flex; gap: 10px; margin-right: 15px; align-items: center;">
+            <a href="javascript:void(0)" onclick="changeSystemLanguage('vi')" title="Tiếng Việt" style="text-decoration: none; font-size: 20px; opacity: 0.5; transition: all 0.2s;" id="lang-vi">
+                <span>🇻🇳</span>
+            </a>
+            <a href="javascript:void(0)" onclick="changeSystemLanguage('en')" title="English" style="text-decoration: none; font-size: 20px; opacity: 0.5; transition: all 0.2s;" id="lang-en">
+                <span>🇬🇧</span>
+            </a>
+        </div>
+
         @if (SignInManager.IsSignedIn(User))
         {
             <div class="user-profile-dropdown">
@@ -311,6 +340,60 @@
         const errorEl = document.getElementById('tempDataError');
         if (successEl) showToast(successEl.getAttribute('data-message'), 'success');
         if (errorEl) showToast(errorEl.getAttribute('data-message'), 'error');
+    });
+</script>
+
+<!-- Google Translate Widget Elements -->
+<div id="google_translate_element" style="display:none;"></div>
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'vi',
+            includedLanguages: 'en,vi',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script>
+    function changeSystemLanguage(lang) {
+        let domain = window.location.hostname;
+        if (lang === 'en') {
+            document.cookie = "googtrans=/vi/en; path=/; domain=" + domain;
+            document.cookie = "googtrans=/vi/en; path=/";
+            document.cookie = "selected_lang=en; path=/; domain=" + domain;
+            document.cookie = "selected_lang=en; path=/";
+        } else {
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + domain;
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+            document.cookie = "selected_lang=vi; path=/; domain=" + domain;
+            document.cookie = "selected_lang=vi; path=/";
+        }
+        window.location.reload();
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Highlight active flag based on Cookie
+        let match = document.cookie.match(new RegExp('(^| )selected_lang=([^;]+)'));
+        let currentLang = match ? match[2] : 'vi';
+        
+        let flagVi = document.getElementById('lang-vi');
+        let flagEn = document.getElementById('lang-en');
+        if (flagVi && flagEn) {
+            if (currentLang === 'en') {
+                flagVi.style.opacity = '0.4';
+                flagVi.classList.remove('active-lang');
+                flagEn.style.opacity = '1';
+                flagEn.classList.add('active-lang');
+            } else {
+                flagVi.style.opacity = '1';
+                flagVi.classList.add('active-lang');
+                flagEn.style.opacity = '0.4';
+                flagEn.classList.remove('active-lang');
+            }
+        }
     });
 </script>
 
