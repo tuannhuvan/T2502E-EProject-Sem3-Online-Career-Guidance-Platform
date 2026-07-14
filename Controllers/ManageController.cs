@@ -32,11 +32,15 @@ namespace Career_Guidance_Platform.Controllers
                 return Challenge();
             }
 
-            var testResults = await _context.TestResults
+            var isPremiumOrSpecial = user.IsPremium || User.IsInRole("Admin") || User.IsInRole("Mentor");
+            var testResultsQuery = _context.TestResults
                 .Include(tr => tr.RecommendedCareerPath)
                 .Where(tr => tr.UserId == user.Id)
-                .OrderByDescending(tr => tr.DateTaken)
-                .ToListAsync();
+                .OrderByDescending(tr => tr.DateTaken);
+
+            var testResults = isPremiumOrSpecial
+                ? await testResultsQuery.ToListAsync()
+                : await testResultsQuery.Take(3).ToListAsync();
 
             var resumes = await _context.Resumes
                 .Where(r => r.UserId == user.Id)

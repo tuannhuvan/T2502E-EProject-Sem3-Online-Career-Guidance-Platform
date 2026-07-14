@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Career_Guidance_Platform.Filters;
 
 namespace Career_Guidance_Platform.Controllers
 {
@@ -22,6 +23,7 @@ namespace Career_Guidance_Platform.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [TypeFilter(typeof(PremiumAccessFilter))]
         public async Task<IActionResult> SubmitAnswers(TakeTestViewModel model)
         {
             if (ModelState.IsValid)
@@ -48,6 +50,16 @@ namespace Career_Guidance_Platform.Controllers
 
                 _context.TestResults.Add(testResult);
                 await _context.SaveChangesAsync();
+
+                if (userId.HasValue)
+                {
+                    var user = await _userManager.FindByIdAsync(userId.Value.ToString());
+                    if (user != null && !user.IsPremium)
+                    {
+                        user.TestAttemptsCount = await _context.TestResults.CountAsync(tr => tr.UserId == userId.Value);
+                        await _userManager.UpdateAsync(user);
+                    }
+                }
 
                 foreach (var answer in model.Answers)
                 {
@@ -119,6 +131,7 @@ namespace Career_Guidance_Platform.Controllers
         }
 
         [HttpPost]
+        [TypeFilter(typeof(PremiumAccessFilter))]
         public async Task<IActionResult> SubmitTest([FromBody] TakeTestViewModel model)
         {
             if (ModelState.IsValid)
@@ -143,6 +156,16 @@ namespace Career_Guidance_Platform.Controllers
 
                 _context.TestResults.Add(testResult);
                 await _context.SaveChangesAsync();
+
+                if (parsedUserId.HasValue)
+                {
+                    var user = await _userManager.FindByIdAsync(parsedUserId.Value.ToString());
+                    if (user != null && !user.IsPremium)
+                    {
+                        user.TestAttemptsCount = await _context.TestResults.CountAsync(tr => tr.UserId == parsedUserId.Value);
+                        await _userManager.UpdateAsync(user);
+                    }
+                }
 
                 foreach (var answer in model.Answers)
                 {

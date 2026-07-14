@@ -51,6 +51,14 @@ namespace Career_Guidance_Platform.Controllers
                             var existingCount = await _context.TestResults.CountAsync(tr => tr.UserId == user.Id && tr.TestId == testResult.TestId);
                             testResult.AttemptNumber = existingCount + 1;
                             await _context.SaveChangesAsync();
+                            
+                            // Recalculate and save TestAttemptsCount for Free users
+                            if (!user.IsPremium)
+                            {
+                                user.TestAttemptsCount = await _context.TestResults.CountAsync(tr => tr.UserId == user.Id);
+                                await _userManager.UpdateAsync(user);
+                            }
+
                             HttpContext.Session.Remove("TestResultId");
                             return RedirectToAction("GetResultDetail", "CareerTest", new { id = testResult.Id });
                         }
@@ -98,6 +106,14 @@ namespace Career_Guidance_Platform.Controllers
                             var existingCount = await _context.TestResults.CountAsync(tr => tr.UserId == user.Id && tr.TestId == testResult.TestId);
                             testResult.AttemptNumber = existingCount + 1;
                             await _context.SaveChangesAsync();
+                            
+                            // Recalculate and save TestAttemptsCount for Free users
+                            if (!user.IsPremium)
+                            {
+                                user.TestAttemptsCount = await _context.TestResults.CountAsync(tr => tr.UserId == user.Id);
+                                await _userManager.UpdateAsync(user);
+                            }
+
                             HttpContext.Session.Remove("TestResultId");
                             return RedirectToAction("GetResultDetail", "CareerTest", new { id = testResult.Id });
                         }
