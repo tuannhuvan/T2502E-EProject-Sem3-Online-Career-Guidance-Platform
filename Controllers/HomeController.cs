@@ -438,6 +438,28 @@ public class HomeController : Controller
         return View(null);
     }
 
+    [Authorize]
+    public async Task<IActionResult> ViewCV(int id)
+    {
+        var userIdValue = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userIdValue))
+        {
+            return Challenge();
+        }
+
+        var userId = int.Parse(userIdValue);
+        var resume = await _context.Resumes
+            .Include(r => r.Template)
+            .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+
+        if (resume == null)
+        {
+            return NotFound("Không tìm thấy CV hoặc bạn không có quyền truy cập CV này.");
+        }
+
+        return View(resume);
+    }
+
     public IActionResult Policy() => View();
 
     public IActionResult Terms() => View();
