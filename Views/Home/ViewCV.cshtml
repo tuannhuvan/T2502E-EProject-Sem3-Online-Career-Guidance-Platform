@@ -1,0 +1,455 @@
+@model Career_Guidance_Platform.Models.Resume
+@{
+    ViewData["Title"] = "Xem chi tiết CV: " + Model.Title;
+}
+
+<link rel="stylesheet" href="~/css/page.css" asp-append-version="true" />
+
+<section class="page-hero print-hide" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding-bottom: 20px;">
+    <span class="page-badge">👁️ Xem lại hồ sơ</span>
+    <h1>Xem và In ấn CV</h1>
+    <p>Xem lại chi tiết CV đã lưu, thay đổi mẫu giao diện hiển thị và tải xuống dưới dạng PDF tiêu chuẩn.</p>
+</section>
+
+<section class="content-section" style="padding-top: 10px; max-width: 1100px;">
+    <!-- Controls Bar (Will be hidden when printing) -->
+    <div class="resume-controls print-hide" style="background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+        <div class="template-selector" style="display: flex; align-items: center; gap: 10px;">
+            <label for="templateSelect" style="font-weight: 700; color: #1e293b; font-size: 14px; margin: 0;">Mẫu CV hiển thị:</label>
+            <select id="templateSelect" class="form-select" style="min-width: 220px; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; font-size: 13.5px;">
+                <option value="modern" selected>Modern Indigo (Hiện đại)</option>
+                <option value="minimalist">Minimalist Classic (Tối giản)</option>
+                <option value="professional">Professional Sidebar (Chuyên nghiệp)</option>
+            </select>
+        </div>
+        <div class="action-buttons" style="display: flex; gap: 10px;">
+            <a asp-controller="Manage" asp-action="Index" class="btn secondary-btn" style="padding: 10px 20px; border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13.5px;">
+                ⬅️ Trở về trang cá nhân
+            </a>
+            <a asp-controller="Home" asp-action="ResumeBuilder" asp-route-id="@Model.Id" class="btn secondary-btn" style="padding: 10px 20px; border-radius: 10px; font-weight: 600; background: #e0f2fe; color: #0369a1; border-color: #bae6fd; display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13.5px;">
+                ✏️ Chỉnh sửa CV này
+            </a>
+            <button type="button" class="btn primary-btn" id="btnPrintCV" style="background: #4f46e5; border-color: #4f46e5; color: white; padding: 10px 24px; border-radius: 10px; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 13.5px;">
+                🖨️ In / Xuất PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Workspace to render CV A4 ratio -->
+    <div class="resume-workspace" style="display: flex; justify-content: center; width: 100%; margin: 0 auto; background: #f8fafc; padding: 40px 20px; border-radius: 24px; border: 1px solid #e2e8f0;">
+        <div class="resume-preview-container" style="background: transparent; border: none; padding: 0; box-shadow: none; min-height: auto; width: 100%; display: flex; justify-content: center;">
+            <div id="cvPreview" class="cv-preview modern">
+                <!-- Javascript will render dynamic templates here -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Hide controls & web elements when printing -->
+<style>
+    @@media print {
+        /* Hide layout controls, header, footer, page info */
+        header.navbar, 
+        .page-hero, 
+        .resume-controls, 
+        .print-hide,
+        footer.main-footer,
+        .btn,
+        footer {
+            display: none !important;
+        }
+
+        body {
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .content-section {
+            padding: 0 !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+        }
+
+        .resume-workspace {
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            display: block !important;
+        }
+
+        .resume-preview-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .cv-preview {
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            min-height: 100% !important;
+            display: block !important;
+        }
+    }
+</style>
+
+<script id="savedCvJson" type="application/json">@Html.Raw(Model.ContentJson)</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const cvPreview = document.getElementById("cvPreview");
+        const templateSelect = document.getElementById("templateSelect");
+        const btnPrintCV = document.getElementById("btnPrintCV");
+
+        let cvData = {
+            fullName: "",
+            title: "",
+            email: "",
+            phone: "",
+            address: "",
+            website: "",
+            summary: "",
+            skills: "",
+            experiences: [],
+            educations: [],
+            projects: []
+        };
+
+        // Load CV JSON Data
+        const savedCvElement = document.getElementById("savedCvJson");
+        if (savedCvElement) {
+            try {
+                cvData = JSON.parse(savedCvElement.textContent);
+            } catch (e) {
+                console.error("Lỗi phân tích dữ liệu CV:", e);
+            }
+        }
+
+        // Action Print
+        btnPrintCV.addEventListener("click", function () {
+            window.print();
+        });
+
+        // Change template select handler
+        templateSelect.addEventListener("change", (e) => {
+            const template = e.target.value;
+            cvPreview.className = "cv-preview " + template;
+            renderCV();
+        });
+
+        // Render CV HTML based on selected template
+        function renderCV() {
+            const template = templateSelect.value;
+            let html = "";
+
+            const safeText = (val) => val ? val.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+            const safeParagraph = (val) => val ? safeText(val).replace(/\n/g, "<br/>") : "";
+
+            const skillsArray = cvData.skills ? cvData.skills.split(",").map(s => s.trim()).filter(s => s.length > 0) : [];
+
+            if (template === "modern") {
+                // Template 1: Modern Indigo
+                html = `
+                    <div style="border-bottom: 3px solid #4f46e5; padding-bottom: 24px; margin-bottom: 24px;">
+                        <h1 style="font-size: 32px; font-weight: 800; color: #020617; margin: 0 0 6px 0; letter-spacing: -1px; text-transform: uppercase;">${safeText(cvData.fullName) || "CHƯA NHẬP HỌ TÊN"}</h1>
+                        <h2 style="font-size: 16px; font-weight: 700; color: #4f46e5; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 1px;">${safeText(cvData.title) || "Chức danh ứng tuyển"}</h2>
+                        
+                        <div style="display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px; color: #64748b; font-weight: 500;">
+                            ${cvData.email ? `<span>✉ ${safeText(cvData.email)}</span>` : ""}
+                            ${cvData.phone ? `<span>📞 ${safeText(cvData.phone)}</span>` : ""}
+                            ${cvData.address ? `<span>📍 ${safeText(cvData.address)}</span>` : ""}
+                            ${cvData.website ? `<span>🌐 ${safeText(cvData.website)}</span>` : ""}
+                        </div>
+                    </div>
+
+                    ${cvData.summary ? `
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 10px 0; letter-spacing: 0.5px;">Tóm tắt bản thân</h3>
+                        <p style="margin: 0; font-size: 13.5px; color: #475569; line-height: 1.6; text-align: justify;">${safeParagraph(cvData.summary)}</p>
+                    </div>
+                    ` : ""}
+
+                    <div style="display: flex; flex-direction: column; gap: 24px;">
+                        
+                        <!-- Experience section -->
+                        ${cvData.experiences && cvData.experiences.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 16px 0; letter-spacing: 0.5px;">Kinh nghiệm làm việc</h3>
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                ${cvData.experiences.map(exp => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                            <strong style="font-size: 14.5px; color: #020617;">${safeText(exp.title) || "Chưa nhập vị trí"}</strong>
+                                            <span style="font-size: 12px; color: #64748b; font-weight: 600; background: #f1f5f9; padding: 2px 8px; border-radius: 99px;">${safeText(exp.period)}</span>
+                                        </div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #4f46e5; margin-bottom: 8px;">${safeText(exp.company) || "Chưa nhập công ty"}</div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6; padding-left: 4px;">${safeParagraph(exp.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Education section -->
+                        ${cvData.educations && cvData.educations.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 16px 0; letter-spacing: 0.5px;">Học vấn</h3>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                ${cvData.educations.map(edu => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                            <strong style="font-size: 14.5px; color: #020617;">${safeText(edu.degree) || "Chưa nhập ngành học"}</strong>
+                                            <span style="font-size: 12px; color: #64748b; font-weight: 600;">${safeText(edu.period)}</span>
+                                        </div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #4f46e5; margin-bottom: 6px;">${safeText(edu.school) || "Chưa nhập trường học"}</div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6; padding-left: 4px;">${safeParagraph(edu.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Skills section -->
+                        ${skillsArray.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 14px 0; letter-spacing: 0.5px;">Kỹ năng chuyên môn</h3>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${skillsArray.map(skill => `
+                                    <span style="background: #e0e7ff; color: #4338ca; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px;">${safeText(skill)}</span>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Projects section -->
+                        ${cvData.projects && cvData.projects.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #020617; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin: 0 0 16px 0; letter-spacing: 0.5px;">Dự án tiêu biểu</h3>
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                ${cvData.projects.map(proj => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                                            <strong style="font-size: 14.5px; color: #020617;">${safeText(proj.name || proj.title) || "Chưa nhập tên dự án"}</strong>
+                                            ${proj.link ? `<span style="font-size: 12px; color: #4f46e5; font-weight: 600;">🌐 ${safeText(proj.link)}</span>` : ""}
+                                        </div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6; padding-left: 4px;">${safeParagraph(proj.desc || proj.company)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                    </div>
+                `;
+            } else if (template === "minimalist") {
+                // Template 2: Minimalist Classic
+                html = `
+                    <div style="text-align: center; margin-bottom: 30px; font-family: Georgia, serif;">
+                        <h1 style="font-size: 34px; font-weight: 400; color: #1e293b; margin: 0 0 6px 0; font-family: Georgia, serif; text-transform: uppercase; letter-spacing: 2px;">${safeText(cvData.fullName) || "CHƯA NHẬP HỌ TÊN"}</h1>
+                        <h2 style="font-size: 14px; font-weight: 600; color: #64748b; margin: 0 0 18px 0; text-transform: uppercase; letter-spacing: 2px;">${safeText(cvData.title) || "Chức danh ứng tuyển"}</h2>
+                        
+                        <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; font-size: 12px; color: #475569; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; padding: 8px 0;">
+                            ${cvData.email ? `<span>✉ ${safeText(cvData.email)}</span>` : ""}
+                            ${cvData.phone ? `<span>📞 ${safeText(cvData.phone)}</span>` : ""}
+                            ${cvData.address ? `<span>📍 ${safeText(cvData.address)}</span>` : ""}
+                            ${cvData.website ? `<span>🌐 ${safeText(cvData.website)}</span>` : ""}
+                        </div>
+                    </div>
+
+                    ${cvData.summary ? `
+                    <div style="margin-bottom: 24px; text-align: center;">
+                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6; font-style: italic; max-width: 650px; margin: 0 auto;">"${safeText(cvData.summary)}"</p>
+                    </div>
+                    ` : ""}
+
+                    <div style="display: flex; flex-direction: column; gap: 24px; font-family: Georgia, serif;">
+                        
+                        <!-- Experience section -->
+                        ${cvData.experiences && cvData.experiences.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; text-transform: uppercase; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 1px;">Kinh nghiệm thực tế</h3>
+                            <div style="display: flex; flex-direction: column; gap: 18px;">
+                                ${cvData.experiences.map(exp => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                            <span>
+                                                <strong style="font-size: 13.5px; color: #1e293b;">${safeText(exp.title) || "Chưa nhập vị trí"}</strong>
+                                                <span style="color: #64748b; font-size: 13px;"> - ${safeText(exp.company) || "Chưa nhập công ty"}</span>
+                                            </span>
+                                            <span style="font-size: 12px; color: #64748b; font-style: italic;">${safeText(exp.period)}</span>
+                                        </div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">${safeParagraph(exp.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Education section -->
+                        ${cvData.educations && cvData.educations.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; text-transform: uppercase; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 1px;">Học trình</h3>
+                            <div style="display: flex; flex-direction: column; gap: 14px;">
+                                ${cvData.educations.map(edu => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                            <span>
+                                                <strong style="font-size: 13.5px; color: #1e293b;">${safeText(edu.degree) || "Chưa nhập ngành học"}</strong>
+                                                <span style="color: #64748b; font-size: 13px;"> - ${safeText(edu.school) || "Chưa nhập trường"}</span>
+                                            </span>
+                                            <span style="font-size: 12px; color: #64748b; font-style: italic;">${safeText(edu.period)}</span>
+                                        </div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">${safeParagraph(edu.desc)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                        <!-- Skills section -->
+                        ${skillsArray.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; text-transform: uppercase; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin: 0 0 12px 0; letter-spacing: 1px;">Kỹ năng chính</h3>
+                            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.7;">
+                                ${skillsArray.join(" &bull; ")}
+                            </p>
+                        </div>
+                        ` : ""}
+
+                        <!-- Projects section -->
+                        ${cvData.projects && cvData.projects.length > 0 ? `
+                        <div>
+                            <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; text-transform: uppercase; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 1px;">Dự án phát triển</h3>
+                            <div style="display: flex; flex-direction: column; gap: 14px;">
+                                ${cvData.projects.map(proj => `
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                            <strong style="font-size: 13.5px; color: #1e293b;">${safeText(proj.name || proj.title) || "Chưa nhập tên dự án"}</strong>
+                                            ${proj.link ? `<span style="font-size: 12px; color: #64748b; font-style: italic;">${safeText(proj.link)}</span>` : ""}
+                                        </div>
+                                        <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">${safeParagraph(proj.desc || proj.company)}</p>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                        ` : ""}
+
+                    </div>
+                `;
+            } else if (template === "professional") {
+                // Template 3: Professional Sidebar
+                html = `
+                    <div style="display: grid; grid-template-columns: 240px 1fr; gap: 30px; min-height: 1020px;">
+                        
+                        <!-- Left Sidebar Column -->
+                        <div style="background: #f8fafc; border-right: 1.5px solid #e2e8f0; padding-right: 25px; height: 100%;">
+                            <div style="margin-bottom: 30px; padding-top: 10px;">
+                                <h1 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0; line-height: 1.2;">${safeText(cvData.fullName) || "CHƯA NHẬP HỌ TÊN"}</h1>
+                                <div style="font-size: 13.5px; font-weight: 700; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px;">${safeText(cvData.title) || "Chức danh ứng tuyển"}</div>
+                            </div>
+
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="font-size: 13px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin: 0 0 12px 0; letter-spacing: 0.5px;">Liên hệ</h3>
+                                <div style="display: flex; flex-direction: column; gap: 10px; color: #475569; word-break: break-word; font-size: 13px;">
+                                    ${cvData.email ? `<div><strong>✉ Email:</strong><br/>${safeText(cvData.email)}</div>` : ""}
+                                    ${cvData.phone ? `<div><strong>📞 ĐT:</strong><br/>${safeText(cvData.phone)}</div>` : ""}
+                                    ${cvData.address ? `<div><strong>📍 Địa chỉ:</strong><br/>${safeText(cvData.address)}</div>` : ""}
+                                    ${cvData.website ? `<div><strong>🌐 Web:</strong><br/>${safeText(cvData.website)}</div>` : ""}
+                                </div>
+                            </div>
+
+                            ${skillsArray.length > 0 ? `
+                            <div>
+                                <h3 style="font-size: 13px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 1.5px solid #cbd5e1; padding-bottom: 4px; margin: 0 0 12px 0; letter-spacing: 0.5px;">Kỹ năng</h3>
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    ${skillsArray.map(skill => `
+                                        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 6px; font-weight: 600; color: #334155; font-size: 12px;">${safeText(skill)}</div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                            ` : ""}
+                        </div>
+
+                        <!-- Main Right Content Column -->
+                        <div style="padding-top: 10px;">
+                            ${cvData.summary ? `
+                            <div style="margin-bottom: 28px;">
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin: 0 0 10px 0; letter-spacing: 0.5px;">Giới thiệu</h3>
+                                <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.6; text-align: justify;">${safeParagraph(cvData.summary)}</p>
+                            </div>
+                            ` : ""}
+
+                            <!-- Experience section -->
+                            ${cvData.experiences && cvData.experiences.length > 0 ? `
+                            <div style="margin-bottom: 28px;">
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 0.5px;">Kinh nghiệm làm việc</h3>
+                                <div style="display: flex; flex-direction: column; gap: 18px;">
+                                    ${cvData.experiences.map(exp => `
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                                <strong style="font-size: 14px; color: #0f172a;">${safeText(exp.title) || "Chưa nhập vị trí"}</strong>
+                                                <span style="font-size: 12px; color: #64748b; font-weight: 600;">${safeText(exp.period)}</span>
+                                            </div>
+                                            <div style="font-size: 12.5px; font-weight: 700; color: #0284c7; margin-bottom: 6px;">${safeText(exp.company) || "Chưa nhập công ty"}</div>
+                                            <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.6; padding-left: 2px;">${safeParagraph(exp.desc)}</p>
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                            ` : ""}
+
+                            <!-- Education section -->
+                            ${cvData.educations && cvData.educations.length > 0 ? `
+                            <div style="margin-bottom: 28px;">
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 0.5px;">Học vấn</h3>
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    ${cvData.educations.map(edu => `
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                                <strong style="font-size: 14px; color: #0f172a;">${safeText(edu.degree) || "Chưa nhập bằng cấp"}</strong>
+                                                <span style="font-size: 12px; color: #64748b; font-weight: 600;">${safeText(edu.period)}</span>
+                                            </div>
+                                            <div style="font-size: 12.5px; font-weight: 700; color: #0284c7; margin-bottom: 4px;">${safeText(edu.school) || "Chưa nhập trường"}</div>
+                                            <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.5; padding-left: 2px;">${safeParagraph(edu.desc)}</p>
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                            ` : ""}
+
+                            <!-- Projects section -->
+                            ${cvData.projects && cvData.projects.length > 0 ? `
+                            <div>
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; text-transform: uppercase; border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin: 0 0 14px 0; letter-spacing: 0.5px;">Dự án</h3>
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    ${cvData.projects.map(proj => `
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+                                                <strong style="font-size: 14px; color: #0f172a;">${safeText(proj.name || proj.title) || "Chưa nhập tên dự án"}</strong>
+                                                ${proj.link ? `<span style="font-size: 12px; color: #0284c7; font-weight: 600;">${safeText(proj.link)}</span>` : ""}
+                                            </div>
+                                            <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.6; padding-left: 2px;">${safeParagraph(proj.desc || proj.company)}</p>
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                            ` : ""}
+                        </div>
+
+                    </div>
+                `;
+            }
+
+            cvPreview.innerHTML = html;
+        }
+
+        // Initialize rendering
+        renderCV();
+    });
+</script>
