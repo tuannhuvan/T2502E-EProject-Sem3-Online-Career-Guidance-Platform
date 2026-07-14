@@ -175,6 +175,9 @@
                                             <td>@(resume.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật")</td>
                                             <td>
                                                 <div style="display: flex; gap: 8px;">
+                                                    <a class="btn secondary-btn" asp-controller="Home" asp-action="ViewCV" asp-route-id="@resume.Id" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px; background: #eef2ff; color: #4f46e5; border-color: #e0e7ff;">
+                                                        👁️ Xem
+                                                    </a>
                                                     <a class="btn secondary-btn" asp-controller="Home" asp-action="ResumeBuilder" asp-route-id="@resume.Id" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px;">
                                                         ✏️ Sửa
                                                     </a>
