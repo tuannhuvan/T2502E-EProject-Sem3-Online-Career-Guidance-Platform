@@ -162,7 +162,7 @@
 <div id="floatingSelectionBar" class="floating-selection-bar hidden">
     <div class="floating-content">
         <span class="count-badge">💡 Đã chọn <strong id="selectedSkillsCount">0</strong> kỹ năng</span>
-        <button @(isPremium ? "" : "disabled") onclick="@(isPremium ? "addSelectedSkillsToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn btn-sm">🎯 @(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
+        <button onclick="@(isPremium ? "addSelectedSkillsToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn btn-sm">🎯 @(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
         <button onclick="clearSkillSelection()" class="btn secondary-btn btn-sm" style="color: white; border-color: rgba(255,255,255,0.3); background: transparent;">Hủy</button>
     </div>
 </div>
@@ -196,7 +196,7 @@
         </div>
         
         <div class="modal-footer">
-            <button id="btnAddSingleGoal" @(isPremium ? "" : "disabled") onclick="@(isPremium ? "addCurrentSkillToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn secondary-btn">🎯 @(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
+            <button id="btnAddSingleGoal" onclick="@(isPremium ? "addCurrentSkillToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn secondary-btn">🎯 @(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
             <form id="startLearningForm" method="post" action="/Goal/StartLearning" style="margin: 0;">
                 <input type="hidden" name="skillId" id="startLearningSkillId" value="" />
                 <button type="@(isPremium ? "submit" : "button")" onclick="@(isPremium ? "" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn" style="@(isPremium ? "" : "background: #cbd5e1; border-color: #cbd5e1; color: #64748b;")">
