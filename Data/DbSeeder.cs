@@ -1271,6 +1271,85 @@ namespace Career_Guidance_Platform.Data
                 context.JobPostings.AddRange(jobs);
                 await context.SaveChangesAsync();
             }
+
+            // 15. Seed PaymentHistories and Premium Users
+            if (!await context.PaymentHistories.AnyAsync())
+            {
+                var studentsData = new List<(string Email, string Name)>
+                {
+                    ("student1@careerpath.vn", "Lê Minh Anh"),
+                    ("student2@careerpath.vn", "Phạm Thảo Vy"),
+                    ("student3@careerpath.vn", "Nguyễn Huy Hoàng"),
+                    ("student4@careerpath.vn", "Đỗ Tuấn Kiệt")
+                };
+
+                var mockStudents = new List<User>();
+
+                foreach (var s in studentsData)
+                {
+                    var user = await userManager.FindByEmailAsync(s.Email);
+                    if (user == null)
+                    {
+                        user = new User
+                        {
+                            UserName = s.Email,
+                            Email = s.Email,
+                            FullName = s.Name,
+                            Role = "Student",
+                            EmailConfirmed = true,
+                            Status = 1,
+                            IsPremium = true
+                        };
+                        var result = await userManager.CreateAsync(user, "Student@123456");
+                        if (result.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(user, "Student");
+                            mockStudents.Add(user);
+                        }
+                    }
+                    else
+                    {
+                        user.IsPremium = true;
+                        await userManager.UpdateAsync(user);
+                        mockStudents.Add(user);
+                    }
+                }
+
+                // Make sure we have student@careerpath.vn in the list
+                var baseStudent = await userManager.FindByEmailAsync("student@careerpath.vn");
+                if (baseStudent != null)
+                {
+                    baseStudent.IsPremium = true;
+                    await userManager.UpdateAsync(baseStudent);
+                    mockStudents.Add(baseStudent);
+                }
+
+                if (mockStudents.Any())
+                {
+                    var random = new Random();
+                    var payments = new List<PaymentHistory>();
+
+                    // Generate payments for the last 6 months
+                    for (int i = 0; i < 30; i++)
+                    {
+                        var date = DateTime.Now.AddDays(-random.Next(0, 180));
+                        var selectedStudent = mockStudents[random.Next(mockStudents.Count)];
+                        
+                        payments.Add(new PaymentHistory
+                        {
+                            UserId = selectedStudent.Id,
+                            PaypalOrderId = "MOCK-PAYPAL-" + Guid.NewGuid().ToString("N").Substring(0, 12).ToUpper(),
+                            Amount = 1.00m,
+                            Currency = "USD",
+                            PaymentStatus = "Completed",
+                            CreatedAt = date
+                        });
+                    }
+
+                    context.PaymentHistories.AddRange(payments);
+                    await context.SaveChangesAsync();
+                }
+            }
         }
     }
 }

@@ -1,7 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.AspNetCore.Mvc;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using Career_Guidance_Platform.Models;
 using Career_Guidance_Platform.Data;
 using System.Linq;
@@ -551,7 +554,191 @@ public class AdminController : Controller
         }
         return RedirectToAction(nameof(Jobs));
     }
-    public IActionResult Reports() => View();
+    public async Task<IActionResult> Reports(DateTime? startDate, DateTime? endDate, string? search)
+    {
+        var query = _context.PaymentHistories
+            .Include(p => p.User)
+            .Where(p => p.PaymentStatus == "Completed");
+
+        if (startDate.HasValue)
+        {
+            query = query.Where(p => p.CreatedAt >= startDate.Value);
+        }
+        if (endDate.HasValue)
+        {
+            var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(p => p.CreatedAt <= endOfDate);
+        }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.Trim().ToLower();
+            query = query.Where(p => p.User != null && (p.User.FullName.ToLower().Contains(searchLower) || p.User.Email.ToLower().Contains(searchLower)));
+        }
+
+        var payments = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        // Aggregates
+        var totalRevenue = payments.Sum(p => p.Amount);
+        var totalTransactions = payments.Count;
+
+        // Monthly data for chart (last 6 months)
+        var sixMonthsAgo = DateTime.Now.Date.AddMonths(-5);
+        sixMonthsAgo = new DateTime(sixMonthsAgo.Year, sixMonthsAgo.Month, 1);
+
+        var monthlyRevenueQuery = await _context.PaymentHistories
+            .Where(p => p.PaymentStatus == "Completed" && p.CreatedAt >= sixMonthsAgo)
+            .GroupBy(p => new { Year = p.CreatedAt.Year, Month = p.CreatedAt.Month })
+            .Select(g => new { Year = g.Key.Year, Month = g.Key.Month, Revenue = g.Sum(p => p.Amount) })
+            .ToListAsync();
+
+        var monthlyLabels = new List<string>();
+        var monthlyValues = new List<decimal>();
+        for (int i = 5; i >= 0; i--)
+        {
+            var targetDate = DateTime.Now.AddMonths(-i);
+            var label = targetDate.ToString("MM/yyyy");
+            monthlyLabels.Add(label);
+
+            var match = monthlyRevenueQuery.FirstOrDefault(m => m.Year == targetDate.Year && m.Month == targetDate.Month);
+            monthlyValues.Add(match?.Revenue ?? 0);
+        }
+
+        // User breakdown
+        var totalUsers = await _context.Users.CountAsync();
+        var premiumUsers = await _context.Users.CountAsync(u => u.IsPremium);
+        var freeUsers = totalUsers - premiumUsers;
+
+        ViewBag.TotalRevenue = totalRevenue;
+        ViewBag.TotalTransactions = totalTransactions;
+        ViewBag.MonthlyLabels = monthlyLabels;
+        ViewBag.MonthlyValues = monthlyValues;
+        ViewBag.PremiumUsers = premiumUsers;
+        ViewBag.FreeUsers = freeUsers;
+        ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+        ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
+        ViewBag.Search = search;
+
+        return View(payments);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(DateTime? startDate, DateTime? endDate, string? search)
+    {
+        ExcelPackage.License.SetNonCommercialPersonal("CareerGuidanceApp");
+
+        var query = _context.PaymentHistories
+            .Include(p => p.User)
+            .Where(p => p.PaymentStatus == "Completed");
+
+        if (startDate.HasValue)
+        {
+            query = query.Where(p => p.CreatedAt >= startDate.Value);
+        }
+        if (endDate.HasValue)
+        {
+            var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(p => p.CreatedAt <= endOfDate);
+        }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.Trim().ToLower();
+            query = query.Where(p => p.User != null && (p.User.FullName.ToLower().Contains(searchLower) || p.User.Email.ToLower().Contains(searchLower)));
+        }
+
+        var payments = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        using (var package = new ExcelPackage())
+        {
+            var worksheet = package.Workbook.Worksheets.Add("Doanh thu nâng cấp");
+
+            // Setup headers
+            string[] headers = { "STT", "Họ và tên", "Email", "Mã giao dịch PayPal", "Số tiền", "Tiền tệ", "Thời gian", "Trạng thái" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                worksheet.Cells[1, i + 1].Value = headers[i];
+                worksheet.Cells[1, i + 1].Style.Font.Bold = true;
+                worksheet.Cells[1, i + 1].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[1, i + 1].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                worksheet.Cells[1, i + 1].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                worksheet.Cells[1, i + 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            }
+
+            // Fill data
+            int row = 2;
+            foreach (var p in payments)
+            {
+                worksheet.Cells[row, 1].Value = row - 1; // STT
+                worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                worksheet.Cells[row, 2].Value = p.User?.FullName ?? "N/A"; // Name
+                worksheet.Cells[row, 3].Value = p.User?.Email ?? "N/A"; // Email
+                
+                worksheet.Cells[row, 4].Value = p.PaypalOrderId; // PayPal Transaction ID
+                
+                worksheet.Cells[row, 5].Value = (double)p.Amount; // Amount (use double/decimal for numeric format)
+                worksheet.Cells[row, 5].Style.Numberformat.Format = "$#,##0.00"; // Currency Format
+                worksheet.Cells[row, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                worksheet.Cells[row, 6].Value = p.Currency; // Currency
+                worksheet.Cells[row, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                worksheet.Cells[row, 7].Value = p.CreatedAt; // CreatedAt
+                worksheet.Cells[row, 7].Style.Numberformat.Format = "dd/MM/yyyy HH:mm"; // Date format
+                worksheet.Cells[row, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                worksheet.Cells[row, 8].Value = p.PaymentStatus; // Status
+                worksheet.Cells[row, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                // Add border to all cells in the row
+                for (int col = 1; col <= headers.Length; col++)
+                {
+                    worksheet.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                }
+
+                row++;
+            }
+
+            // Add Total row
+            if (payments.Any())
+            {
+                worksheet.Cells[row, 1].Value = "Tổng cộng";
+                worksheet.Cells[row, 1, row, 4].Merge = true; // Merge A to D
+                worksheet.Cells[row, 1].Style.Font.Bold = true;
+                worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                // Formula for total
+                worksheet.Cells[row, 5].Formula = $"SUM(E2:E{row - 1})";
+                worksheet.Cells[row, 5].Style.Font.Bold = true;
+                worksheet.Cells[row, 5].Style.Numberformat.Format = "$#,##0.00";
+                worksheet.Cells[row, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                worksheet.Cells[row, 6].Value = "USD";
+                worksheet.Cells[row, 6].Style.Font.Bold = true;
+                worksheet.Cells[row, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                // Add double line bottom border to summary row (accounting style)
+                for (int col = 1; col <= headers.Length; col++)
+                {
+                    worksheet.Cells[row, col].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                    worksheet.Cells[row, col].Style.Border.Bottom.Style = ExcelBorderStyle.Double;
+                }
+            }
+
+            worksheet.Cells.AutoFitColumns();
+
+            var stream = new MemoryStream();
+            package.SaveAs(stream);
+            stream.Position = 0;
+
+            string fileName = $"BaoCaoDoanhThu_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+    }
+
     public IActionResult Settings() => View();
     public IActionResult Terms() => View();
 
