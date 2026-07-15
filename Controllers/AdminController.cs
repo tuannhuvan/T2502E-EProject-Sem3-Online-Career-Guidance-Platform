@@ -558,7 +558,7 @@ public class AdminController : Controller
     {
         var query = _context.PaymentHistories
             .Include(p => p.User)
-            .Where(p => p.PaymentStatus == "Completed");
+            .AsQueryable();
 
         if (startDate.HasValue)
         {
@@ -579,9 +579,13 @@ public class AdminController : Controller
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
 
-        // Aggregates
-        var totalRevenue = payments.Sum(p => p.Amount);
-        var totalTransactions = payments.Count;
+        // Aggregates (Doanh thu chỉ tính từ các giao dịch Completed)
+        var totalRevenue = payments.Where(p => p.PaymentStatus == "Completed").Sum(p => p.Amount);
+        var totalTransactions = payments.Count(p => p.PaymentStatus == "Completed");
+
+        var completedCount = payments.Count(p => p.PaymentStatus == "Completed");
+        var cancelledCount = payments.Count(p => p.PaymentStatus == "Cancelled");
+        var pendingCount = payments.Count(p => p.PaymentStatus == "Pending");
 
         // Monthly data for chart (last 6 months)
         var sixMonthsAgo = DateTime.Now.Date.AddMonths(-5);
@@ -612,6 +616,9 @@ public class AdminController : Controller
 
         ViewBag.TotalRevenue = totalRevenue;
         ViewBag.TotalTransactions = totalTransactions;
+        ViewBag.CompletedCount = completedCount;
+        ViewBag.CancelledCount = cancelledCount;
+        ViewBag.PendingCount = pendingCount;
         ViewBag.MonthlyLabels = monthlyLabels;
         ViewBag.MonthlyValues = monthlyValues;
         ViewBag.PremiumUsers = premiumUsers;
@@ -630,7 +637,7 @@ public class AdminController : Controller
 
         var query = _context.PaymentHistories
             .Include(p => p.User)
-            .Where(p => p.PaymentStatus == "Completed");
+            .AsQueryable();
 
         if (startDate.HasValue)
         {
