@@ -82,6 +82,48 @@
     </div>
 </div>
 
+<!-- Chi tiết trạng thái giao dịch -->
+<div class="row row-deck row-cards mb-4">
+    <div class="col-sm-6 col-lg-4">
+        <div class="card bg-success-lt">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-success">Thanh toán thành công</div>
+                    <span class="avatar bg-success text-white"><i class="ti ti-check"></i></span>
+                </div>
+                <div class="h1 mb-1 text-success">@ViewBag.CompletedCount</div>
+                <div class="text-muted text-truncate">Giao dịch đã hoàn tất thành công</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <div class="card bg-danger-lt">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-danger">Giao dịch đã hủy</div>
+                    <span class="avatar bg-danger text-white"><i class="ti ti-x"></i></span>
+                </div>
+                <div class="h1 mb-1 text-danger">@ViewBag.CancelledCount</div>
+                <div class="text-muted text-truncate">Giao dịch do người dùng hủy bỏ</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <div class="card bg-warning-lt">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-warning">Đang chờ thanh toán</div>
+                    <span class="avatar bg-warning text-white"><i class="ti ti-clock"></i></span>
+                </div>
+                <div class="h1 mb-1 text-warning">@ViewBag.PendingCount</div>
+                <div class="text-muted text-truncate">Giao dịch đang chờ hoặc chưa hoàn tất</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Bộ lọc tìm kiếm -->
 <div class="card mb-4">
     <div class="card-header">

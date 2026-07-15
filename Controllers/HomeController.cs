@@ -520,7 +520,7 @@ public class HomeController : Controller
                     application_context = new
                     {
                         return_url = $"{Request.Scheme}://{Request.Host}/Home/PaymentSuccess",
-                        cancel_url = $"{Request.Scheme}://{Request.Host}/Home/UpgradePremium"
+                        cancel_url = $"{Request.Scheme}://{Request.Host}/Home/PaymentCancel"
                     }
                 };
 
@@ -534,6 +534,21 @@ public class HomeController : Controller
                         var jsonStr = await response.Content.ReadAsStringAsync();
                         using (var doc = JsonDocument.Parse(jsonStr))
                         {
+                            var orderId = doc.RootElement.GetProperty("id").GetString();
+                            
+                            // Tạo bản ghi Pending ngay khi tạo order thành công
+                            var payment = new PaymentHistory
+                            {
+                                UserId = user.Id,
+                                PaypalOrderId = orderId ?? "N/A",
+                                Amount = 1.00m,
+                                Currency = "USD",
+                                PaymentStatus = "Pending",
+                                CreatedAt = DateTime.Now
+                            };
+                            _context.PaymentHistories.Add(payment);
+                            await _context.SaveChangesAsync();
+
                             var links = doc.RootElement.GetProperty("links");
                             foreach (var link in links.EnumerateArray())
                             {
@@ -555,6 +570,20 @@ public class HomeController : Controller
 
         // --- FALLBACK MOCK FLOW (Khi không có credentials PayPal hoặc không có mạng) ---
         var mockToken = "MOCK-PAYPAL-" + Guid.NewGuid().ToString("N").Substring(0, 12).ToUpper();
+        
+        // Tạo bản ghi Pending cho mock flow
+        var mockPayment = new PaymentHistory
+        {
+            UserId = user.Id,
+            PaypalOrderId = mockToken,
+            Amount = 1.00m,
+            Currency = "USD",
+            PaymentStatus = "Pending",
+            CreatedAt = DateTime.Now
+        };
+        _context.PaymentHistories.Add(mockPayment);
+        await _context.SaveChangesAsync();
+
         return RedirectToAction("PaymentSuccess", new { token = mockToken });
     }
 
@@ -603,18 +632,30 @@ public class HomeController : Controller
             user.IsPremium = true;
             await _userManager.UpdateAsync(user);
 
-            // Lưu thông tin vào bảng PaymentHistory
-            var payment = new PaymentHistory
-            {
-                UserId = user.Id,
-                PaypalOrderId = token ?? "N/A",
-                Amount = 1.00m,
-                Currency = "USD",
-                PaymentStatus = "Completed",
-                CreatedAt = DateTime.Now
-            };
+            // Cập nhật trạng thái Completed cho bản ghi giao dịch
+            var payment = await _context.PaymentHistories
+                .FirstOrDefaultAsync(p => p.PaypalOrderId == token && p.PaymentStatus == "Pending");
 
-            _context.PaymentHistories.Add(payment);
+            if (payment != null)
+            {
+                payment.PaymentStatus = "Completed";
+                payment.CreatedAt = DateTime.Now; // Cập nhật thời gian thanh toán thành công
+                _context.PaymentHistories.Update(payment);
+            }
+            else
+            {
+                // Fallback nếu trước đó tạo Pending bị lỗi
+                payment = new PaymentHistory
+                {
+                    UserId = user.Id,
+                    PaypalOrderId = token ?? "N/A",
+                    Amount = 1.00m,
+                    Currency = "USD",
+                    PaymentStatus = "Completed",
+                    CreatedAt = DateTime.Now
+                };
+                _context.PaymentHistories.Add(payment);
+            }
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Chúc mừng! Bạn đã trở thành thành viên Premium và mở khóa toàn bộ tính năng vĩnh viễn.";
@@ -622,6 +663,30 @@ public class HomeController : Controller
         }
 
         TempData["ErrorMessage"] = "Không thể xác nhận giao dịch thanh toán từ PayPal.";
+        return RedirectToAction(nameof(UpgradePremium));
+    }
+
+    [Authorize]
+    public async Task<IActionResult> PaymentCancel(string token)
+    {
+        var userIdValue = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userIdValue)) return Challenge();
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            var payment = await _context.PaymentHistories
+                .FirstOrDefaultAsync(p => p.PaypalOrderId == token && p.PaymentStatus == "Pending");
+
+            if (payment != null)
+            {
+                payment.PaymentStatus = "Cancelled";
+                payment.CreatedAt = DateTime.Now; // Ghi nhận thời gian hủy giao dịch
+                _context.PaymentHistories.Update(payment);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        TempData["ErrorMessage"] = "Bạn đã hủy quá trình thanh toán nâng cấp Premium.";
         return RedirectToAction(nameof(UpgradePremium));
     }
 
