@@ -23,10 +23,31 @@ namespace Career_Guidance_Platform.Controllers
             _userManager = userManager;
         }
 
+        private async Task<bool> IsPremiumUserAsync()
+        {
+            if (User.Identity?.IsAuthenticated != true) return false;
+            if (User.IsInRole("Admin") || User.IsInRole("Mentor")) return true;
+            
+            var userIdValue = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdValue)) return false;
+            
+            var user = await _userManager.FindByIdAsync(userIdValue);
+            return user?.IsPremium == true;
+        }
+
         // 1. MENTEE VIEW: Danh sách Mentor hỗ trợ tìm kiếm & xếp hạng thông minh
-        [AllowAnonymous]
         public async Task<IActionResult> Index(string? search, string? skill, string? careerPath)
         {
+            if (!await IsPremiumUserAsync())
+            {
+                if (User.Identity?.IsAuthenticated != true)
+                {
+                    return Challenge();
+                }
+                TempData["PremiumLimitMessage"] = "Tính năng kết nối Cố vấn (Mentorship) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+                return RedirectToAction("UpgradePremium", "Home");
+            }
+
             // Lấy tất cả các Mentor trong database
             var query = _context.MentorProfiles
                 .Include(m => m.User)
@@ -143,9 +164,18 @@ namespace Career_Guidance_Platform.Controllers
         }
 
         // 2. MENTEE VIEW: Chi tiết thông tin Cố vấn & Các đánh giá
-        [AllowAnonymous]
         public async Task<IActionResult> Details(int id)
         {
+            if (!await IsPremiumUserAsync())
+            {
+                if (User.Identity?.IsAuthenticated != true)
+                {
+                    return Challenge();
+                }
+                TempData["PremiumLimitMessage"] = "Tính năng kết nối Cố vấn (Mentorship) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+                return RedirectToAction("UpgradePremium", "Home");
+            }
+
             var mentor = await _context.MentorProfiles
                 .Include(m => m.User)
                 .FirstOrDefaultAsync(m => m.UserId == id);
@@ -457,6 +487,16 @@ namespace Career_Guidance_Platform.Controllers
         // 7. GROUP MENTORING SESSIONS: Xem danh sách và đăng ký
         public async Task<IActionResult> GroupSessions()
         {
+            if (!await IsPremiumUserAsync())
+            {
+                if (User.Identity?.IsAuthenticated != true)
+                {
+                    return Challenge();
+                }
+                TempData["PremiumLimitMessage"] = "Tính năng kết nối Cố vấn (Mentorship) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+                return RedirectToAction("UpgradePremium", "Home");
+            }
+
             var userIdValue = _userManager.GetUserId(User);
             var userId = !string.IsNullOrEmpty(userIdValue) ? int.Parse(userIdValue) : 0;
 
