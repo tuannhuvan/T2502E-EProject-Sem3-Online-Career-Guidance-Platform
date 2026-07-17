@@ -68,12 +68,7 @@
             <a asp-controller="Mentorship" asp-action="GroupSessions" class="btn secondary-btn" style="padding: 10px 20px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 14px;">
                 🗣️ Hội thảo Nhóm (Group Sessions)
             </a>
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <a asp-controller="Mentorship" asp-action="Dashboard" class="btn primary-btn" style="padding: 10px 20px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 14px; background: #0284c7; border-color: #0284c7;">
-                    💼 Trang quản lý Cố vấn (Mentor Area)
-                </a>
-            }
+
         </div>
     </div>
 
