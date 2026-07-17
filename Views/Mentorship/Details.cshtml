@@ -3,6 +3,7 @@
     ViewData["Title"] = $"Cố vấn {Model.User?.FullName}";
     var reviews = ViewBag.Reviews as IEnumerable<Career_Guidance_Platform.Models.MentorReview>;
     var currentRequest = ViewBag.CurrentRequest as Career_Guidance_Platform.Models.MentorshipRequest;
+    var menteeMeetings = ViewBag.MenteeMeetings as IEnumerable<Career_Guidance_Platform.Models.MentorshipMeeting>;
 }
 
 <section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #e2e8f0; padding: 50px 24px;">
@@ -63,7 +64,7 @@
             <!-- Reviews and Ratings list -->
             <div class="info-card" style="padding: 30px; border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.01);">
                 <h3 style="font-size: 20px; color: #0f172a; font-weight: 800; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                    <span>⭐ Đánh giá từ Học viên (@ViewBag.TotalReviews)</span>
+                    <span>⭐ Đánh giá từ Học viên (@(reviews?.Count() ?? 0))</span>
                     <span style="font-size: 16px; color: #f59e0b; background: #fef3c7; padding: 4px 12px; border-radius: 999px;">
                         ★ @ViewBag.AverageRating.ToString("0.0")
                     </span>
@@ -71,7 +72,7 @@
 
                 @if (reviews != null && reviews.Any())
                 {
-                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 20px; max-height: 380px; overflow-y: auto; padding-right: 8px;">
                         @foreach (var review in reviews)
                         {
                             <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc;">
@@ -93,6 +94,67 @@
                     <p style="font-style: italic; color: #64748b; margin: 0; text-align: center; padding: 20px;">Chưa có đánh giá nào cho cố vấn này. Hãy đặt lịch và chia sẻ nhận xét của bạn sau buổi học nhé!</p>
                 }
             </div>
+
+            <!-- Mentorship Meetings List for Mentee -->
+            @if (menteeMeetings != null && menteeMeetings.Any())
+            {
+                <div class="info-card" style="padding: 30px; border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.01);">
+                    <h3 style="font-size: 20px; color: #0f172a; font-weight: 800; margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">📅 Lịch hẹn tư vấn của bạn</h3>
+                    <div style="display: flex; flex-direction: column; gap: 16px; max-height: 380px; overflow-y: auto; padding-right: 8px;">
+                        @foreach (var meeting in menteeMeetings)
+                        {
+                            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fafafa; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                                    <div>
+                                        <h4 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">@meeting.Title</h4>
+                                        <span style="font-size: 13.5px; color: #4f46e5; font-weight: 600;">
+                                            🕒 @meeting.ScheduledTime.ToString("dd/MM/yyyy HH:mm")
+                                        </span>
+                                    </div>
+                                    <div>
+                                        @if (meeting.Status == "Scheduled")
+                                        {
+                                            <span style="background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">Đã lên lịch</span>
+                                        }
+                                        else if (meeting.Status == "Completed")
+                                        {
+                                            <span style="background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">Đã hoàn thành</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="background: #f1f5f9; color: #64748b; padding: 4px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">@meeting.Status</span>
+                                        }
+                                    </div>
+                                </div>
+                                
+                                @if (!string.IsNullOrEmpty(meeting.Description))
+                                {
+                                    <p style="color: #475569; font-size: 14px; margin: 0; line-height: 1.5; background: #ffffff; padding: 10px 14px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                                        <strong>Nội dung:</strong> @meeting.Description
+                                    </p>
+                                }
+
+                                @if (meeting.Status == "Scheduled")
+                                {
+                                    <div style="margin-top: 5px;">
+                                        <a href="@meeting.MeetingUrl" target="_blank" class="btn" style="display: inline-flex; align-items: center; gap: 8px; background: #10b981; color: white; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px; transition: background 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                                            🎥 Vào phòng họp trực tuyến (Jitsi)
+                                        </a>
+                                    </div>
+                                }
+                                else if (meeting.Status == "Completed")
+                                {
+                                    <div style="margin-top: 5px;">
+                                        <a asp-controller="Mentorship" asp-action="WriteReview" asp-route-meetingId="@meeting.Id" class="btn" style="display: inline-flex; align-items: center; gap: 8px; background: #4f46e5; color: white; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px;">
+                                            ⭐ Viết đánh giá cho Mentor
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </div>
 
         <!-- Right Column: Connect & Booking Box -->
@@ -161,40 +223,134 @@
                     }
                     else if (currentRequest.Status == "Approved")
                     {
-                        <!-- Connected: Show Book Meeting Form -->
+                        <!-- Connected: Show Book Meeting Form OR Active Meeting Info -->
                         <h4 style="font-size: 16px; color: #0f172a; margin-top: 0; margin-bottom: 12px; font-weight: 700; border-top: 1px solid #f1f5f9; padding-top: 20px; display: flex; align-items: center; gap: 8px;">
                             <span style="color: #10b981;">✔</span> Đã kết nối học tập
                         </h4>
-                        <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 15px;">Hãy điền các thông tin hẹn lịch tư vấn 1-1 bên dưới:</p>
-                        
-                        <form asp-controller="Mentorship" asp-action="BookMentor" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="mentorId" value="@Model.UserId" />
 
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px;">Chọn Ngày tư vấn</label>
-                                <input type="date" name="meetingDate" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px;" />
+                        var activeMeeting = menteeMeetings?.FirstOrDefault(m => m.Status == "Scheduled");
+
+                        @if (activeMeeting != null)
+                        {
+                            <div style="background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 12px; padding: 20px; border-left: 5px solid #0284c7;">
+                                <strong style="color: #0369a1; font-size: 15px; display: block; margin-bottom: 8px;">📅 Bạn có lịch hẹn chưa hoàn thành</strong>
+                                <p style="color: #0f172a; font-size: 13.5px; font-weight: 600; margin: 0 0 6px 0;">@activeMeeting.Title</p>
+                                <p style="color: #475569; font-size: 13px; margin: 0 0 12px 0;">
+                                    Thời gian: <strong>@activeMeeting.ScheduledTime.ToString("dd/MM/yyyy HH:mm")</strong>
+                                </p>
+                                <a href="@activeMeeting.MeetingUrl" target="_blank" class="btn" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #10b981; color: white; text-decoration: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13.5px; width: 100%; box-sizing: border-box; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                                    🎥 Vào phòng họp trực tuyến (Jitsi)
+                                </a>
+                                <p style="color: #64748b; font-size: 12px; font-style: italic; margin-top: 10px; margin-bottom: 0; text-align: center;">
+                                    * Hãy hoàn thành buổi tư vấn này để có thể đặt lịch hẹn tiếp theo.
+                                </p>
                             </div>
+                        }
+                        else
+                        {
+                            <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 15px;">Hãy điền các thông tin hẹn lịch tư vấn 1-1 bên dưới:</p>
+                            
+                            <form asp-controller="Mentorship" asp-action="BookMentor" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="mentorId" value="@Model.UserId" />
 
-                            <div style="margin-bottom: 15px;">
-                                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px;">Chọn Khung giờ</label>
-                                <select name="meetingTime" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white;">
-                                    <option value="09:00">09:00 - 10:00 (Sáng)</option>
-                                    <option value="10:30">10:30 - 11:30 (Sáng)</option>
-                                    <option value="14:00">14:00 - 15:00 (Chiều)</option>
-                                    <option value="15:30">15:30 - 16:30 (Chiều)</option>
-                                    <option value="19:00">19:00 - 20:00 (Tối)</option>
-                                    <option value="20:30">20:30 - 21:30 (Tối)</option>
-                                </select>
-                            </div>
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px;">Chọn Ngày tư vấn</label>
+                                    <input type="date" name="meetingDate" id="meetingDateInput" min="@DateTime.Now.ToString("yyyy-MM-dd")" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px;" />
+                                </div>
 
-                            <div style="margin-bottom: 20px;">
-                                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px;">Mục tiêu cần giải đáp</label>
-                                <textarea name="notes" required placeholder="Ghi rõ nội dung bạn mong muốn cố vấn hỗ trợ chuyên môn..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 80px; resize: vertical;"></textarea>
-                            </div>
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px;">Chọn Khung giờ</label>
+                                    <select name="meetingTime" id="meetingTimeSelect" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; background: white;">
+                                        <option value="09:00">09:00 - 10:00 (Sáng)</option>
+                                        <option value="10:30">10:30 - 11:30 (Sáng)</option>
+                                        <option value="14:00">14:00 - 15:00 (Chiều)</option>
+                                        <option value="15:30">15:30 - 16:30 (Chiều)</option>
+                                        <option value="19:00">19:00 - 20:00 (Tối)</option>
+                                        <option value="20:30">20:30 - 21:30 (Tối)</option>
+                                    </select>
+                                </div>
 
-                            <button type="submit" class="btn primary-btn" style="width: 100%; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; height: 42px;">Xác nhận đặt lịch hẹn</button>
-                        </form>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px;">Mục tiêu cần giải đáp</label>
+                                    <textarea name="notes" required placeholder="Ghi rõ nội dung bạn mong muốn cố vấn hỗ trợ chuyên môn..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-height: 80px; resize: vertical;"></textarea>
+                                </div>
+
+                                <button type="submit" class="btn primary-btn" style="width: 100%; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; height: 42px;">Xác nhận đặt lịch hẹn</button>
+                            </form>
+
+                            <script>
+                                document.addEventListener("DOMContentLoaded", function () {
+                                    const dateInput = document.getElementById("meetingDateInput");
+                                    const timeSelect = document.getElementById("meetingTimeSelect");
+                                    if (!dateInput || !timeSelect) return;
+
+                                    const busyTimes = @Html.Raw(Json.Serialize(ViewBag.MentorBusyTimes ?? new List<string>()));
+                                    
+                                    // Lưu lại text gốc của option
+                                    const originalOptions = [];
+                                    Array.from(timeSelect.options).forEach(opt => {
+                                        originalOptions.push({
+                                            value: opt.value,
+                                            text: opt.text
+                                        });
+                                    });
+
+                                    function updateAvailableTimes() {
+                                        const selectedDate = dateInput.value;
+                                        if (!selectedDate) return;
+
+                                        const now = new Date();
+                                        const todayStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
+
+                                        Array.from(timeSelect.options).forEach((opt, index) => {
+                                            const optTimeStr = `${selectedDate} ${opt.value}`;
+                                            const original = originalOptions[index];
+
+                                            // 1. Kiểm tra lịch bận của mentor
+                                            const isBusy = busyTimes.includes(optTimeStr);
+
+                                            // 2. Kiểm tra nếu là ngày hôm nay, loại bỏ những giờ đã qua
+                                            let isPast = false;
+                                            if (selectedDate === todayStr) {
+                                                const [optHour, optMin] = opt.value.split(':').map(Number);
+                                                const optDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), optHour, optMin);
+                                                if (optDateTime <= now) {
+                                                    isPast = true;
+                                                }
+                                            }
+
+                                            if (isBusy) {
+                                                opt.disabled = true;
+                                                opt.text = original.text + " (Đã có lịch hẹn)";
+                                            } else if (isPast) {
+                                                opt.disabled = true;
+                                                opt.text = original.text + " (Đã qua giờ)";
+                                            } else {
+                                                opt.disabled = false;
+                                                opt.text = original.text;
+                                            }
+                                        });
+
+                                        // Chọn option đầu tiên không bị disabled nếu option hiện tại bị disabled
+                                        if (timeSelect.selectedOptions[0] && timeSelect.selectedOptions[0].disabled) {
+                                            const firstAvailable = Array.from(timeSelect.options).find(opt => !opt.disabled);
+                                            if (firstAvailable) {
+                                                timeSelect.value = firstAvailable.value;
+                                            } else {
+                                                timeSelect.value = "";
+                                            }
+                                        }
+                                    }
+
+                                    dateInput.addEventListener("change", updateAvailableTimes);
+                                    
+                                    // Set mặc định ngày hôm nay và kích hoạt cập nhật giờ
+                                    dateInput.value = "@DateTime.Now.ToString("yyyy-MM-dd")";
+                                    updateAvailableTimes();
+                                });
+                            </script>
+                        }
                     }
                 }
             </div>

@@ -179,7 +179,24 @@ namespace Career_Guidance_Platform.Controllers
                 var userId = int.Parse(userIdValue);
                 ViewBag.CurrentRequest = await _context.MentorshipRequests
                     .FirstOrDefaultAsync(mr => mr.MenteeId == userId && mr.MentorId == id);
+
+                var reviewedMeetingIds = await _context.MentorReviews
+                    .Where(mr => mr.MenteeId == userId)
+                    .Select(mr => mr.MeetingId)
+                    .ToListAsync();
+
+                ViewBag.MenteeMeetings = await _context.MentorshipMeetings
+                    .Where(mm => mm.MenteeId == userId && mm.MentorId == id && !reviewedMeetingIds.Contains(mm.Id))
+                    .OrderByDescending(mm => mm.ScheduledTime)
+                    .ToListAsync();
             }
+
+            // Lấy danh sách lịch bận (đã lên lịch) của Mentor này
+            var mentorBusyTimes = await _context.MentorshipMeetings
+                .Where(mm => mm.MentorId == id && mm.Status == "Scheduled")
+                .Select(mm => mm.ScheduledTime)
+                .ToListAsync();
+            ViewBag.MentorBusyTimes = mentorBusyTimes.Select(t => t.ToString("yyyy-MM-dd HH:mm")).ToList();
 
             return View(mentor);
         }
@@ -289,11 +306,20 @@ namespace Career_Guidance_Platform.Controllers
             var meetings = await _context.MentorshipMeetings
                 .Include(mm => mm.Mentee)
                 .Where(mm => mm.MentorId == userId)
-                .OrderByDescending(mm => mm.ScheduledTime)
+                .OrderBy(mm => mm.Status == "Completed" ? 1 : 0)
+                .ThenBy(mm => mm.ScheduledTime)
+                .ToListAsync();
+
+            // Lấy danh sách đánh giá từ người học
+            var reviews = await _context.MentorReviews
+                .Include(r => r.Mentee)
+                .Where(r => r.MentorId == userId)
+                .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
             ViewBag.Requests = requests;
             ViewBag.Meetings = meetings;
+            ViewBag.Reviews = reviews;
 
             return View(mentorProfile);
         }
