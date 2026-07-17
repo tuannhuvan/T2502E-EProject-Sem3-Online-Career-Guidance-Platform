@@ -86,22 +86,46 @@
         </div>
 
         <!-- Right Column: Scheduled Meetings -->
-        <div class="info-card" style="padding: 30px; border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.01);">
-            <h3 style="font-size: 20px; color: #0f172a; font-weight: 800; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">📅 Lịch hẹn tư vấn</h3>
+        <div class="info-card" style="padding: 30px; border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.01); overflow: hidden;">
+            <style>
+                #meetingsSlider::-webkit-scrollbar {
+                    display: none;
+                }
+                #meetingsSlider {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+                .slider-btn:hover {
+                    background: #f1f5f9 !important;
+                    color: #0f172a !important;
+                    border-color: #cbd5e1 !important;
+                }
+            </style>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                <h3 style="font-size: 20px; color: #0f172a; font-weight: 800; margin: 0;">📅 Lịch hẹn tư vấn (Chưa hoàn thành: @(meetings?.Count(m => m.Status != "Completed") ?? 0))</h3>
+                @if (meetings != null && meetings.Count() > 1)
+                {
+                    <div style="display: flex; gap: 8px;">
+                        <button id="prevMeetingBtn" class="slider-btn" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid #e2e8f0; background: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #475569; transition: all 0.2s;"><i class="bi bi-chevron-left"></i></button>
+                        <button id="nextMeetingBtn" class="slider-btn" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid #e2e8f0; background: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #475569; transition: all 0.2s;"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                }
+            </div>
             
             @if (meetings != null && meetings.Any())
             {
-                <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div id="meetingsSlider" style="display: flex; gap: 20px; overflow-x: auto; scroll-behavior: smooth; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
                     @foreach (var meeting in meetings)
                     {
-                        <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.01);">
+                        <div class="meeting-slide" style="flex: 0 0 100%; scroll-snap-align: start; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.01); box-sizing: border-box;">
                             <div>
                                 <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; margin-bottom: 6px; display: inline-block;
                                              background: @(meeting.Status == "Scheduled" ? "#e0f2fe" : meeting.Status == "Completed" ? "#dcfce7" : "#fee2e2");
                                              color: @(meeting.Status == "Scheduled" ? "#0369a1" : meeting.Status == "Completed" ? "#15803d" : "#991b1b");">
                                     @meeting.Status
                                 </span>
-                                <h4 style="font-size: 16px; color: #0f172a; margin: 4px 0 6px; font-weight: 800;">@meeting.Title</h4>
+                                <h4 style="font-size: 16px; color: #0f172a; margin: 4px 0 6px; font-weight: 800; line-height: 1.4;">@meeting.Title</h4>
                                 <div style="font-size: 13.5px; color: #475569; margin-bottom: 4px;">Học viên: <strong>@meeting.Mentee?.FullName</strong></div>
                                 <div style="font-size: 13px; color: #64748b;">Thời gian: <strong>@meeting.ScheduledTime.ToString("dd/MM/yyyy HH:mm")</strong></div>
                                 
@@ -117,7 +141,7 @@
                                     <form asp-controller="Mentorship" asp-action="CompleteMeeting" method="post" style="margin: 0;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="meetingId" value="@meeting.Id" />
-                                        <button type="submit" class="btn" style="background: #10b981; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer;">
+                                        <button type="submit" class="btn" style="background: #10b981; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap;">
                                             Hoàn thành
                                         </button>
                                     </form>
@@ -134,4 +158,71 @@
         </div>
 
     </div>
+
+    <!-- User Reviews Section -->
+    <div style="margin-top: 40px; padding: 30px; border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.01);">
+        <h3 style="font-size: 20px; color: #0f172a; font-weight: 800; margin-top: 0; margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">⭐️ Đánh giá từ Học viên</h3>
+        
+        @{
+            var reviews = ViewBag.Reviews as IEnumerable<Career_Guidance_Platform.Models.MentorReview>;
+        }
+        @if (reviews != null && reviews.Any())
+        {
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+                @foreach (var review in reviews)
+                {
+                    <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                <div>
+                                    <strong style="font-size: 15px; color: #0f172a; display: block;">@review.Mentee?.FullName</strong>
+                                    <span style="font-size: 12px; color: #64748b;">@review.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                </div>
+                                <div style="display: flex; gap: 2px; color: #fbbf24;">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= review.Rating)
+                                        {
+                                            <i class="bi bi-star-fill" style="font-size: 14px;"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star" style="font-size: 14px;"></i>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <p style="color: #475569; font-size: 13.5px; line-height: 1.6; margin: 0; font-style: italic;">
+                                "@review.Comment"
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="font-style: italic; color: #64748b; font-size: 13.5px; margin: 0; text-align: center; padding: 20px;">Chưa có đánh giá nào từ học viên.</p>
+        }
+    </div>
 </section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const slider = document.getElementById("meetingsSlider");
+        const prevBtn = document.getElementById("prevMeetingBtn");
+        const nextBtn = document.getElementById("nextMeetingBtn");
+
+        if (slider && prevBtn && nextBtn) {
+            prevBtn.addEventListener("click", () => {
+                const cardWidth = slider.querySelector(".meeting-slide")?.offsetWidth || 300;
+                slider.scrollBy({ left: -cardWidth - 20, behavior: 'smooth' });
+            });
+
+            nextBtn.addEventListener("click", () => {
+                const cardWidth = slider.querySelector(".meeting-slide")?.offsetWidth || 300;
+                slider.scrollBy({ left: cardWidth + 20, behavior: 'smooth' });
+            });
+        }
+    });
+</script>

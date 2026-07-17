@@ -40,10 +40,10 @@ namespace Career_Guidance_Platform.Controllers
 
                 if (result.Succeeded)
                 {
+                    var user = await _userManager.FindByEmailAsync(model.Email);
                     var testResultId = HttpContext.Session.GetInt32("TestResultId");
-                    if (testResultId.HasValue)
+                    if (testResultId.HasValue && user != null)
                     {
-                        var user = await _userManager.FindByEmailAsync(model.Email);
                         var testResult = await _context.TestResults.FindAsync(testResultId.Value);
                         if (testResult != null)
                         {
@@ -61,6 +61,18 @@ namespace Career_Guidance_Platform.Controllers
 
                             HttpContext.Session.Remove("TestResultId");
                             return RedirectToAction("GetResultDetail", "CareerTest", new { id = testResult.Id });
+                        }
+                    }
+
+                    if (user != null)
+                    {
+                        if (user.Role == "Admin" || await _userManager.IsInRoleAsync(user, "Admin"))
+                        {
+                            return RedirectToAction("Dashboard", "Admin");
+                        }
+                        if (user.Role == "Mentor" || await _userManager.IsInRoleAsync(user, "Mentor"))
+                        {
+                            return RedirectToAction("Dashboard", "Mentorship");
                         }
                     }
 

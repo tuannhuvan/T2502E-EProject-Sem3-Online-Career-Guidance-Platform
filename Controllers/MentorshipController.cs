@@ -306,11 +306,20 @@ namespace Career_Guidance_Platform.Controllers
             var meetings = await _context.MentorshipMeetings
                 .Include(mm => mm.Mentee)
                 .Where(mm => mm.MentorId == userId)
-                .OrderByDescending(mm => mm.ScheduledTime)
+                .OrderBy(mm => mm.Status == "Completed" ? 1 : 0)
+                .ThenBy(mm => mm.ScheduledTime)
+                .ToListAsync();
+
+            // Lấy danh sách đánh giá từ người học
+            var reviews = await _context.MentorReviews
+                .Include(r => r.Mentee)
+                .Where(r => r.MentorId == userId)
+                .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
             ViewBag.Requests = requests;
             ViewBag.Meetings = meetings;
+            ViewBag.Reviews = reviews;
 
             return View(mentorProfile);
         }
