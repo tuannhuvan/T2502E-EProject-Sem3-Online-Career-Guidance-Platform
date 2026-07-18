@@ -989,8 +989,7 @@ public class AdminController : Controller
     {
         var courses = await _context.CareerPathCourses
             .Include(c => c.CareerPath)
-            .OrderBy(c => c.CareerPathId)
-            .ThenBy(c => c.SortOrder)
+            .OrderBy(c => c.Id)
             .ToListAsync();
 
         return View(courses);
@@ -1103,7 +1102,7 @@ public class AdminController : Controller
     {
         var careerPaths = await _context.CareerPaths
             .Include(c => c.Category)
-            .OrderByDescending(c => c.Id)
+            .OrderBy(c => c.Id)
             .ToListAsync();
 
         // Pass statistics to display on the index view (e.g. stage count, skill count)
@@ -1525,35 +1524,15 @@ public class AdminController : Controller
 // CRUD RESOURCES with Parent-Child Support
 // ==========================================
 
-public async Task<IActionResult> Resources(int? categoryId, int? skillId, string? search)
+public async Task<IActionResult> Resources()
 {
-    var query = _context.Resources
+    var resources = await _context.Resources
         .Include(r => r.Category)
         .Include(r => r.ParentResource)
         .Include(r => r.ChildResources)
         .Include(r => r.Skill)
-        .AsQueryable();
-
-    if (categoryId.HasValue)
-    {
-        query = query.Where(r => r.CategoryId == categoryId);
-    }
-
-    if (skillId.HasValue)
-    {
-        query = query.Where(r => r.SkillId == skillId);
-    }
-
-    if (!string.IsNullOrWhiteSpace(search))
-    {
-        var cleanSearch = search.Trim().ToLower();
-        query = query.Where(r => (r.Title != null && r.Title.ToLower().Contains(cleanSearch)) || 
-                                 (r.Description != null && r.Description.ToLower().Contains(cleanSearch)));
-    }
-
-    var resources = await query
         .Where(r => r.Status == 1)
-        .OrderByDescending(r => r.CreatedAt)
+        .OrderBy(r => r.Id)
         .ToListAsync();
 
     ViewBag.Categories = await _context.Categories
@@ -1565,10 +1544,6 @@ public async Task<IActionResult> Resources(int? categoryId, int? skillId, string
         .Where(s => s.Status == 1)
         .OrderBy(s => s.Name)
         .ToListAsync();
-    
-    ViewBag.SelectedCategoryId = categoryId;
-    ViewBag.SelectedSkillId = skillId;
-    ViewBag.Search = search;
 
     return View(resources);
 }
@@ -1792,7 +1767,7 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
     {
         var skills = await _context.Skills
             .Include(s => s.Resources)
-            .OrderByDescending(s => s.Id)
+            .OrderBy(s => s.Id)
             .ToListAsync();
 
         ViewBag.PathCounts = await _context.CareerPathSkills
@@ -1989,43 +1964,15 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
         return RedirectToAction(nameof(Skills));
     }
     // GET: /Admin/Goals
-    public async Task<IActionResult> Goals(string? search, string? type, int? status)
+    public async Task<IActionResult> Goals()
     {
-        var query = _context.Goals
+        var goals = await _context.Goals
             .Include(g => g.Student)
             .Include(g => g.CareerPath)
             .Include(g => g.GoalMilestones)
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            query = query.Where(g =>
-                g.Title.Contains(search) ||
-                g.Student!.FullName.Contains(search) ||
-                g.Student.Email!.Contains(search));
-        }
-
-        if (!string.IsNullOrWhiteSpace(type))
-        {
-            query = query.Where(g => g.GoalType == type);
-        }
-
-        if (status.HasValue)
-        {
-            query = query.Where(g => g.Status == status.Value);
-        }
-        else
-        {
-            query = query.Where(g => g.Status != 3);
-        }
-
-        var goals = await query
-            .OrderByDescending(g => g.CreatedAt)
+            .Where(g => g.Status != 3)
+            .OrderBy(g => g.Id)
             .ToListAsync();
-
-        ViewBag.Search = search;
-        ViewBag.Type = type;
-        ViewBag.Status = status;
 
         return View(goals);
     }

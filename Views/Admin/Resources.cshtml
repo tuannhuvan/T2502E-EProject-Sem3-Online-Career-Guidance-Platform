@@ -38,18 +38,18 @@
 <!-- Optimized Filter Bar (Single Row) -->
 <div class="card mb-3">
     <div class="card-body py-3">
-        <form method="get" action="@Url.Action("Resources")" class="row g-2 align-items-center">
-            <div class="col-md-4">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-5">
                 <div class="input-icon">
                     <span class="input-icon-addon">
                         <i class="ti ti-search text-muted"></i>
                     </span>
-                    <input type="text" name="search" class="form-control" placeholder="Search by title, description..." value="@ViewBag.Search" />
+                    <input type="text" id="resource-search" class="form-control" placeholder="Search by title, description..." />
                 </div>
             </div>
             
             <div class="col-md-3">
-                <select name="categoryId" class="form-select">
+                <select id="category-select" class="form-select">
                     <option value="">All Categories</option>
                     @{
                         var categories = ViewBag.Categories as IEnumerable<Career_Guidance_Platform.Models.Category>;
@@ -58,7 +58,7 @@
                     {
                         foreach (var category in categories)
                         {
-                            <option value="@category.Id" selected="@(ViewBag.SelectedCategoryId == category.Id ? "selected" : null)">
+                            <option value="@category.Id">
                                 @category.Name
                             </option>
                         }
@@ -66,8 +66,8 @@
                 </select>
             </div>
             
-            <div class="col-md-3">
-                <select name="skillId" class="form-select">
+            <div class="col-md-4">
+                <select id="skill-select" class="form-select">
                     <option value="">All Skills</option>
                     @{
                         var skills = ViewBag.Skills as IEnumerable<Career_Guidance_Platform.Models.Skill>;
@@ -76,20 +76,14 @@
                     {
                         foreach (var skill in skills)
                         {
-                            <option value="@skill.Id" selected="@(ViewBag.SelectedSkillId == skill.Id ? "selected" : null)">
+                            <option value="@skill.Id">
                                 @skill.Name
                             </option>
                         }
                     }
                 </select>
             </div>
-            
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="ti ti-filter me-1"></i> Filter
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
@@ -112,7 +106,11 @@
                 {
                     foreach (var item in Model)
                     {
-                        <tr>
+                        <tr class="resource-row"
+                            data-title="@item.Title?.ToLower()"
+                            data-description="@item.Description?.ToLower()"
+                            data-category-id="@item.CategoryId"
+                            data-skill-id="@item.SkillId">
                             <td>
                                 <div class="d-flex align-items-center mb-1">
                                     <span class="badge bg-secondary-lt text-secondary me-2">#@item.Id</span>
@@ -202,4 +200,139 @@
             </tbody>
         </table>
     </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        <span id="entryText">
+            Showing 1 to 10 of @(Model?.Count() ?? 0) entries
+        </span>
+        <ul class="pagination m-0 ms-auto" id="pagination-ul">
+        </ul>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById('resource-search');
+            const categorySelect = document.getElementById('category-select');
+            const skillSelect = document.getElementById('skill-select');
+            const rows = document.querySelectorAll('.resource-row');
+
+            let currentPage = 1;
+            const pageSize = 5;
+
+            function filterAndPaginateResources(resetPage = false) {
+                if (resetPage === true) {
+                    currentPage = 1;
+                }
+
+                const query = searchInput.value.toLowerCase().trim();
+                const categoryId = categorySelect.value;
+                const skillId = skillSelect.value;
+
+                const matchedRows = [];
+
+                rows.forEach(row => {
+                    const title = row.getAttribute('data-title') || '';
+                    const description = row.getAttribute('data-description') || '';
+                    const rowCategoryId = row.getAttribute('data-category-id') || '';
+                    const rowSkillId = row.getAttribute('data-skill-id') || '';
+
+                    const matchesSearch = !query || 
+                        title.includes(query) || 
+                        description.includes(query);
+
+                    const matchesCategory = !categoryId || rowCategoryId === categoryId;
+                    const matchesSkill = !skillId || rowSkillId === skillId;
+
+                    if (matchesSearch && matchesCategory && matchesSkill) {
+                        matchedRows.push(row);
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const totalItems = matchedRows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                matchedRows.forEach((row, index) => {
+                    if (index >= startIdx && index < endIdx) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update entry text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} tài nguyên`;
+
+                // Render pagination
+                const paginationUl = document.getElementById('pagination-ul');
+                if (paginationUl) {
+                    paginationUl.innerHTML = '';
+
+                    // Prev Button
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                    if (currentPage > 1) {
+                        prevLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            filterAndPaginateResources();
+                        });
+                    }
+                    paginationUl.appendChild(prevLi);
+
+                    // Page buttons
+                    const maxButtons = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                        li.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage = i;
+                            filterAndPaginateResources();
+                        });
+                        paginationUl.appendChild(li);
+                    }
+
+                    // Next Button
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                    if (currentPage < totalPages) {
+                        nextLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            filterAndPaginateResources();
+                        });
+                    }
+                    paginationUl.appendChild(nextLi);
+                }
+            }
+
+            searchInput.addEventListener('input', () => filterAndPaginateResources(true));
+            categorySelect.addEventListener('change', () => filterAndPaginateResources(true));
+            skillSelect.addEventListener('change', () => filterAndPaginateResources(true));
+
+            // Initial run
+            filterAndPaginateResources(true);
+        });
+    </script>
+}

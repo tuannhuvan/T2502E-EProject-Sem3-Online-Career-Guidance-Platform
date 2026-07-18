@@ -99,12 +99,21 @@ function deleteUser(id) {
     }
 }
 
-function filterUsers() {
+let currentPage = 1;
+const pageSize = 9;
+
+function filterUsers(resetPage = false) {
+    if (resetPage === true || (resetPage && (resetPage instanceof Event || resetPage.target))) {
+        currentPage = 1;
+    }
+
     const searchValue = document.getElementById('searchInput').value.toLowerCase();
     const roleValue = document.getElementById('roleFilter').value;
     const statusValue = document.getElementById('statusFilter').value;
     const membershipValue = document.getElementById('membershipFilter').value;
     const rows = document.querySelectorAll('#userTableBody tr.user-row');
+
+    const matchedRows = [];
 
     rows.forEach(row => {
         const name = row.querySelector('.user-name').innerText.toLowerCase();
@@ -121,9 +130,105 @@ function filterUsers() {
                                 (membershipValue === 'free' && !isPremium);
 
         if (matchSearch && matchRole && matchStatus && matchMembership) {
+            matchedRows.push(row);
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const totalItems = matchedRows.length;
+    const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+    if (currentPage > totalPages) {
+        currentPage = totalPages;
+    }
+
+    const startIdx = (currentPage - 1) * pageSize;
+    const endIdx = startIdx + pageSize;
+
+    matchedRows.forEach((row, index) => {
+        if (index >= startIdx && index < endIdx) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
         }
     });
+
+    // Update entry info
+    const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+    const endEntry = Math.min(endIdx, totalItems);
+    document.getElementById('entryText').innerHTML = `Showing ${startEntry} to ${endEntry} of ${totalItems} entries`;
+
+    // Render pagination links
+    const paginationUl = document.getElementById('pagination-ul');
+    if (paginationUl) {
+        paginationUl.innerHTML = '';
+
+        // Prev Button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+        if (currentPage > 1) {
+            prevLi.querySelector('a').addEventListener('click', function(e) {
+                e.preventDefault();
+                currentPage--;
+                filterUsers();
+            });
+        }
+        paginationUl.appendChild(prevLi);
+
+        // Page numbers
+        const maxButtons = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+        if (endPage - startPage + 1 < maxButtons) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+            li.querySelector('a').addEventListener('click', function(e) {
+                e.preventDefault();
+                currentPage = i;
+                filterUsers();
+            });
+            paginationUl.appendChild(li);
+        }
+
+        // Next Button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+        if (currentPage < totalPages) {
+            nextLi.querySelector('a').addEventListener('click', function(e) {
+                e.preventDefault();
+                currentPage++;
+                filterUsers();
+            });
+        }
+        paginationUl.appendChild(nextLi);
+    }
+}
+
+// Initialise pagination and trigger search reset on input changes
+function init() {
+    const searchInput = document.getElementById('searchInput');
+    const roleFilter = document.getElementById('roleFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const membershipFilter = document.getElementById('membershipFilter');
+
+    if (searchInput) searchInput.addEventListener('input', () => filterUsers(true));
+    if (roleFilter) roleFilter.addEventListener('change', () => filterUsers(true));
+    if (statusFilter) statusFilter.addEventListener('change', () => filterUsers(true));
+    if (membershipFilter) membershipFilter.addEventListener('change', () => filterUsers(true));
+
+    filterUsers(true);
+}
+
+if (document.readyState !== 'loading') {
+    init();
+} else {
+    document.addEventListener("DOMContentLoaded", init);
 }

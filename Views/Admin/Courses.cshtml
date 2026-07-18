@@ -19,6 +19,30 @@
         </a>
     </div>
 
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-8">
+                    <input id="course-search" class="form-control"
+                           placeholder="Tìm kiếm theo tên khóa học hoặc mô tả..." />
+                </div>
+
+                <div class="col-md-4">
+                    <select id="path-select" class="form-select">
+                        <option value="">Tất cả Career Path</option>
+                        @{
+                            var paths = Model.Where(m => m.CareerPath != null).Select(m => m.CareerPath!).GroupBy(p => p.Id).Select(g => g.First());
+                        }
+                        @foreach (var p in paths)
+                        {
+                            <option value="@p.Id">@p.Title</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="table-responsive">
             <table class="table table-vcenter card-table">
@@ -36,7 +60,10 @@
                 <tbody>
                 @foreach (var item in Model)
                 {
-                    <tr>
+                    <tr class="course-row"
+                        data-title="@item.Title?.ToLower()"
+                        data-description="@item.Description?.ToLower()"
+                        data-path-id="@item.CareerPathId">
                         <td>@item.Id</td>
                         <td>@item.CareerPath?.Title</td>
                         <td>
@@ -80,5 +107,135 @@
                 </tbody>
             </table>
         </div>
+        <div class="card-footer d-flex align-items-center justify-content-between">
+            <span id="entryText">
+                Showing 1 to 10 of @(Model?.Count() ?? 0) entries
+            </span>
+            <ul class="pagination m-0 ms-auto" id="pagination-ul">
+            </ul>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById('course-search');
+            const pathSelect = document.getElementById('path-select');
+            const rows = document.querySelectorAll('.course-row');
+
+            let currentPage = 1;
+            const pageSize = 5;
+
+            function filterAndPaginateCourses(resetPage = false) {
+                if (resetPage === true) {
+                    currentPage = 1;
+                }
+
+                const query = searchInput.value.toLowerCase().trim();
+                const pathId = pathSelect.value;
+
+                const matchedRows = [];
+
+                rows.forEach(row => {
+                    const title = row.getAttribute('data-title') || '';
+                    const description = row.getAttribute('data-description') || '';
+                    const rowPathId = row.getAttribute('data-path-id') || '';
+
+                    const matchesSearch = !query || 
+                        title.includes(query) || 
+                        description.includes(query);
+
+                    const matchesPath = !pathId || rowPathId === pathId;
+
+                    if (matchesSearch && matchesPath) {
+                        matchedRows.push(row);
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const totalItems = matchedRows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                matchedRows.forEach((row, index) => {
+                    if (index >= startIdx && index < endIdx) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update entry text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} khóa học`;
+
+                // Render pagination
+                const paginationUl = document.getElementById('pagination-ul');
+                if (paginationUl) {
+                    paginationUl.innerHTML = '';
+
+                    // Prev Button
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                    if (currentPage > 1) {
+                        prevLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            filterAndPaginateCourses();
+                        });
+                    }
+                    paginationUl.appendChild(prevLi);
+
+                    // Page buttons
+                    const maxButtons = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                        li.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage = i;
+                            filterAndPaginateCourses();
+                        });
+                        paginationUl.appendChild(li);
+                    }
+
+                    // Next Button
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                    if (currentPage < totalPages) {
+                        nextLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            filterAndPaginateCourses();
+                        });
+                    }
+                    paginationUl.appendChild(nextLi);
+                }
+            }
+
+            searchInput.addEventListener('input', () => filterAndPaginateCourses(true));
+            pathSelect.addEventListener('change', () => filterAndPaginateCourses(true));
+
+            // Initial run
+            filterAndPaginateCourses(true);
+        });
+    </script>
+}
