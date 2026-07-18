@@ -16,13 +16,19 @@
         .navbar-brand { font-weight: 800; }
         .admin-logo { font-size: 22px; }
         .table-actions { white-space: nowrap; }
+
+        @@media print {
+            .page-wrapper {
+                margin-left: 0 !important;
+            }
+        }
     </style>
 </head>
 
 <body>
 <div class="page">
 
-    <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+    <aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
         <div class="container-fluid">
             <h1 class="navbar-brand navbar-brand-autodark">
                 <a asp-controller="Admin" asp-action="Dashboard" class="text-white text-decoration-none">

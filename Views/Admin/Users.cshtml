@@ -28,14 +28,16 @@
     <div class="card-body border-bottom py-3">
         <div class="row g-2">
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <input id="searchInput"
+                       type="search"
                        class="form-control"
                        placeholder="Search user..."
-                       onkeyup="filterUsers()" />
+                       onkeyup="filterUsers()"
+                       autocomplete="off" />
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select id="roleFilter"
                         class="form-select"
                         onchange="filterUsers()">
@@ -46,7 +48,7 @@
                 </select>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select id="statusFilter"
                         class="form-select"
                         onchange="filterUsers()">
@@ -54,6 +56,16 @@
                     <option value="Active">Active</option>
                     <option value="Pending">Pending</option>
                     <option value="Blocked">Blocked</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select id="membershipFilter"
+                        class="form-select"
+                        onchange="filterUsers()">
+                    <option value="">All Membership</option>
+                    <option value="premium">Premium</option>
+                    <option value="free">Regular</option>
                 </select>
             </div>
 
@@ -79,6 +91,7 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Membership</th>
                 <th>Status</th>
                 <th width="150">Actions</th>
             </tr>
@@ -92,7 +105,7 @@
                     var displayRole = user.Role == "Student" ? "User" : user.Role;
                     var displayStatus = user.Status == 1 ? "Active" : (user.Status == 2 ? "Pending" : "Blocked");
                     var badgeClass = user.Status == 1 ? "bg-green-lt" : (user.Status == 2 ? "bg-yellow-lt" : "bg-red-lt");
-                    <tr class="user-row">
+                    <tr class="user-row" data-premium="@user.IsPremium.ToString().ToLower()">
                         <td>
                             <input type="checkbox" class="form-check-input">
                         </td>
@@ -100,7 +113,17 @@
                         <td class="user-email">@user.Email</td>
                         <td class="user-role">@displayRole</td>
                         <td>
-                            <span class="badge @badgeClass">@displayStatus</span>
+                            @if (user.IsPremium)
+                            {
+                                <span class="badge bg-purple-lt"><i class="ti ti-crown me-1"></i>Premium</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary-lt">Regular</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge status-badge @badgeClass">@displayStatus</span>
                         </td>
                         <td class="table-actions">
                             <button class="btn btn-sm btn-outline-primary me-1"
@@ -126,7 +149,7 @@
             else
             {
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-3">No users found in database.</td>
+                    <td colspan="7" class="text-center text-muted py-3">No users found in database.</td>
                 </tr>
             }
             </tbody>
