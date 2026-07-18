@@ -46,12 +46,18 @@ public class GoalController : Controller
                          (us.Status == "Completed" || us.Status == "Acquired"))
             .ToListAsync();
 
+        var allSkills = await _context.UserSkills
+            .Include(us => us.Skill)
+            .Where(us => us.UserId == userId)
+            .ToListAsync();
+
         var resumes = await _context.Resumes
             .Where(r => r.UserId == userId)
             .OrderByDescending(r => r.UpdatedAt ?? r.CreatedAt)
             .ToListAsync();
 
         ViewBag.Completed = completed;
+        ViewBag.AllSkills = allSkills;
         ViewBag.Resumes = resumes;
 
         return View(personalGoals);
@@ -75,6 +81,31 @@ public class GoalController : Controller
     // GET: /Goal/Create
     public async Task<IActionResult> Create()
     {
+        var userId = GetCurrentUserId();
+
+        // Premium limitation: Free users can only create 1 goal
+        var totalGoalsCount = await _context.Goals
+            .CountAsync(g => g.StudentId == userId && g.Status != 3);
+
+        if (totalGoalsCount >= 1)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null || !user.IsPremium)
+            {
+                TempData["PremiumLimitMessage"] = "Tính năng tạo nhiều hơn 1 mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+                return RedirectToAction("UpgradePremium", "Home");
+            }
+        }
+
+        var hasActiveGoal = await _context.Goals
+            .AnyAsync(g => g.StudentId == userId && g.Status != 3 && g.Progress < 100);
+
+        if (hasActiveGoal)
+        {
+            TempData["ErrorMessage"] = "Bạn chưa hoàn thành mục tiêu trước đó. Hãy hoàn thành mục tiêu hiện tại trước khi tạo mục tiêu mới!";
+            return RedirectToAction(nameof(Index));
+        }
+
         await LoadCareerPaths();
         return View();
     }
@@ -82,14 +113,73 @@ public class GoalController : Controller
     // POST: /Goal/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Goal goal)
+    public async Task<IActionResult> Create(Goal goal, List<int> selectedSkills)
     {
         var userId = GetCurrentUserId();
+
+        // Premium limitation: Free users can only create 1 goal
+        var totalGoalsCount = await _context.Goals
+            .CountAsync(g => g.StudentId == userId && g.Status != 3);
+
+        if (totalGoalsCount >= 1)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null || !user.IsPremium)
+            {
+                TempData["PremiumLimitMessage"] = "Tính năng tạo nhiều hơn 1 mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+                return RedirectToAction("UpgradePremium", "Home");
+            }
+        }
+
+        var hasActiveGoal = await _context.Goals
+            .AnyAsync(g => g.StudentId == userId && g.Status != 3 && g.Progress < 100);
+
+        if (hasActiveGoal)
+        {
+            TempData["ErrorMessage"] = "Bạn chưa hoàn thành mục tiêu trước đó. Hãy hoàn thành mục tiêu hiện tại trước khi tạo mục tiêu mới!";
+            return RedirectToAction(nameof(Index));
+        }
 
         goal.StudentId = userId;
         goal.CreatedAt = DateTime.Now;
         goal.CreatedBy = User.Identity?.Name ?? "User";
         goal.Status = 1;
+
+        selectedSkills ??= new List<int>();
+
+        var userSkills = await _context.UserSkills
+            .Where(us => us.UserId == userId)
+            .ToDictionaryAsync(us => us.SkillId, us => us.Status);
+
+        int completedCount = 0;
+        int totalCount = selectedSkills.Count;
+
+        foreach (var skillId in selectedSkills)
+        {
+            var skill = await _context.Skills.FindAsync(skillId);
+            if (skill != null)
+            {
+                var isCompleted = userSkills.ContainsKey(skillId) && 
+                                  (userSkills[skillId] == "Completed" || userSkills[skillId] == "Acquired");
+                if (isCompleted)
+                {
+                    completedCount++;
+                }
+
+                goal.GoalMilestones.Add(new GoalMilestone
+                {
+                    Title = $"Hoàn thành kỹ năng {skill.Name}",
+                    SkillId = skillId,
+                    Status = isCompleted ? "Completed" : "In Progress",
+                    SequenceOrder = goal.GoalMilestones.Count + 1
+                });
+            }
+        }
+
+        goal.Progress = totalCount > 0 ? (int)Math.Round((double)completedCount / totalCount * 100) : 0;
+
+        ModelState.Remove(nameof(goal.StudentId));
+        ModelState.Remove(nameof(goal.Student));
 
         if (!ModelState.IsValid)
         {
@@ -104,12 +194,46 @@ public class GoalController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // GET: /Goal/GetSkillsByCareerPath?careerPathId=5
+    [HttpGet]
+    public async Task<IActionResult> GetSkillsByCareerPath(int careerPathId)
+    {
+        var userId = GetCurrentUserId();
+
+        var pathSkills = await _context.CareerPathSkills
+            .Include(cps => cps.Skill)
+            .Where(cps => cps.CareerPathId == careerPathId && cps.Skill != null && cps.Skill.Status == 1)
+            .Select(cps => cps.Skill!)
+            .ToListAsync();
+
+        var userSkills = await _context.UserSkills
+            .Where(us => us.UserId == userId)
+            .ToDictionaryAsync(us => us.SkillId, us => us.Status);
+
+        var result = pathSkills.Select(s => new {
+            s.Id,
+            s.Name,
+            s.Description,
+            Status = userSkills.ContainsKey(s.Id) ? userSkills[s.Id] : "Not Started"
+        });
+
+        return Json(result);
+    }
+
     // GET: /Goal/Edit/5
     public async Task<IActionResult> Edit(int id)
     {
         var userId = GetCurrentUserId();
 
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null || !user.IsPremium)
+        {
+            TempData["PremiumLimitMessage"] = "Tính năng chỉnh sửa hoặc xóa mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+            return RedirectToAction("UpgradePremium", "Home");
+        }
+
         var goal = await _context.Goals
+            .Include(g => g.GoalMilestones)
             .FirstOrDefaultAsync(g => g.Id == id && g.StudentId == userId && g.Status != 3);
 
         if (goal == null) return NotFound();
@@ -121,16 +245,64 @@ public class GoalController : Controller
     // POST: /Goal/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Goal input)
+    public async Task<IActionResult> Edit(int id, Goal input, List<int> selectedSkills)
     {
         if (id != input.Id) return NotFound();
 
         var userId = GetCurrentUserId();
 
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null || !user.IsPremium)
+        {
+            TempData["PremiumLimitMessage"] = "Tính năng chỉnh sửa hoặc xóa mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+            return RedirectToAction("UpgradePremium", "Home");
+        }
+
         var goal = await _context.Goals
+            .Include(g => g.GoalMilestones)
             .FirstOrDefaultAsync(g => g.Id == id && g.StudentId == userId && g.Status != 3);
 
         if (goal == null) return NotFound();
+
+        selectedSkills ??= new List<int>();
+
+        // Remove old milestones associated with skills
+        _context.GoalMilestones.RemoveRange(goal.GoalMilestones);
+        goal.GoalMilestones.Clear();
+
+        var userSkills = await _context.UserSkills
+            .Where(us => us.UserId == userId)
+            .ToDictionaryAsync(us => us.SkillId, us => us.Status);
+
+        int completedCount = 0;
+        int totalCount = selectedSkills.Count;
+
+        foreach (var skillId in selectedSkills)
+        {
+            var skill = await _context.Skills.FindAsync(skillId);
+            if (skill != null)
+            {
+                var isCompleted = userSkills.ContainsKey(skillId) && 
+                                  (userSkills[skillId] == "Completed" || userSkills[skillId] == "Acquired");
+                if (isCompleted)
+                {
+                    completedCount++;
+                }
+
+                goal.GoalMilestones.Add(new GoalMilestone
+                {
+                    Title = $"Hoàn thành kỹ năng {skill.Name}",
+                    SkillId = skillId,
+                    Status = isCompleted ? "Completed" : "In Progress",
+                    SequenceOrder = goal.GoalMilestones.Count + 1
+                });
+            }
+        }
+
+        input.Progress = totalCount > 0 ? (int)Math.Round((double)completedCount / totalCount * 100) : 0;
+
+        ModelState.Remove(nameof(input.StudentId));
+        ModelState.Remove(nameof(input.Student));
 
         if (!ModelState.IsValid)
         {
@@ -157,6 +329,13 @@ public class GoalController : Controller
     {
         var userId = GetCurrentUserId();
 
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null || !user.IsPremium)
+        {
+            TempData["PremiumLimitMessage"] = "Tính năng chỉnh sửa hoặc xóa mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+            return RedirectToAction("UpgradePremium", "Home");
+        }
+
         var goal = await _context.Goals
             .Include(g => g.CareerPath)
             .FirstOrDefaultAsync(g => g.Id == id && g.StudentId == userId && g.Status != 3);
@@ -172,6 +351,13 @@ public class GoalController : Controller
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var userId = GetCurrentUserId();
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null || !user.IsPremium)
+        {
+            TempData["PremiumLimitMessage"] = "Tính năng chỉnh sửa hoặc xóa mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+            return RedirectToAction("UpgradePremium", "Home");
+        }
 
         var goal = await _context.Goals
             .FirstOrDefaultAsync(g => g.Id == id && g.StudentId == userId && g.Status != 3);
