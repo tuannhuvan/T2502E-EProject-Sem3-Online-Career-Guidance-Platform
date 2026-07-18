@@ -103,19 +103,24 @@ function filterUsers() {
     const searchValue = document.getElementById('searchInput').value.toLowerCase();
     const roleValue = document.getElementById('roleFilter').value;
     const statusValue = document.getElementById('statusFilter').value;
+    const membershipValue = document.getElementById('membershipFilter').value;
     const rows = document.querySelectorAll('#userTableBody tr.user-row');
 
     rows.forEach(row => {
         const name = row.querySelector('.user-name').innerText.toLowerCase();
         const email = row.querySelector('.user-email').innerText.toLowerCase();
         const role = row.querySelector('.user-role').innerText.trim();
-        const status = row.querySelector('.badge').innerText.trim();
+        const status = row.querySelector('.status-badge').innerText.trim();
+        const isPremium = row.getAttribute('data-premium') === 'true';
 
         const matchSearch = name.includes(searchValue) || email.includes(searchValue);
         const matchRole = roleValue === '' || role === roleValue;
         const matchStatus = statusValue === '' || status === statusValue;
+        const matchMembership = membershipValue === '' || 
+                                (membershipValue === 'premium' && isPremium) || 
+                                (membershipValue === 'free' && !isPremium);
 
-        if (matchSearch && matchRole && matchStatus) {
+        if (matchSearch && matchRole && matchStatus && matchMembership) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
