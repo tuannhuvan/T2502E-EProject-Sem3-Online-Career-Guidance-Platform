@@ -4,6 +4,7 @@ using Career_Guidance_Platform.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
