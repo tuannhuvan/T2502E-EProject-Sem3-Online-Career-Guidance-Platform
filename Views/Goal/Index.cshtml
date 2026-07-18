@@ -175,35 +175,57 @@
         </div>
     }
 
+    @{
+        var allSkills = ViewBag.AllSkills as List<Career_Guidance_Platform.Models.UserSkill>
+            ?? new List<Career_Guidance_Platform.Models.UserSkill>();
+    }
+
     <div class="goal-tabs">
         <button onclick="switchTab('tab-inventory')" id="btn-tab-inventory" class="tab-nav-btn active">
-            💼 Kho kỹ năng (@completed.Count)
+            💼 Kho kỹ năng (@allSkills.Count)
         </button>
 
         <button onclick="switchTab('tab-cv-sync')" id="btn-tab-cv-sync" class="tab-nav-btn">
-            📝 Đồng bộ CV (@resumes.Count)
+            📝 Đồng bộ CV (@completed.Count)
         </button>
     </div>
 
     <div id="tab-inventory" class="tab-pane active">
-        @if (completed.Count == 0)
+        @if (allSkills.Count == 0)
         {
             <div class="empty-box small">
                 <span>🏆</span>
                 <h3>Kho kỹ năng trống</h3>
-                <p>Hãy hoàn thành bài kiểm tra kỹ năng để lưu kỹ năng tại đây.</p>
+                <p>Hãy hoàn thành bài kiểm tra kỹ năng hoặc thêm kỹ năng mục tiêu để lưu tại đây.</p>
             </div>
         }
         else
         {
             <div class="skill-grid">
-                @foreach (var item in completed)
+                @foreach (var item in allSkills)
                 {
-                    <div class="skill-card">
+                    <div class="skill-card" style="position: relative;">
                         <span>🛡️</span>
                         <div>
                             <h4>@(item.Skill?.Name ?? "Tên kỹ năng")</h4>
-                            <p>Đã xác minh</p>
+                            <p style="margin-top: 4px;">
+                                @if (item.Status == "Completed" || item.Status == "Acquired")
+                                {
+                                    <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.75rem; border-radius: 4px;">Đã hoàn thành</span>
+                                }
+                                else if (item.Status == "Learning")
+                                {
+                                    <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.75rem; border-radius: 4px;">Đang học</span>
+                                }
+                                else if (item.Status == "In-Goals")
+                                {
+                                    <span class="badge bg-info text-white px-2 py-1" style="font-size: 0.75rem; border-radius: 4px;">Mục tiêu học</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.75rem; border-radius: 4px;">@item.Status</span>
+                                }
+                            </p>
                         </div>
                     </div>
                 }
