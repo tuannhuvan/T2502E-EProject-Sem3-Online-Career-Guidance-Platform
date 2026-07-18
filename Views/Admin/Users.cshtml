@@ -34,7 +34,7 @@
                        class="form-control"
                        placeholder="Search user..."
                        onkeyup="filterUsers()"
-                       autocomplete="off" />
+                       autocomplete="new-password" />
             </div>
 
             <div class="col-md-2">
@@ -158,10 +158,12 @@
 
     </div>
 
-    <div class="card-footer">
+    <div class="card-footer d-flex align-items-center justify-content-between">
         <span id="entryText">
             Showing 1 to @(Model?.Count() ?? 0) entries
         </span>
+        <ul class="pagination m-0 ms-auto" id="pagination-ul">
+        </ul>
     </div>
 
 </div>

@@ -143,23 +143,124 @@
             </tbody>
         </table>
     </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        <p class="m-0 text-muted">Showing <span id="start-entry">0</span> to <span id="end-entry">0</span> of <span id="total-entries">0</span> entries</p>
+        <ul class="pagination m-0 ms-auto" id="pagination-ul">
+        </ul>
+    </div>
 </div>
 
 @section Scripts {
     <script>
-        function filterSkills() {
-            const query = document.getElementById('skill-search').value.toLowerCase();
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById('skill-search');
             const rows = document.querySelectorAll('.skill-row');
-            rows.forEach(row => {
-                const name = row.getAttribute('data-name');
-                const type = row.getAttribute('data-type');
-                const diff = row.getAttribute('data-difficulty');
-                if (name.includes(query) || type.includes(query) || diff.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
+            const pageSize = 5;
+            let currentPage = 1;
+
+            function filterAndPaginateSkills() {
+                const query = searchInput.value.toLowerCase().trim();
+                
+                // First filter all rows
+                const matchedRows = [];
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name') || '';
+                    const type = row.getAttribute('data-type') || '';
+                    const diff = row.getAttribute('data-difficulty') || '';
+
+                    const matches = !query || name.includes(query) || type.includes(query) || diff.includes(query);
+                    if (matches) {
+                        matchedRows.push(row);
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const totalItems = matchedRows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
                 }
-            });
-        }
+
+                // Show only current page items
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                matchedRows.forEach((row, index) => {
+                    if (index >= startIdx && index < endIdx) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update info text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                document.getElementById('start-entry').textContent = startEntry;
+                document.getElementById('end-entry').textContent = endEntry;
+                document.getElementById('total-entries').textContent = totalItems;
+
+                // Update pagination controls
+                const paginationUl = document.getElementById('pagination-ul');
+                paginationUl.innerHTML = '';
+
+                // Prev Button
+                const prevLi = document.createElement('li');
+                prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                if (currentPage > 1) {
+                    prevLi.querySelector('a').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage--;
+                        filterAndPaginateSkills();
+                    });
+                }
+                paginationUl.appendChild(prevLi);
+
+                // Page numbers
+                const maxButtons = 5;
+                let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                if (endPage - startPage + 1 < maxButtons) {
+                    startPage = Math.max(1, endPage - maxButtons + 1);
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const li = document.createElement('li');
+                    li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                    li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                    li.querySelector('a').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage = i;
+                        filterAndPaginateSkills();
+                    });
+                    paginationUl.appendChild(li);
+                }
+
+                // Next Button
+                const nextLi = document.createElement('li');
+                nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                if (currentPage < totalPages) {
+                    nextLi.querySelector('a').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage++;
+                        filterAndPaginateSkills();
+                    });
+                }
+                paginationUl.appendChild(nextLi);
+            }
+
+            // Expose filterSkills globally in case the inline onkeyup is triggered
+            window.filterSkills = function() {
+                currentPage = 1;
+                filterAndPaginateSkills();
+            };
+
+            // Run initial render
+            filterAndPaginateSkills();
+        });
     </script>
 }

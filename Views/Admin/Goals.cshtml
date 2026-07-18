@@ -15,37 +15,33 @@
 <div class="page-body">
     <div class="container-xl">
 
-        <form method="get" class="card mb-3">
+        <div class="card mb-3">
             <div class="card-body">
                 <div class="row g-2">
-                    <div class="col-md-5">
-                        <input name="search" value="@ViewBag.Search" class="form-control"
+                    <div class="col-md-6">
+                        <input id="goal-search" class="form-control"
                                placeholder="Tìm goal, user, email..." />
                     </div>
 
                     <div class="col-md-3">
-                        <select name="type" class="form-select">
+                        <select id="type-select" class="form-select">
                             <option value="">Tất cả loại</option>
-                            <option value="ShortTerm" selected="@(ViewBag.Type == "ShortTerm")">Ngắn hạn</option>
-                            <option value="LongTerm" selected="@(ViewBag.Type == "LongTerm")">Dài hạn</option>
+                            <option value="shortterm">Ngắn hạn</option>
+                            <option value="longterm">Dài hạn</option>
                         </select>
                     </div>
 
-                    <div class="col-md-2">
-                        <select name="status" class="form-select">
-                            <option value="">Đang hoạt động</option>
-                            <option value="1" selected="@(ViewBag.Status == 1)">Active</option>
-                            <option value="0" selected="@(ViewBag.Status == 0)">Inactive</option>
-                            <option value="3" selected="@(ViewBag.Status == 3)">Deleted</option>
+                    <div class="col-md-3">
+                        <select id="status-select" class="form-select">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                            <option value="3">Deleted</option>
                         </select>
-                    </div>
-
-                    <div class="col-md-2">
-                        <button class="btn btn-primary w-100">Lọc</button>
                     </div>
                 </div>
             </div>
-        </form>
+        </div>
 
         <div class="card">
             <div class="table-responsive">
@@ -81,7 +77,12 @@
                             var total = goal.GoalMilestones?.Count ?? 0;
                             var completed = goal.GoalMilestones?.Count(m => m.Status == "Completed") ?? 0;
 
-                            <tr>
+                             <tr class="goal-row"
+                                 data-student-name="@(goal.Student?.FullName?.ToLower())"
+                                 data-student-email="@(goal.Student?.Email?.ToLower())"
+                                 data-title="@(goal.Title?.ToLower())"
+                                 data-type="@(goal.GoalType?.ToLower())"
+                                 data-status="@goal.Status">
                                 <td>@goal.Id</td>
 
                                 <td>
@@ -154,7 +155,144 @@
                     </tbody>
                 </table>
             </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <span id="entryText">
+                    Showing 1 to 10 of @(Model?.Count() ?? 0) entries
+                </span>
+                <ul class="pagination m-0 ms-auto" id="pagination-ul">
+                </ul>
+            </div>
         </div>
 
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById('goal-search');
+            const typeSelect = document.getElementById('type-select');
+            const statusSelect = document.getElementById('status-select');
+            const rows = document.querySelectorAll('.goal-row');
+
+            let currentPage = 1;
+            const pageSize = 5;
+
+            function filterAndPaginateGoals(resetPage = false) {
+                if (resetPage === true) {
+                    currentPage = 1;
+                }
+
+                const query = searchInput.value.toLowerCase().trim();
+                const type = typeSelect.value;
+                const status = statusSelect.value;
+
+                const matchedRows = [];
+
+                rows.forEach(row => {
+                    const studentName = row.getAttribute('data-student-name') || '';
+                    const studentEmail = row.getAttribute('data-student-email') || '';
+                    const title = row.getAttribute('data-title') || '';
+                    const goalType = row.getAttribute('data-type') || '';
+                    const goalStatus = row.getAttribute('data-status') || '';
+
+                    const matchesSearch = !query || 
+                        studentName.includes(query) || 
+                        studentEmail.includes(query) || 
+                        title.includes(query);
+
+                    const matchesType = !type || goalType === type;
+                    const matchesStatus = !status || goalStatus === status;
+
+                    if (matchesSearch && matchesType && matchesStatus) {
+                        matchedRows.push(row);
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const totalItems = matchedRows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                matchedRows.forEach((row, index) => {
+                    if (index >= startIdx && index < endIdx) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update entry text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} mục tiêu`;
+
+                // Render pagination
+                const paginationUl = document.getElementById('pagination-ul');
+                if (paginationUl) {
+                    paginationUl.innerHTML = '';
+
+                    // Prev Button
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                    if (currentPage > 1) {
+                        prevLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            filterAndPaginateGoals();
+                        });
+                    }
+                    paginationUl.appendChild(prevLi);
+
+                    // Page buttons
+                    const maxButtons = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                        li.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage = i;
+                            filterAndPaginateGoals();
+                        });
+                        paginationUl.appendChild(li);
+                    }
+
+                    // Next Button
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                    if (currentPage < totalPages) {
+                        nextLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            filterAndPaginateGoals();
+                        });
+                    }
+                    paginationUl.appendChild(nextLi);
+                }
+            }
+
+            searchInput.addEventListener('input', () => filterAndPaginateGoals(true));
+            typeSelect.addEventListener('change', () => filterAndPaginateGoals(true));
+            statusSelect.addEventListener('change', () => filterAndPaginateGoals(true));
+
+            // Initial run
+            filterAndPaginateGoals(true);
+        });
+    </script>
+}
