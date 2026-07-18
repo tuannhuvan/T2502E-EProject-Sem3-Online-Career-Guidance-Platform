@@ -544,8 +544,9 @@ namespace Career_Guidance_Platform.Data
             }
             await context.SaveChangesAsync();
 
+            var hasSubQuestions = await context.QuestionTests.AnyAsync(q => q.TestId == baseTest.Id && q.Content.Contains("Câu hỏi phụ"));
             var existingQuestionsCount = await context.QuestionTests.CountAsync(q => q.TestId == baseTest.Id);
-            if (existingQuestionsCount != 100)
+            if (existingQuestionsCount != 104 || hasSubQuestions)
             {
                 var existingQuestions = await context.QuestionTests.Where(q => q.TestId == baseTest.Id).ToListAsync();
                 foreach (var q in existingQuestions)
@@ -561,131 +562,9 @@ namespace Career_Guidance_Platform.Data
                 context.QuestionTests.RemoveRange(existingQuestions);
                 await context.SaveChangesAsync();
 
-                // --- SEEDING 20 QUESTIONS FOR BASE TEST ---
-                var questionsData = new List<(string Content, string TestType, List<string> Options, List<(int PathIdx, int W)> Weights)>
-                {
-                    // Q1
-                    ("Bạn thích dành thời gian rảnh của mình để làm việc nào nhất?",
-                     "Interests",
-                     new List<string> { "Đọc tài liệu công nghệ hoặc tự mày mò viết code mẫu.", "Gặp gỡ, kết nối và mở rộng mối quan hệ xã hội.", "Vẽ tranh, thiết kế đồ họa hoặc sáng tạo tự do.", "Sắp xếp lại bảng chi tiêu, lên kế hoạch tuần mới cụ thể." },
-                     new List<(int, int)> { (0, 5), (4, 5), (3, 5), (6, 5) }),
+                // --- SEEDING 104 UNIQUE QUESTIONS FOR BASE TEST ---
+                var questionsData = new List<(string Content, string TestType, List<string> Options, List<(int PathIdx, int W)> Weights)>();
 
-                    // Q2
-                    ("Khi đối mặt với một thiết bị công nghệ mới bị hỏng, bạn sẽ làm gì?",
-                     "Skills",
-                     new List<string> { "Tự tháo linh kiện ra xem cấu trúc phần cứng bên trong để sửa.", "Lên mạng tìm các bài viết/video phân tích bản chất lỗi kỹ thuật.", "Tìm kiếm sự giúp đỡ từ những người xung quanh hoặc mang ra tiệm.", "Ghi chép lại lỗi này vào file log để theo dõi thiết bị định kỳ." },
-                     new List<(int, int)> { (1, 5), (2, 5), (4, 4), (6, 4) }),
-
-                    // Q3
-                    ("Trong một cuộc thảo luận nhóm, vai trò tự nhiên của bạn thường là gì?",
-                     "Personality",
-                     new List<string> { "Đưa ra các ý tưởng cấu trúc, giải pháp đột phá, mới mẻ.", "Lắng nghe, hòa giải mâu thuẫn và kết nối các thành viên.", "Phân tích chuyên sâu tính khả thi và logic của các ý tưởng.", "Thúc giục tiến độ, quản lý thời gian và phân chia nhiệm vụ." },
-                     new List<(int, int)> { (3, 5), (4, 5), (2, 5), (5, 5) }),
-
-                    // Q4
-                    ("Khi một người bạn đồng nghiệp đang gặp áp lực hoặc chuyện buồn, bạn sẽ:",
-                     "Personality",
-                     new List<string> { "Tìm các giải pháp thực tế giúp họ xử lý dứt điểm công việc đang nghẽn.", "Lắng nghe một cách đồng cảm, chia sẻ và khích lệ tinh thần.", "Rủ họ tham gia các buổi Workshop kết nối cộng đồng để giải tỏa.", "Giữ khoảng cách tôn trọng giúp họ có không gian riêng để tĩnh tâm." },
-                     new List<(int, int)> { (0, 4), (4, 5), (4, 4), (6, 3) }),
-
-                    // Q5
-                    ("Bạn cảm thấy bị thu hút mạnh mẽ bởi môi trường làm việc nào?",
-                     "Values",
-                     new List<string> { "Hạ tầng kỹ thuật phòng Lab hiện đại, quy trình làm việc chuẩn hóa.", "Không gian làm việc mở, tự do sáng tạo cao, linh hoạt thời gian.", "Môi trường sôi nổi, liên tục di chuyển gặp gỡ đối tác ngoại giao.", "Hệ thống văn phòng ổn định, phúc lợi rõ ràng, quản lý chặt chẽ." },
-                     new List<(int, int)> { (1, 5), (3, 5), (5, 5), (6, 5) }),
-
-                    // Q6
-                    ("Khi phải xử lý các bảng số liệu phức tạp hoặc khối dữ liệu thô, bạn thấy:",
-                     "Skills",
-                     new List<string> { "Hào hứng tìm kiếm bản chất mô hình toán học ẩn sau chúng.", "Làm theo đúng biểu mẫu tài chính chuyên môn một cách cẩn thận.", "Nhanh chóng thiết kế các biểu đồ trực quan hóa màu sắc cho dễ hiểu.", "Cảm thấy nhàm chán và muốn ủy quyền cho người khác xử lý." },
-                     new List<(int, int)> { (2, 5), (6, 5), (3, 4), (4, 3) }),
-
-                    // Q7
-                    ("Nếu được tài trợ để viết một cuốn sách, bạn sẽ viết về chủ đề nào?",
-                     "Interests",
-                     new List<string> { "Chiến lược quản trị và dẫn dắt doanh nghiệp khởi nghiệp.", "Cẩm nang hướng dẫn chuyên sâu về mỹ thuật số nghệ thuật.", "Nghiên cứu cấu trúc tâm lý học và cách quản trị nhân sự.", "Các thuật toán thông minh cải tiến hệ thống cơ sở dữ liệu." },
-                     new List<(int, int)> { (5, 5), (3, 5), (4, 5), (0, 5) }),
-
-                    // Q8
-                    ("Cách bạn đang tự quản lý tài chính cá nhân hàng tháng là gì?",
-                     "Skills",
-                     new List<string> { "Sử dụng ứng dụng/Excel ghi chép nghiêm túc không sót một đồng.", "Chi tiêu linh hoạt theo cảm xúc, ước lượng sơ bộ trong đầu.", "Chia nhỏ ngân sách vào các quỹ: Tiết kiệm, Đầu tư, Nâng cấp bản thân.", "Tìm cách tối ưu hóa, đầu tư sinh lời từ các khoản tiền nhàn rỗi." },
-                     new List<(int, int)> { (6, 5), (3, 3), (6, 4), (5, 5) }),
-
-                    // Q9
-                    ("Khi bất chợt nảy ra một ý tưởng kinh doanh mới, bạn làm gì trước tiên?",
-                     "Personality",
-                     new List<string> { "Phân tích, xây dựng bản kế hoạch chi tiết và khảo sát thị trường.", "Liên hệ ngay với bạn bè có thế mạnh chuyên môn khác để lập Team.", "Tìm một Mentor có uy tín lớn trong ngành để xin ý kiến tư vấn.", "Lập tức xây dựng thử nghiệm sản phẩm phiên bản Demo (MVP)." },
-                     new List<(int, int)> { (5, 5), (5, 4), (4, 4), (0, 5) }),
-
-                    // Q10
-                    ("Bạn đánh giá khả năng xử lý công việc dồn dập (áp lực Deadline lớn) của mình thế nào?",
-                     "Personality",
-                     new List<string> { "Rất tốt, áp lực công nghệ kích thích sự tập trung giải bài toán khó của tôi.", "Tốt, tôi sẽ thiết lập kế hoạch chia nhỏ công việc, sắp xếp độ ưu tiên rõ ràng.", "Dễ bị áp lực tâm lý, tôi cần sự động viên hoặc chỉ dẫn từ đồng nghiệp.", "Tôi thích làm việc tuần tự và sẽ chủ động đàm phán kéo dài thời gian." },
-                     new List<(int, int)> { (1, 4), (5, 5), (4, 4), (6, 4) }),
-
-                    // Q11
-                    ("Khi truy cập vào một trang web mới, yếu tố nào tác động tới bạn đầu tiên?",
-                     "Interests",
-                     new List<string> { "Hệ màu sắc bố cục, độ mượt mà của trải nghiệm UI/UX.", "Tốc độ tải trang, kiến trúc tính năng hệ thống thông minh.", "Độ chính xác logic của nội dung truyền tải và thông tin liên hệ.", "Mô hình chuyển đổi kinh doanh, cách thức tối ưu doanh thu của trang." },
-                     new List<(int, int)> { (3, 5), (0, 5), (2, 4), (5, 4) }),
-
-                    // Q12
-                    ("Bạn mong muốn đối tượng tương tác chính trong công việc hàng ngày của mình là gì?",
-                     "Interests",
-                     new List<string> { "Hệ thống câu lệnh mã code, máy móc cấu hình mạng hoặc thuật toán.", "Con người (Học viên, ứng viên, đối tác chiến lược hoặc khách hàng).", "Sản phẩm sáng tạo nghệ thuật, hình ảnh truyền thông, giao diện số.", "Hồ sơ chứng từ tài chính, quy trình kiểm toán, văn bản hành chính." },
-                     new List<(int, int)> { (0, 5), (4, 5), (3, 5), (6, 5) }),
-
-                    // Q13
-                    ("Khi xảy ra xung đột nghiêm trọng về quan điểm kỹ thuật trong nội bộ dự án, bạn sẽ:",
-                     "Values",
-                     new List<string> { "Đưa ra các dẫn chứng số liệu, logic thực tế để bảo vệ luận điểm chuyên môn.", "Lắng nghe các bên, tìm giải pháp dung hòa tinh thần đồng đội.", "Đề xuất một cuộc họp lấy biểu quyết đồng thuận theo đa số hành chính.", "Mời chuyên gia/Mentor có kinh nghiệm dày dặn đứng ra phân xử khách quan." },
-                     new List<(int, int)> { (2, 5), (4, 5), (6, 4), (5, 4) }),
-
-                    // Q14
-                    ("Bạn tự tin nhất vào siêu năng lực bẩm sinh nào của bản thân?",
-                     "Skills",
-                     new List<string> { "Tư duy logic, giải quyết các bài toán chuỗi dữ liệu hóc búa.", "Giao tiếp thuyết phục, tạo tầm ảnh hưởng dẫn dắt đám đông.", "Sự tỉ mỉ, quan sát chi tiết siêu nhỏ, kiểm lỗi dữ liệu chính xác.", "Thích ứng công nghệ cực nhanh, đổi mới tư duy linh hoạt." },
-                     new List<(int, int)> { (0, 5), (5, 5), (6, 5), (1, 5) }),
-
-                    // Q15
-                    ("Khi cấp trên giao phó một nhiệm vụ công nghệ hoàn toàn mới chưa từng có tài liệu hướng dẫn:",
-                     "Skills",
-                     new List<string> { "Rất hào hứng, tự tra cứu tài liệu quốc tế chuyên sâu để xử lý.", "Cần có một Mentor giàu kinh nghiệm cầm tay chỉ việc giai đoạn đầu.", "Tìm kiếm các biểu mẫu (Template) tương đồng để áp dụng có quy trình.", "Đề xuất chuyển giao nhiệm vụ cho người có chuyên môn phù hợp hơn." },
-                     new List<(int, int)> { (0, 5), (4, 4), (6, 4), (5, 3) }),
-
-                    // Q16
-                    ("Đâu là động lực cốt lõi lớn nhất thúc đẩy bạn làm việc mỗi ngày?",
-                     "Values",
-                     new List<string> { "Mức thu nhập cao, cơ hội thăng tiến lên cấp quản lý điều hành.", "Được tự do sáng tạo nghệ thuật, không chịu sự gò bó hành chính.", "Mang lại giá trị lớn cho xã hội, hỗ trợ phát triển năng lực con người.", "Sự ổn định lâu dài, môi trường làm việc ít biến động rủi ro tài chính." },
-                     new List<(int, int)> { (5, 5), (3, 5), (4, 5), (6, 5) }),
-
-                    // Q17
-                    ("Bạn có xu hướng đưa ra quyết định cuối cùng dựa trên nền tảng nào?",
-                     "Personality",
-                     new List<string> { "Số liệu thống kê thực tế, chứng cứ khoa học kiểm định rõ ràng.", "Trực giác nhạy bén kết hợp cảm xúc nghệ thuật tại thời điểm đó.", "Sự thống nhất, đồng lòng của toàn bộ thành viên trong tập thể.", "Các hướng dẫn của chuyên gia đầu ngành hoặc quy chuẩn pháp lý có sẵn." },
-                     new List<(int, int)> { (2, 5), (3, 5), (4, 4), (6, 4) }),
-
-                    // Q18
-                    ("Khi tham gia setup một không gian làm việc mới cho Team, bạn ưu tiên tiêu chí nào?",
-                     "Values",
-                     new List<string> { "Tối ưu hóa công năng kỹ thuật, đường truyền mạng tốc độ cao ổn định.", "Thiết kế độc đáo mang tính nghệ thuật cao, khơi nguồn cảm hứng sáng tạo.", "Gần gũi thiên nhiên, có khu vực kết nối trò chuyện mở giữa các thành viên.", "Tiết kiệm chi phí đầu tư vật liệu, tối ưu hóa ngân sách quản lý." },
-                     new List<(int, int)> { (1, 5), (3, 5), (4, 5), (6, 5) }),
-
-                    // Q19
-                    ("Tần suất bạn chủ động tự học để cập nhật các kiến thức công nghệ/xu hướng mới là:",
-                     "Interests",
-                     new List<string> { "Mỗi ngày, tôi liên tục đọc báo cáo thị trường chuyên ngành quốc tế.", "Vài lần một tuần khi bắt gặp các nguồn bài viết phân tích uy tín.", "Chỉ học tập khi hệ thống công việc bắt buộc hoặc có kỳ kiểm tra định kỳ.", "Rất ít khi, tôi ưu tiên tối ưu hóa tốt các kỹ năng hiện có của bản thân." },
-                     new List<(int, int)> { (0, 5), (2, 4), (6, 4), (5, 3) }),
-
-                    // Q20
-                    ("Đối với bạn, một người Mentor đồng hành lý tưởng nhất thiết phải có tố chất nào?",
-                     "Values",
-                     new List<string> { "Kỹ năng chuyên môn kỹ thuật thượng thừa, giải quyết lỗi hệ thống cực nhanh.", "Định hướng tầm nhìn chiến lược phát triển sự nghiệp dài hạn.", "Biết lắng nghe tâm tư, truyền cảm hứng bứt phá năng lực.", "Nghiêm khắc, quản lý tiến độ học tập một cách quy chuẩn kỷ luật." },
-                     new List<(int, int)> { (0, 5), (5, 5), (4, 5), (6, 5) })
-                };
-
-                // Generate 80 additional questions programmatically (20 for each of the 4 test types)
                 var pathTexts = new Dictionary<string, string[]>()
                 {
                     { "Interests", new[] {
@@ -726,34 +605,140 @@ namespace Career_Guidance_Platform.Data
                     }}
                 };
 
-                var aspectPrompts = new Dictionary<string, string>()
+                var aspectQuestions = new Dictionary<string, string[]>()
                 {
-                    { "Interests", "Lĩnh vực hoặc hoạt động học tập/làm việc nào khiến bạn cảm thấy hào hứng và muốn đầu tư thời gian tìm hiểu nhất?" },
-                    { "Skills", "Kỹ năng chuyên môn hoặc năng lực thực tế nào dưới đây là thế mạnh vượt trội mà bạn tự tin nhất?" },
-                    { "Values", "Khi lựa chọn công việc hoặc định hướng sự nghiệp, giá trị hoặc yếu tố cốt lõi nào dưới đây quan trọng nhất đối với bạn?" },
-                    { "Personality", "Phẩm chất hoặc đặc điểm phong cách làm việc nào mô tả chính xác nhất con người hành vi của bạn?" }
+                    { "Interests", new[] {
+                        "Bạn thích tìm hiểu về chủ đề công nghệ hay nghệ thuật hơn?",
+                        "Khi rảnh rỗi, bạn muốn tham gia hoạt động nào nhất?",
+                        "Bạn thích làm việc với các con số, hình ảnh hay con người hơn?",
+                        "Đọc sách về chủ đề nào khiến bạn cảm thấy hào hứng nhất?",
+                        "Bạn thích dành thời gian để nghiên cứu phần mềm hay thiết kế đồ họa?",
+                        "Bạn muốn tìm hiểu sâu về mảng nào trong doanh nghiệp?",
+                        "Bạn thích học một ngôn ngữ lập trình mới hay học cách quản lý tài chính?",
+                        "Bạn có hứng thú hơn với việc lắp ráp phần cứng hay phân tích dữ liệu?",
+                        "Khi tham gia một sự kiện, bạn thích quan sát điều gì nhất?",
+                        "Bạn thích sáng tạo nội dung hình ảnh hay viết code giải quyết bài toán?",
+                        "Bạn thích nghiên cứu hành vi con người hay phân tích thị trường kinh doanh?",
+                        "Chủ đề nào trong các buổi hội thảo thu hút sự chú ý của bạn nhất?",
+                        "Bạn thích khám phá các công cụ thiết kế mới hay các công cụ quản lý dự án?",
+                        "Bạn muốn dành thời gian để lập kế hoạch tài chính hay tối ưu hóa hệ thống mạng?",
+                        "Bạn thích nghiên cứu về an ninh mạng hay xây dựng quy trình nhân sự?",
+                        "Bạn thích tìm tòi về trí tuệ nhân tạo hay các xu hướng thiết kế giao diện?",
+                        "Khi lướt mạng xã hội, bạn thường đọc bài viết về chủ đề nào?",
+                        "Bạn thích học hỏi về kỹ thuật kiểm toán hay kỹ năng lãnh đạo đội nhóm?",
+                        "Hoạt động ngoại khóa nào bạn cảm thấy tự tin và hứng thú tham gia nhất?",
+                        "Bạn thích nghiên cứu về cấu trúc dữ liệu hay vẽ minh họa sản phẩm?",
+                        "Bạn thích học cách tối ưu hóa công cụ tìm kiếm hay xây dựng kế hoạch nhân sự?",
+                        "Bạn thích tìm hiểu cách vận hành của một chuỗi cung ứng hay thiết kế hệ thống?",
+                        "Bạn có hứng thú với việc phân tích dòng tiền hay đào tạo nhân sự mới?",
+                        "Bạn thích tìm hiểu về các giải pháp bảo mật hay các mô hình kinh doanh?",
+                        "Bạn có muốn học cách tổ chức một sự kiện cộng đồng lớn không?",
+                        "Bạn thích nghiên cứu về trải nghiệm người dùng trên thiết bị di động hay máy tính?"
+                    }},
+                    { "Skills", new[] {
+                        "Bạn tự tin nhất vào khả năng nào khi làm việc nhóm?",
+                        "Kỹ năng kỹ thuật nào bạn đã làm chủ tốt nhất?",
+                        "Khi gặp một lỗi kỹ thuật phức tạp, bạn giải quyết bằng cách nào?",
+                        "Bạn có khả năng tự học một công nghệ mới nhanh đến mức nào?",
+                        "Bạn đánh giá thế nào về khả năng thuyết trình và truyền đạt của mình?",
+                        "Bạn có khả năng quản lý thời gian và sắp xếp công việc tốt không?",
+                        "Bạn tự tin nhất vào khả năng viết code hay thiết kế giao diện?",
+                        "Bạn có kỹ năng phân tích và làm sạch dữ liệu tốt không?",
+                        "Khả năng thiết lập và cấu hình hệ thống mạng của bạn ở mức nào?",
+                        "Bạn có tự tin vào khả năng lập báo cáo tài chính chính xác không?",
+                        "Kỹ năng giao tiếp và thuyết phục người khác của bạn như thế nào?",
+                        "Bạn có khả năng phỏng vấn và đánh giá năng lực của người khác không?",
+                        "Bạn tự tin vào khả năng sử dụng các công cụ thiết kế như Figma không?",
+                        "Khả năng giải quyết các mâu thuẫn trong nhóm của bạn như thế nào?",
+                        "Bạn có kỹ năng quản lý ngân sách và kiểm soát chi phí không?",
+                        "Bạn tự tin nhất vào khả năng phát hiện lỗi bảo mật hay lỗi phần mềm?",
+                        "Khả năng làm việc độc lập của bạn so với làm việc nhóm thế nào?",
+                        "Bạn có kỹ năng điều phối dự án theo mô hình Agile/Scrum không?",
+                        "Kỹ năng nghiên cứu trải nghiệm và khảo sát người dùng của bạn ra sao?",
+                        "Bạn tự tin vào khả năng viết các câu lệnh truy vấn SQL phức tạp không?",
+                        "Bạn có kỹ năng tối ưu hóa các thuật toán xử lý dữ liệu lớn không?",
+                        "Khả năng thích ứng với sự thay đổi quy trình làm việc của bạn thế nào?",
+                        "Bạn tự tin vào kỹ năng viết tài liệu kỹ thuật rõ ràng, dễ hiểu không?",
+                        "Bạn có khả năng hướng dẫn và hỗ trợ chuyên môn cho người mới không?",
+                        "Kỹ năng phân tích thị trường và đối thủ cạnh tranh của bạn ra sao?",
+                        "Bạn tự tin vào khả năng xử lý các tình huống khẩn cấp trong công việc không?"
+                    }},
+                    { "Values", new[] {
+                        "Yếu tố nào quan trọng nhất đối với bạn khi chọn một công việc?",
+                        "Động lực lớn nhất giúp bạn nỗ lực hoàn thành công việc mỗi ngày là gì?",
+                        "Môi trường làm việc lý tưởng đối với bạn có đặc điểm gì?",
+                        "Bạn coi trọng sự ổn định lâu dài hay cơ hội bứt phá thử thách hơn?",
+                        "Bạn mong muốn sản phẩm mình làm ra mang lại giá trị gì cho xã hội?",
+                        "Đối với bạn, một người quản lý lý tưởng cần có phẩm chất gì?",
+                        "Bạn coi trọng thu nhập cao hay sự cân bằng giữa công việc và cuộc sống?",
+                        "Bạn muốn làm việc ở một tập đoàn lớn có quy trình hay startup linh hoạt?",
+                        "Tính minh bạch và trung thực trong tổ chức có ý nghĩa thế nào với bạn?",
+                        "Bạn mong đợi nhận được sự công nhận từ cấp trên như thế nào?",
+                        "Bạn ưu tiên làm việc ở nơi có cơ hội thăng tiến rõ ràng không?",
+                        "Mức độ tự do sáng tạo trong công việc quan trọng với bạn thế nào?",
+                        "Bạn mong muốn đồng nghiệp của mình là những người như thế nào?",
+                        "Việc đóng góp ý kiến cá nhân vào chiến lược chung quan trọng ra sao?",
+                        "Bạn nghĩ sao về việc làm thêm giờ (OT) để đạt được mục tiêu chung?",
+                        "Bạn coi trọng việc học hỏi kiến thức mới hay áp dụng kỹ năng sẵn có?",
+                        "Một văn hóa làm việc cởi mở, không khoảng cách có quan trọng với bạn?",
+                        "Bạn có muốn làm việc ở nơi có nhiều hoạt động gắn kết cộng đồng?",
+                        "Sự rõ ràng trong chế độ đãi ngộ và phúc lợi tác động thế nào đến bạn?",
+                        "Bạn mong muốn công việc của mình mang tính chất phục vụ cộng đồng không?",
+                        "Sự an toàn thông tin và bảo mật dữ liệu của công ty quan trọng thế nào?",
+                        "Bạn thích nhận phản hồi trực tiếp, thẳng thắn hay nhẹ nhàng, khích lệ?",
+                        "Bạn coi trọng việc tự do quyết định cách làm việc của mình như thế nào?",
+                        "Tinh thần khởi nghiệp và dám chấp nhận rủi ro có cuốn hút bạn không?",
+                        "Bạn mong muốn công việc mang lại danh tiếng cá nhân ở mức độ nào?",
+                        "Bạn ưu tiên môi trường tôn trọng sự đa dạng và khác biệt của cá nhân?"
+                    }},
+                    { "Personality", new[] {
+                        "Khi đối mặt với áp lực công việc lớn, phản ứng tự nhiên của bạn là gì?",
+                        "Bạn là người hướng nội thích làm việc độc lập hay hướng ngoại thích giao lưu?",
+                        "Cách bạn thường đưa ra quyết định quan trọng trong cuộc sống là gì?",
+                        "Bạn thường giải quyết các bất đồng quan điểm trong nhóm như thế nào?",
+                        "Khi bắt đầu một dự án mới, bạn là người lập kế hoạch hay hành động ngay?",
+                        "Bạn tự nhận thấy mình là người cẩn thận, tỉ mỉ hay nhanh nhẹn, linh hoạt?",
+                        "Bạn phản ứng thế nào khi nhận được những lời góp ý phê bình từ người khác?",
+                        "Khi làm việc nhóm, bạn thường đảm nhận vai trò nào một cách tự nhiên?",
+                        "Bạn có dễ dàng đồng cảm và chia sẻ khó khăn với người xung quanh không?",
+                        "Bạn thích làm việc theo quy trình sẵn có hay tự tìm lối đi riêng?",
+                        "Khi một kế hoạch bị thay đổi đột ngột vào phút chót, bạn sẽ làm gì?",
+                        "Bạn có xu hướng tập trung vào chi tiết nhỏ hay bức tranh tổng thể hơn?",
+                        "Khi phải thuyết phục người khác đồng ý với mình, bạn thường làm gì?",
+                        "Bạn có phải là người dễ dàng chấp nhận và thử nghiệm các ý tưởng mới?",
+                        "Bạn thường kiểm soát cảm xúc của mình thế nào trong các cuộc tranh luận?",
+                        "Bạn có phải là người thích cạnh tranh để đạt được kết quả tốt nhất?",
+                        "Khi hoàn thành công việc, bạn có xu hướng tự kiểm tra lại nhiều lần không?",
+                        "Bạn thích sự ngăn nắp, quy củ hay sự linh hoạt, ngẫu hứng hơn?",
+                        "Cách bạn tiếp cận một vấn đề phức tạp chưa từng có tiền lệ là gì?",
+                        "Bạn có thường xuyên chia sẻ tiến độ công việc với mọi người không?",
+                        "Bạn phản ứng thế nào khi đồng nghiệp không hoàn thành đúng tiến độ?",
+                        "Bạn có thích dẫn dắt và chịu trách nhiệm cho kết quả của cả đội không?",
+                        "Bạn thấy mình là người thực tế, lý trí hay mơ mộng, giàu cảm xúc hơn?",
+                        "Bạn thường dành thời gian để tự phản tỉnh và đánh giá bản thân khi nào?",
+                        "Bạn có dễ bị phân tâm bởi các yếu tố môi trường xung quanh khi làm việc?",
+                        "Bạn có phải là người luôn giữ lời hứa và hoàn thành cam kết đúng hạn?"
+                    }}
                 };
 
                 var aspectTypes = new[] { "Interests", "Skills", "Values", "Personality" };
-                int questionIndex = 1;
                 foreach (var aspect in aspectTypes)
                 {
-                    for (int i = 1; i <= 20; i++)
+                    var questionsList = aspectQuestions[aspect];
+                    for (int i = 0; i < questionsList.Length; i++)
                     {
-                        var aspectNameVietnamese = aspect == "Interests" ? "Sở thích" : aspect == "Skills" ? "Kỹ năng" : aspect == "Values" ? "Giá trị" : "Tính cách";
-                        var content = $"{aspectPrompts[aspect]} (Khảo sát {aspectNameVietnamese} - Câu hỏi phụ {questionIndex})";
+                        var content = questionsList[i];
                         var opts = new List<string>();
                         var weights = new List<(int, int)>();
                         
                         for (int j = 0; j < 4; j++)
                         {
-                            int pathIdx = (questionIndex + j) % 7;
+                            int pathIdx = (i + j) % 7;
                             opts.Add(pathTexts[aspect][pathIdx]);
                             weights.Add((pathIdx, 5));
                         }
 
                         questionsData.Add((content, aspect, opts, weights));
-                        questionIndex++;
                     }
                 }
 
