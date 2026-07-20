@@ -65,7 +65,7 @@
                             <span>👤 Đăng bởi: <strong>@post.AuthorName</strong></span>
                         </div>
                         <div style="display: flex; gap: 20px; color: #64748b;">
-                            <span style="display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="showToast('Đã thích bài viết!', 'success')">👍 @post.LikesCount</span>
+                            <span data-post-id="@post.Id" class="like-btn" style="display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="likePost(@post.Id, this)">👍 <span class="like-count">@post.LikesCount</span></span>
                             <a asp-controller="Home" asp-action="PostDetails" asp-route-id="@post.Id" style="display: flex; align-items: center; gap: 4px; text-decoration: none; color: inherit;">💬 @post.RepliesCount Phản hồi</a>
                         </div>
                     </div>
@@ -148,5 +148,69 @@
         if (event.target == modal) {
             modal.style.display = "none";
         }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+        likedPosts.forEach(postId => {
+            const elements = document.querySelectorAll(`[data-post-id="${postId}"]`);
+            elements.forEach(element => {
+                element.classList.add('liked');
+                element.style.color = '#4f46e5';
+                element.style.fontWeight = 'bold';
+            });
+        });
+    });
+
+    function likePost(postId, element) {
+        const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+        const isAlreadyLiked = likedPosts.includes(postId);
+        
+        fetch(`/Home/LikePost/${postId}?isUnlike=${isAlreadyLiked}`, {
+            method: 'POST'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const countElement = element.querySelector('.like-count');
+                if (countElement) {
+                    countElement.textContent = data.likesCount;
+                }
+                
+                const allElementsOfThisPost = document.querySelectorAll(`[data-post-id="${postId}"]`);
+                if (isAlreadyLiked) {
+                    // Unlike
+                    const index = likedPosts.indexOf(postId);
+                    if (index > -1) likedPosts.splice(index, 1);
+                    allElementsOfThisPost.forEach(el => {
+                        el.classList.remove('liked');
+                        el.style.color = 'inherit';
+                        el.style.fontWeight = 'normal';
+                    });
+                    showToast('Đã bỏ thích bài viết!', 'info');
+                } else {
+                    // Like
+                    likedPosts.push(postId);
+                    allElementsOfThisPost.forEach(el => {
+                        el.classList.add('liked');
+                        el.style.color = '#4f46e5';
+                        el.style.fontWeight = 'bold';
+                    });
+                    showToast('Đã thích bài viết!', 'success');
+                }
+                localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+            } else {
+                showToast('Không thể thực hiện hành động.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Có lỗi xảy ra, vui lòng thử lại.', 'error');
+        });
     }
 </script>

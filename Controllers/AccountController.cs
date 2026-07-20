@@ -83,7 +83,7 @@ namespace Career_Guidance_Platform.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không chính xác.");
             }
 
             return View(model);

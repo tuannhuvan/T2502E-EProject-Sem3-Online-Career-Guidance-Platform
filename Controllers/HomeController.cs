@@ -335,6 +335,30 @@ public class HomeController : Controller
         return RedirectToAction(nameof(PostDetails), new { id = postId });
     }
 
+    [HttpPost]
+    public async Task<IActionResult> LikePost(int id, bool isUnlike = false)
+    {
+        var post = await _context.CommunityPosts.FindAsync(id);
+        if (post == null)
+        {
+            return NotFound(new { success = false, message = "Không tìm thấy bài thảo luận." });
+        }
+
+        if (isUnlike)
+        {
+            post.LikesCount = Math.Max(0, post.LikesCount - 1);
+        }
+        else
+        {
+            post.LikesCount += 1;
+        }
+
+        _context.CommunityPosts.Update(post);
+        await _context.SaveChangesAsync();
+
+        return Json(new { success = true, likesCount = post.LikesCount });
+    }
+
     public async Task<IActionResult> Mentors()
     {
         var mentors = await _context.MentorProfiles
