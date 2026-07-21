@@ -6,13 +6,170 @@
     var recPathId = ViewBag.RecommendedPathId as int?;
 }
 
+<style>
+    /* Premium Jobs & Pagination Styling */
+    .job-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 28px;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+    }
+    .job-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        border-color: #cbd5e1;
+    }
+    .job-card.recommended {
+        background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+        border-left: 4px solid #6366f1;
+        border-color: #c7d2fe;
+    }
+    .job-badge {
+        font-size: 11px;
+        font-weight: 700;
+        color: #475569;
+        background: #f1f5f9;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .job-badge.path-badge {
+        background: #eef2ff;
+        color: #4f46e5;
+        border-color: #e0e7ff;
+    }
+    .job-badge.recommend-badge {
+        background: #f5f3ff;
+        color: #7c3aed;
+        border-color: #ddd6fe;
+        position: absolute;
+        right: 28px;
+        top: 28px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .job-title {
+        font-size: 22px;
+        color: #0f172a;
+        margin: 8px 0;
+        font-weight: 800;
+        line-height: 1.3;
+        transition: color 0.2s;
+    }
+    .job-title:hover {
+        color: #4f46e5;
+    }
+    .job-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        font-size: 13.5px;
+        color: #475569;
+        margin-bottom: 16px;
+        align-items: center;
+    }
+    .job-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .job-meta .salary {
+        color: #059669;
+        font-weight: 700;
+        background: #ecfdf5;
+        padding: 2px 8px;
+        border-radius: 6px;
+    }
+    .job-desc {
+        font-size: 14.5px;
+        color: #64748b;
+        line-height: 1.6;
+        margin: 0 0 20px;
+    }
+    .job-footer {
+        border-top: 1px dashed #e2e8f0;
+        padding-top: 18px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+    }
+    .apply-btn {
+        background: #4f46e5;
+        color: #ffffff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    }
+    .apply-btn:hover {
+        background: #4338ca;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+    }
+    .applied-btn {
+        background: #f1f5f9;
+        color: #94a3b8;
+        border: 1px solid #e2e8f0;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: not-allowed;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .page-btn {
+        padding: 10px 18px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        background: #ffffff;
+        color: #475569;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .page-btn:hover:not(:disabled) {
+        border-color: #4f46e5;
+        color: #4f46e5;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .page-btn.active {
+        background: #4f46e5;
+        color: #ffffff;
+        border-color: #4f46e5;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+    .page-btn:disabled {
+        background: #f8fafc;
+        color: #cbd5e1;
+        border-color: #e2e8f0;
+        cursor: not-allowed;
+    }
+</style>
+
 <section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
     <span class="page-badge">💼 Personalized Job Board</span>
     <h1>Việc làm đề xuất cho bạn</h1>
     <p>Khám phá các cơ hội nghề nghiệp thực tế được đề xuất và tối ưu hóa dựa trên lộ trình kỹ năng của bạn.</p>
 </section>
 
-<section class="content-section" style="max-width: 1000px;">
+<section class="content-section" style="max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
     @if (TempData["ApplySuccess"] != null)
     {
         <div style="background: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; padding: 16px 24px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; box-shadow: 0 4px 12px rgba(21, 128, 61, 0.05);">
@@ -26,7 +183,35 @@
         </div>
     }
 
-    <div style="display: flex; flex-direction: column; gap: 24px;">
+    <!-- Automatic Filter Bar -->
+    <div class="info-card print-hide" style="padding: 24px; border-radius: 24px; border: 1px solid #e2e8f0; background: #ffffff; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px;">Tìm kiếm từ khóa</label>
+                <input type="text" id="searchKeyword" placeholder="Tiêu đề, công ty, mô tả..." style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14px; outline: none; transition: 0.2s;" />
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px;">Lộ trình nghề nghiệp</label>
+                <select id="filterCareerPath" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14px; background: white; outline: none;">
+                    <option value="">Tất cả lộ trình</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px;">Hình thức làm việc</label>
+                <select id="filterJobType" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14px; background: white; outline: none;">
+                    <option value="">Tất cả hình thức</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px;">Địa điểm</label>
+                <select id="filterLocation" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14px; background: white; outline: none;">
+                    <option value="">Tất cả địa điểm</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="jobListContainer" style="display: flex; flex-direction: column; gap: 24px;">
         @if (Model != null && Model.Any())
         {
             foreach (var job in Model)
@@ -34,48 +219,54 @@
                 var isRecommended = recPathId.HasValue && job.CareerPathId == recPathId.Value;
                 var isApplied = appliedJobIds.Contains(job.Id);
 
-                <div class="info-card" style="padding: 28px; border-radius: 20px; transition: all 0.3s; border: 1px solid @(isRecommended ? "#c7d2fe" : "#e2e8f0"); background: @(isRecommended ? "#faf5ff" : "#ffffff"); position: relative;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                <div class="job-item job-card @(isRecommended ? "recommended" : "")" 
+                     data-title="@job.Title"
+                     data-company="@job.CompanyName"
+                     data-careerpath="@(job.CareerPath?.Title ?? "")"
+                     data-location="@job.Location"
+                     data-jobtype="@job.JobType"
+                     data-description="@job.Description">
                     
                     @if (isRecommended)
                     {
-                        <span style="position: absolute; right: 28px; top: 28px; font-size: 11px; font-weight: 800; color: #6d28d9; background: #f3e8ff; border: 1px solid #d8b4fe; padding: 4px 12px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <span class="job-badge recommend-badge">
                             ✨ Phù hợp nhất
                         </span>
                     }
 
-                    <div style="max-width: 80%;">
-                        <span style="font-size:12px;font-weight:700;color:#64748b;background:#f1f5f9;padding:4px 10px;border-radius:6px;display:inline-block;margin-bottom:8px;">
+                    <div>
+                        <span class="job-badge path-badge">
                             @(job.CareerPath?.Title ?? "Tổng quan")
                         </span>
                         
-                        <h3 style="font-size: 22px; color: #020617; margin: 4px 0 8px; font-weight: 800;">@job.Title</h3>
+                        <h3 class="job-title">@job.Title</h3>
                         
-                        <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13.5px; color: #475569; margin-bottom: 15px;">
+                        <div class="job-meta">
                             <span style="font-weight: 600; color: #020617;">🏢 @job.CompanyName</span>
                             <span>📍 @job.Location</span>
                             <span>💼 @job.JobType</span>
                             <span>⏱ @job.ExperienceLevel</span>
                             @if (job.Salary > 0)
                             {
-                                <span style="color: #10b981; font-weight: 700;">💰 @job.Salary.ToString("N0") VNĐ</span>
+                                <span class="salary">💰 @job.Salary.ToString("N0") VNĐ</span>
                             }
                         </div>
 
-                        <p style="font-size: 14.5px; color: #64748b; line-height: 1.6; margin: 0 0 20px;">
+                        <p class="job-desc">
                             @job.Description
                         </p>
                     </div>
 
-                    <div style="border-top: 1px dashed #e2e8f0; padding-top: 20px; display: flex; justify-content: flex-end; gap: 12px;">
+                    <div class="job-footer">
                         @if (isApplied)
                         {
-                            <button class="btn" disabled style="background: #cbd5e1; color: #64748b; border: 1px solid #cbd5e1; padding: 10px 24px; border-radius: 12px; font-weight: 700; cursor: not-allowed;">
+                            <button class="applied-btn" disabled>
                                 ✓ Đã ứng tuyển
                             </button>
                         }
                         else
                         {
-                            <button type="button" class="btn" style="background: #4f46e5; color: white; border: none; padding: 10px 24px; border-radius: 12px; font-weight: 700; cursor: pointer;" onclick="openApplyModal(@job.Id, '@job.Title', '@job.CompanyName')">
+                            <button type="button" class="apply-btn" onclick="openApplyModal(@job.Id, '@job.Title', '@job.CompanyName')">
                                 Ứng tuyển ngay
                             </button>
                         }
@@ -83,12 +274,14 @@
                 </div>
             }
         }
-        else
-        {
-            <div class="info-card" style="text-align: center; padding: 50px;">
-                <p style="color: #64748b; font-style: italic; margin: 0;">Hiện chưa có công việc nào được đăng tuyển.</p>
-            </div>
-        }
+        
+        <div id="noJobsAlert" class="info-card" style="display: none; text-align: center; padding: 50px; width: 100%;">
+            <p style="color: #64748b; font-style: italic; margin: 0;">Không tìm thấy công việc nào phù hợp với bộ lọc của bạn.</p>
+        </div>
+    </div>
+
+    <!-- Pagination Container -->
+    <div id="paginationContainer" style="display: flex; justify-content: center; gap: 8px; margin-top: 32px; align-items: center;">
     </div>
 </section>
 
@@ -183,4 +376,148 @@
             modal.style.display = "none";
         }
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const jobElements = Array.from(document.querySelectorAll(".job-item"));
+        const searchInput = document.getElementById("searchKeyword");
+        const careerPathSelect = document.getElementById("filterCareerPath");
+        const jobTypeSelect = document.getElementById("filterJobType");
+        const locationSelect = document.getElementById("filterLocation");
+        const paginationContainer = document.getElementById("paginationContainer");
+        const noJobsAlert = document.getElementById("noJobsAlert");
+
+        const pageSize = 3;
+        let currentPage = 1;
+        let filteredJobs = [...jobElements];
+
+        // Populate dropdown filters dynamically from the existing jobs on page load
+        const careerPaths = new Set();
+        const jobTypes = new Set();
+        const locations = new Set();
+
+        jobElements.forEach(el => {
+            const cp = el.getAttribute("data-careerpath");
+            const jt = el.getAttribute("data-jobtype");
+            const loc = el.getAttribute("data-location");
+            if (cp) careerPaths.add(cp);
+            if (jt) jobTypes.add(jt);
+            if (loc) locations.add(loc);
+        });
+
+        careerPaths.forEach(cp => {
+            const opt = document.createElement("option");
+            opt.value = cp;
+            opt.textContent = cp;
+            careerPathSelect.appendChild(opt);
+        });
+
+        jobTypes.forEach(jt => {
+            const opt = document.createElement("option");
+            opt.value = jt;
+            opt.textContent = jt;
+            jobTypeSelect.appendChild(opt);
+        });
+
+        locations.forEach(loc => {
+            const opt = document.createElement("option");
+            opt.value = loc;
+            opt.textContent = loc;
+            locationSelect.appendChild(opt);
+        });
+
+        function filterJobs() {
+            const query = searchInput.value.toLowerCase().trim();
+            const cpVal = careerPathSelect.value;
+            const jtVal = jobTypeSelect.value;
+            const locVal = locationSelect.value;
+
+            filteredJobs = jobElements.filter(el => {
+                const title = el.getAttribute("data-title").toLowerCase();
+                const company = el.getAttribute("data-company").toLowerCase();
+                const desc = el.getAttribute("data-description").toLowerCase();
+                const cp = el.getAttribute("data-careerpath");
+                const jt = el.getAttribute("data-jobtype");
+                const loc = el.getAttribute("data-location");
+
+                const matchesSearch = !query || title.includes(query) || company.includes(query) || desc.includes(query);
+                const matchesCP = !cpVal || cp === cpVal;
+                const matchesJT = !jtVal || jt === jtVal;
+                const matchesLoc = !locVal || loc === locVal;
+
+                return matchesSearch && matchesCP && matchesJT && matchesLoc;
+            });
+
+            currentPage = 1;
+            updateUI();
+        }
+
+        // Add event listeners to trigger filter automatically
+        searchInput.addEventListener("input", filterJobs);
+        careerPathSelect.addEventListener("change", filterJobs);
+        jobTypeSelect.addEventListener("change", filterJobs);
+        locationSelect.addEventListener("change", filterJobs);
+
+        function updateUI() {
+            if (filteredJobs.length === 0) {
+                if (noJobsAlert) noJobsAlert.style.display = "block";
+                paginationContainer.innerHTML = "";
+                jobElements.forEach(el => el.style.display = "none");
+                return;
+            } else {
+                if (noJobsAlert) noJobsAlert.style.display = "none";
+            }
+
+            const totalPages = Math.ceil(filteredJobs.length / pageSize);
+
+            // Hide all jobs first
+            jobElements.forEach(el => el.style.display = "none");
+
+            // Show jobs for the current page
+            const startIdx = (currentPage - 1) * pageSize;
+            const endIdx = startIdx + pageSize;
+            const pageJobs = filteredJobs.slice(startIdx, endIdx);
+            pageJobs.forEach(el => el.style.display = "block");
+
+            // Render pagination buttons
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            paginationContainer.innerHTML = "";
+
+            function createBtn(text, page, isActive = false, isDisabled = false) {
+                const btn = document.createElement("button");
+                btn.textContent = text;
+                btn.type = "button";
+                btn.className = "page-btn";
+
+                if (isActive) {
+                    btn.classList.add("active");
+                }
+
+                if (isDisabled) {
+                    btn.disabled = true;
+                } else if (!isActive) {
+                    btn.addEventListener("click", () => {
+                        currentPage = page;
+                        updateUI();
+                        // Scroll to top of listing smoothly on page change
+                        window.scrollTo({ top: document.getElementById("jobListContainer").offsetTop - 100, behavior: 'smooth' });
+                    });
+                }
+                return btn;
+            }
+
+            paginationContainer.appendChild(createBtn("‹ Trước", currentPage - 1, false, currentPage === 1));
+
+            for (let i = 1; i <= totalPages; i++) {
+                paginationContainer.appendChild(createBtn(i, i, i === currentPage));
+            }
+
+            paginationContainer.appendChild(createBtn("Sau ›", currentPage + 1, false, currentPage === totalPages));
+        }
+
+        // Initial load
+        updateUI();
+    });
 </script>

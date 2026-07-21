@@ -71,6 +71,16 @@ public class AdminController : Controller
 
         ViewBag.RecentResults = recentResults;
 
+        // Pending Applications & Notification Data
+        ViewBag.PendingApplicationsCount = await _context.JobApplications.CountAsync(ja => ja.Status == "Applied");
+        ViewBag.RecentApplications = await _context.JobApplications
+            .Include(ja => ja.User)
+            .Include(ja => ja.JobPosting)
+            .Include(ja => ja.Resume)
+            .OrderByDescending(ja => ja.AppliedAt)
+            .Take(5)
+            .ToListAsync();
+
         return View();
     }
 
@@ -429,7 +439,10 @@ public class AdminController : Controller
     }
     public async Task<IActionResult> Jobs()
     {
-        var jobs = await _context.JobPostings.Include(j => j.CareerPath).ToListAsync();
+        var jobs = await _context.JobPostings
+            .Include(j => j.CareerPath)
+            .Include(j => j.JobApplications)
+            .ToListAsync();
         return View(jobs);
     }
 
@@ -2078,5 +2091,98 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
             "Id",
             "Title"
         );
+    }
+
+    // GET: /Admin/JobApplications
+    public async Task<IActionResult> JobApplications(int? jobId, string? status)
+    {
+        var query = _context.JobApplications
+            .Include(ja => ja.User)
+            .Include(ja => ja.JobPosting)
+            .Include(ja => ja.Resume)
+            .AsQueryable();
+
+        if (jobId.HasValue && jobId.Value > 0)
+        {
+            query = query.Where(ja => ja.JobPostingId == jobId.Value);
+            ViewBag.CurrentJob = await _context.JobPostings.FindAsync(jobId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            query = query.Where(ja => ja.Status == status);
+        }
+
+        ViewBag.SelectedJobId = jobId;
+        ViewBag.SelectedStatus = status;
+        ViewBag.JobList = await _context.JobPostings.OrderBy(j => j.Title).ToListAsync();
+
+        var applications = await query.OrderByDescending(ja => ja.AppliedAt).ToListAsync();
+        return View(applications);
+    }
+
+    // POST: /Admin/UpdateApplicationStatus
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateApplicationStatus(int applicationId, string status)
+    {
+        var application = await _context.JobApplications.FindAsync(applicationId);
+        if (application == null)
+        {
+            TempData["Error"] = "Đơn ứng tuyển không tồn tại.";
+            return RedirectToAction(nameof(JobApplications));
+        }
+
+        application.Status = status;
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = $"Đã cập nhật trạng thái đơn ứng tuyển sang: {status}";
+        return RedirectToAction(nameof(JobApplications), new { jobId = application.JobPostingId });
+    }
+
+    // GET: /Admin/ViewResume/5
+    public async Task<IActionResult> ViewResume(int id)
+    {
+        var resume = await _context.Resumes
+            .Include(r => r.User)
+            .Include(r => r.Template)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (resume == null)
+        {
+            TempData["Error"] = "Không tìm thấy hồ sơ CV này.";
+            return RedirectToAction(nameof(JobApplications));
+        }
+
+        return View(resume);
+    }
+
+    // GET: /Admin/GetAdminNotifications
+    [HttpGet]
+    public async Task<IActionResult> GetAdminNotifications()
+    {
+        var pendingCount = await _context.JobApplications.CountAsync(ja => ja.Status == "Applied");
+        var recentApplications = await _context.JobApplications
+            .Include(ja => ja.User)
+            .Include(ja => ja.JobPosting)
+            .OrderByDescending(ja => ja.AppliedAt)
+            .Take(5)
+            .Select(ja => new
+            {
+                id = ja.Id,
+                jobId = ja.JobPostingId,
+                userName = ja.User != null ? (ja.User.FullName ?? ja.User.Email) : "Ứng viên",
+                jobTitle = ja.JobPosting != null ? ja.JobPosting.Title : "Việc làm",
+                appliedAt = ja.AppliedAt.ToString("HH:mm dd/MM/yyyy"),
+                status = ja.Status
+            })
+            .ToListAsync();
+
+        return Json(new
+        {
+            success = true,
+            pendingCount = pendingCount,
+            notifications = recentApplications
+        });
     }
 }
