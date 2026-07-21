@@ -65,7 +65,7 @@
                             <span>👤 Đăng bởi: <strong>@post.AuthorName</strong></span>
                         </div>
                         <div style="display: flex; gap: 20px; color: #64748b;">
-                            <span style="display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="showToast('Đã thích bài viết!', 'success')">👍 @post.LikesCount</span>
+                            <span data-post-id="@post.Id" class="like-btn" style="display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="likePost(@post.Id, this)">👍 <span class="like-count">@post.LikesCount</span></span>
                             <a asp-controller="Home" asp-action="PostDetails" asp-route-id="@post.Id" style="display: flex; align-items: center; gap: 4px; text-decoration: none; color: inherit;">💬 @post.RepliesCount Phản hồi</a>
                         </div>
                     </div>
@@ -78,9 +78,38 @@
             <div class="info-card">
                 <h3 style="font-size: 18px; color: #020617; margin-bottom: 15px;">🔥 Chủ đề hot tuần này</h3>
                 <ul style="padding-left: 15px; margin: 0; color: #64748b; font-size: 13px; line-height: 1.8;">
-                    <li style="margin-bottom: 10px;"><a href="#" style="color: inherit; text-decoration: none; font-weight: 500;">Cách Deal lương thử việc cho Dev Intern</a></li>
-                    <li style="margin-bottom: 10px;"><a href="#" style="color: inherit; text-decoration: none; font-weight: 500;">Review phỏng vấn Kế toán tại BIG4</a></li>
-                    <li style="margin-bottom: 10px;"><a href="#" style="color: inherit; text-decoration: none; font-weight: 500;">Tài liệu tự học Figma cơ bản cho UI/UX</a></li>
+                    @{
+                        var hotPosts = Model?
+                            .Where(p => p.CreatedAt >= DateTime.Now.AddDays(-7))
+                            .OrderByDescending(p => p.LikesCount + p.RepliesCount)
+                            .Take(5)
+                            .ToList();
+                        if (hotPosts == null || !hotPosts.Any())
+                        {
+                            hotPosts = Model?
+                                .OrderByDescending(p => p.LikesCount + p.RepliesCount)
+                                .Take(5)
+                                .ToList();
+                        }
+                    }
+                    @if (hotPosts != null && hotPosts.Any())
+                    {
+                        foreach (var post in hotPosts)
+                        {
+                            <li style="margin-bottom: 10px;">
+                                <a asp-controller="Home" asp-action="PostDetails" asp-route-id="@post.Id" style="color: inherit; text-decoration: none; font-weight: 500; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@post.Title">
+                                    @post.Title
+                                </a>
+                                <span style="font-size: 11px; color: #94a3b8; display: block;">👍 @post.LikesCount lượt thích · 💬 @post.RepliesCount phản hồi</span>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        <li style="margin-bottom: 10px;"><a href="#" style="color: inherit; text-decoration: none; font-weight: 500;">Cách Deal lương thử việc cho Dev Intern</a></li>
+                        <li style="margin-bottom: 10px;"><a href="#" style="color: inherit; text-decoration: none; font-weight: 500;">Review phỏng vấn Kế toán tại BIG4</a></li>
+                        <li style="margin-bottom: 10px;"><a href="#" style="color: inherit; text-decoration: none; font-weight: 500;">Tài liệu tự học Figma cơ bản cho UI/UX</a></li>
+                    }
                 </ul>
             </div>
             
@@ -148,5 +177,69 @@
         if (event.target == modal) {
             modal.style.display = "none";
         }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+        likedPosts.forEach(postId => {
+            const elements = document.querySelectorAll(`[data-post-id="${postId}"]`);
+            elements.forEach(element => {
+                element.classList.add('liked');
+                element.style.color = '#4f46e5';
+                element.style.fontWeight = 'bold';
+            });
+        });
+    });
+
+    function likePost(postId, element) {
+        const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
+        const isAlreadyLiked = likedPosts.includes(postId);
+        
+        fetch(`/Home/LikePost/${postId}?isUnlike=${isAlreadyLiked}`, {
+            method: 'POST'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const countElement = element.querySelector('.like-count');
+                if (countElement) {
+                    countElement.textContent = data.likesCount;
+                }
+                
+                const allElementsOfThisPost = document.querySelectorAll(`[data-post-id="${postId}"]`);
+                if (isAlreadyLiked) {
+                    // Unlike
+                    const index = likedPosts.indexOf(postId);
+                    if (index > -1) likedPosts.splice(index, 1);
+                    allElementsOfThisPost.forEach(el => {
+                        el.classList.remove('liked');
+                        el.style.color = 'inherit';
+                        el.style.fontWeight = 'normal';
+                    });
+                    showToast('Đã bỏ thích bài viết!', 'info');
+                } else {
+                    // Like
+                    likedPosts.push(postId);
+                    allElementsOfThisPost.forEach(el => {
+                        el.classList.add('liked');
+                        el.style.color = '#4f46e5';
+                        el.style.fontWeight = 'bold';
+                    });
+                    showToast('Đã thích bài viết!', 'success');
+                }
+                localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+            } else {
+                showToast('Không thể thực hiện hành động.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Có lỗi xảy ra, vui lòng thử lại.', 'error');
+        });
     }
 </script>
