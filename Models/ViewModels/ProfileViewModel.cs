@@ -8,4 +8,5 @@ public class ProfileViewModel
     public List<TestResult> TestResults { get; set; } = new();
     public List<Resume> Resumes { get; set; } = new();
     public List<JobApplication> JobApplications { get; set; } = new();
+    public List<SavedJob> SavedJobs { get; set; } = new();
 }

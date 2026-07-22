@@ -1,0 +1,71 @@
+@model Career_Guidance_Platform.Models.CareerEvent
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Tạo Sự kiện Mới";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Tạo Sự kiện Mới</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form asp-action="CreateEvent" method="post" class="card">
+            @Html.AntiForgeryToken()
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label required">Tên sự kiện</label>
+                    <input type="text" asp-for="Title" class="form-control" placeholder="Nhập tên sự kiện" required />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label required">Diễn giả (Speaker)</label>
+                    <input type="text" asp-for="Speaker" class="form-control" placeholder="Nhập tên diễn giả" required />
+                    <span asp-validation-for="Speaker" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mô tả sự kiện</label>
+                    <textarea asp-for="Description" class="form-control" rows="5" placeholder="Mô tả nội dung chi tiết của sự kiện..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">Thời gian diễn ra</label>
+                        <input type="datetime-local" asp-for="EventDate" class="form-control" required />
+                        <span asp-validation-for="EventDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">Số lượng người tham gia tối đa (Capacity)</label>
+                        <input type="number" asp-for="MaxParticipants" class="form-control" value="100" min="1" required />
+                        <span asp-validation-for="MaxParticipants" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Địa điểm tổ chức</label>
+                    <input type="text" asp-for="Location" class="form-control" placeholder="Ví dụ: Phòng hội thảo A, Đại học FPT hoặc Zoom Meeting" />
+                    <span asp-validation-for="Location" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Link đăng ký ngoài (Không bắt buộc)</label>
+                    <input type="text" asp-for="RegistrationUrl" class="form-control" placeholder="Để trống nếu muốn sử dụng chức năng đăng ký trực tiếp trên hệ thống" />
+                    <span asp-validation-for="RegistrationUrl" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="card-footer text-end">
+                <a asp-action="Events" class="btn btn-link">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary">Lưu thông tin</button>
+            </div>
+        </form>
+    </div>
+</div>

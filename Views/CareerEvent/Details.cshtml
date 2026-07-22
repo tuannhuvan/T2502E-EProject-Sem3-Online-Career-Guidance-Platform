@@ -1,0 +1,149 @@
+@model Career_Guidance_Platform.Models.CareerEvent
+@inject Microsoft.AspNetCore.Identity.UserManager<User> UserManager
+@{
+    ViewData["Title"] = Model.Title + " - Sự kiện";
+    int registeredCount = ViewBag.RegisteredCount ?? 0;
+    bool isRegistered = ViewBag.IsRegistered ?? false;
+    bool isFull = registeredCount >= Model.MaxParticipants;
+    bool isEnded = Model.EventDate < DateTime.Now;
+
+    var currentUser = User.Identity?.IsAuthenticated == true ? await UserManager.GetUserAsync(User) : null;
+    var isPremium = currentUser?.IsPremium == true || User.IsInRole("Admin") || User.IsInRole("Mentor");
+    bool isVipEvent = Model.Title.Contains("VIP", StringComparison.OrdinalIgnoreCase) || 
+                      Model.Title.Contains("Premium", StringComparison.OrdinalIgnoreCase) ||
+                      Model.Location.Contains("VIP", StringComparison.OrdinalIgnoreCase) ||
+                      Model.Location.Contains("Premium", StringComparison.OrdinalIgnoreCase);
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top right, #eff6ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding-bottom: 20px;">
+    @if (isVipEvent)
+    {
+        <span class="page-badge" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8;">💎 Sự kiện độc quyền VIP</span>
+    }
+    else
+    {
+        <span class="page-badge">📅 Career Event</span>
+    }
+    <h1 style="max-width: 800px; font-size: 32px; line-height: 1.25; margin-bottom: 10px;">@Model.Title</h1>
+    <p style="font-size: 15px; color: #4f46e5; font-weight: 700; margin: 0;">🎙️ Diễn giả: @(string.IsNullOrEmpty(Model.Speaker) ? "Chuyên gia từ CareerPath" : Model.Speaker)</p>
+</section>
+
+<section class="content-section" style="max-width: 1100px; padding-top: 10px; padding-bottom: 60px;">
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 30px; align-items: start;">
+        
+        <!-- Left: Event details -->
+        <div class="info-card" style="padding: 30px; border-radius: 20px; background: #ffffff;">
+            <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; color: #020617; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">Chi tiết nội dung sự kiện</h3>
+            <p style="color: #334155; font-size: 14.5px; line-height: 1.7; white-space: pre-line; margin-bottom: 25px;">@Model.Description</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                <div>
+                    <span style="font-size: 12.5px; color: #64748b; font-weight: 600; display: block; margin-bottom: 4px;">📍 Địa điểm diễn ra</span>
+                    <strong style="color: #1e293b; font-size: 14px;">@(string.IsNullOrEmpty(Model.Location) ? "Hội thảo trực tuyến (Zoom / Google Meet)" : Model.Location)</strong>
+                </div>
+                <div>
+                    <span style="font-size: 12.5px; color: #64748b; font-weight: 600; display: block; margin-bottom: 4px;">⏰ Thời gian tổ chức</span>
+                    <strong style="color: #1e293b; font-size: 14px;">@Model.EventDate.ToString("dd/MM/yyyy HH:mm")</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Registration Widget -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="info-card" style="padding: 24px; border-radius: 20px; background: #ffffff; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+                <span style="font-size: 36px; display: block; margin-bottom: 12px;">🎟️</span>
+                <h4 style="margin: 0 0 15px; font-size: 16px; font-weight: 800; color: #0f172a;">Đăng ký tham gia</h4>
+                
+                <!-- Slots count display -->
+                <div style="background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 6px;">
+                        <span>Số chỗ đã đăng ký</span>
+                        <span>@registeredCount / @Model.MaxParticipants chỗ</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+                        <div style="width: @( ((double)registeredCount / Model.MaxParticipants) * 100 )%; height: 100%; background: #4f46e5; border-radius: 999px;"></div>
+                    </div>
+                </div>
+
+                <div id="registrationActionArea">
+                    @if (isRegistered)
+                    {
+                        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 13.5px; margin-bottom: 10px;">
+                            ✓ Bạn đã đăng ký sự kiện này
+                        </div>
+                        @if (isPremium)
+                        {
+                            <div style="background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 12.5px; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                                ⭐ Vé VIP (Premium Member)
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="background: #f1f5f9; border: 1px solid #e2e8f0; color: #475569; padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 12.5px; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                                🎟️ Vé Thường
+                            </div>
+                        }
+                        <p style="font-size: 11.5px; color: #64748b; margin: 0; line-height: 1.4;">Thông tin chi tiết tham gia và link sự kiện đã được gửi về thông báo tài khoản của bạn.</p>
+                    }
+                    else if (isEnded)
+                    {
+                        <button type="button" class="btn secondary-btn" style="width: 100%; justify-content: center; height: 42px; opacity: 0.6; cursor: not-allowed;" disabled>Sự kiện đã diễn ra</button>
+                    }
+                    else if (isFull)
+                    {
+                        <button type="button" class="btn secondary-btn" style="width: 100%; justify-content: center; height: 42px; opacity: 0.6; cursor: not-allowed;" disabled>Sự kiện đã hết chỗ</button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn primary-btn" onclick="registerForEvent(@Model.Id)" style="width: 100%; justify-content: center; height: 42px; font-size: 13.5px; font-weight: 700;">Đăng ký tham gia ngay</button>
+                    }
+                </div>
+            </div>
+
+            <!-- Sponsor / Speaker Profile Card -->
+            <div class="info-card" style="padding: 20px; border-radius: 20px; background: #ffffff;">
+                <h4 style="margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Diễn giả sự kiện</h4>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">👤</div>
+                    <div>
+                        <strong style="color: #1e293b; font-size: 14px; display: block;">@(string.IsNullOrEmpty(Model.Speaker) ? "Chuyên gia từ CareerPath" : Model.Speaker)</strong>
+                        <span style="font-size: 11px; color: #64748b; display: block; margin-top: 1px;">Speaker & Coach</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script>
+    function registerForEvent(eventId) {
+        const isAuthenticated = @(User.Identity.IsAuthenticated ? "true" : "false");
+        if (!isAuthenticated) {
+            showToast("Vui lòng đăng nhập để đăng ký tham gia sự kiện.", "info");
+            setTimeout(() => {
+                window.location.href = "/Identity/Account/Login?ReturnUrl=" + encodeURIComponent(window.location.pathname);
+            }, 1200);
+            return;
+        }
+
+        fetch("/CareerEvent/RegisterEvent/" + eventId, {
+            method: "POST"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, "success");
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showToast(data.message, "warning");
+            }
+        })
+        .catch(err => {
+            console.error("Lỗi đăng ký sự kiện:", err);
+            showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+        });
+    }
+</script>

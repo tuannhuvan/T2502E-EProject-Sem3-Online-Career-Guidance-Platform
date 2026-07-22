@@ -90,6 +90,10 @@ namespace Career_Guidance_Platform.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("location");
 
+                    b.Property<int>("MaxParticipants")
+                        .HasColumnType("int")
+                        .HasColumnName("max_participants");
+
                     b.Property<string>("RegistrationUrl")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -435,70 +439,6 @@ namespace Career_Guidance_Platform.Migrations
                     b.ToTable("community_posts");
                 });
 
-            modelBuilder.Entity("Career_Guidance_Platform.Models.EmployerReview", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CareerGrowthRating")
-                        .HasColumnType("int")
-                        .HasColumnName("career_growth_rating");
-
-                    b.Property<string>("CompanyName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("company_name");
-
-                    b.Property<string>("Cons")
-                        .HasColumnType("longtext")
-                        .HasColumnName("cons");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)")
-                        .HasColumnName("created_at");
-
-                    b.Property<int>("CultureRating")
-                        .HasColumnType("int")
-                        .HasColumnName("culture_rating");
-
-                    b.Property<string>("JobTitle")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("job_title");
-
-                    b.Property<int>("OverallRating")
-                        .HasColumnType("int")
-                        .HasColumnName("overall_rating");
-
-                    b.Property<string>("Pros")
-                        .HasColumnType("longtext")
-                        .HasColumnName("pros");
-
-                    b.Property<string>("ReviewContent")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("review_content");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int")
-                        .HasColumnName("user_id");
-
-                    b.Property<int>("WorkLifeBalanceRating")
-                        .HasColumnType("int")
-                        .HasColumnName("work_life_balance_rating");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("employer_reviews");
-                });
-
             modelBuilder.Entity("Career_Guidance_Platform.Models.EventRegistration", b =>
                 {
                     b.Property<int>("EventId")
@@ -508,6 +448,10 @@ namespace Career_Guidance_Platform.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("user_id");
+
+                    b.Property<bool>("IsVip")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_vip");
 
                     b.Property<DateTime>("RegisteredAt")
                         .HasColumnType("datetime(6)")
@@ -1186,6 +1130,39 @@ namespace Career_Guidance_Platform.Migrations
                     b.ToTable("news_articles");
                 });
 
+            modelBuilder.Entity("Career_Guidance_Platform.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("message");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("notifications");
+                });
+
             modelBuilder.Entity("Career_Guidance_Platform.Models.OptionCareerPath", b =>
                 {
                     b.Property<int>("Id")
@@ -1602,6 +1579,10 @@ namespace Career_Guidance_Platform.Migrations
                         .HasColumnType("tinyint(1)")
                         .HasColumnName("is_active");
 
+                    b.Property<bool>("IsPremium")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_premium");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -2008,6 +1989,10 @@ namespace Career_Guidance_Platform.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("longtext")
+                        .HasColumnName("avatar_url");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("longtext");
@@ -2028,10 +2013,18 @@ namespace Career_Guidance_Platform.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("Experience")
+                        .HasColumnType("longtext")
+                        .HasColumnName("experience");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("full_name");
+
+                    b.Property<string>("Headline")
+                        .HasColumnType("longtext")
+                        .HasColumnName("headline");
 
                     b.Property<bool>("IsPremium")
                         .HasColumnType("tinyint(1)")
@@ -2042,6 +2035,10 @@ namespace Career_Guidance_Platform.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Major")
+                        .HasColumnType("longtext")
+                        .HasColumnName("major");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -2064,6 +2061,10 @@ namespace Career_Guidance_Platform.Migrations
                         .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("role");
+
+                    b.Property<string>("School")
+                        .HasColumnType("longtext")
+                        .HasColumnName("school");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("longtext");
@@ -2438,17 +2439,6 @@ namespace Career_Guidance_Platform.Migrations
                     b.Navigation("Author");
                 });
 
-            modelBuilder.Entity("Career_Guidance_Platform.Models.EmployerReview", b =>
-                {
-                    b.HasOne("Career_Guidance_Platform.Models.User", "User")
-                        .WithMany("EmployerReviews")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Career_Guidance_Platform.Models.EventRegistration", b =>
                 {
                     b.HasOne("Career_Guidance_Platform.Models.CareerEvent", "CareerEvent")
@@ -2679,6 +2669,17 @@ namespace Career_Guidance_Platform.Migrations
                     b.Navigation("Mentee");
 
                     b.Navigation("Mentor");
+                });
+
+            modelBuilder.Entity("Career_Guidance_Platform.Models.Notification", b =>
+                {
+                    b.HasOne("Career_Guidance_Platform.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Career_Guidance_Platform.Models.OptionCareerPath", b =>
@@ -3128,8 +3129,6 @@ namespace Career_Guidance_Platform.Migrations
                     b.Navigation("CommunityComments");
 
                     b.Navigation("CommunityPosts");
-
-                    b.Navigation("EmployerReviews");
 
                     b.Navigation("EventRegistrations");
 

@@ -1,0 +1,196 @@
+@model IEnumerable<Career_Guidance_Platform.Models.ResumeTemplate>
+@{
+    ViewData["Title"] = "Mẫu Thiết Kế CV - CareerPath";
+    bool userIsPremium = ViewBag.IsPremium ?? false;
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f0fdf4 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding-bottom: 20px;">
+    <span class="page-badge">🎨 CV Templates</span>
+    <h1>Chọn Mẫu CV Nghề Nghiệp</h1>
+    <p>Chọn một mẫu thiết kế đã được nghiên cứu kỹ lưỡng để tối ưu hóa khả năng đọc của nhà tuyển dụng.</p>
+</section>
+
+<section class="content-section" style="max-width: 1200px; padding-top: 10px;">
+    @if (TempData["PremiumMessage"] != null)
+    {
+        <div style="background: #fffbeb; border: 1px solid #fef08a; border-left: 5px solid #eab308; color: #854d0e; padding: 16px 20px; border-radius: 12px; margin-bottom: 30px; font-weight: 600; font-size: 14px;">
+            ⚠️ @TempData["PremiumMessage"]
+        </div>
+    }
+
+    <!-- Templates Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-bottom: 48px;">
+        @foreach (var temp in Model)
+        {
+            var isLocked = temp.IsPremium && !userIsPremium;
+            
+            <div class="info-card" style="padding: 0; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; background: #ffffff; transition: all 0.3s; @(isLocked ? "opacity: 0.9;" : "")">
+                <!-- Thumbnail -->
+                <div style="position: relative; background: #f1f5f9; padding-top: 130%; width: 100%; overflow: hidden; border-bottom: 1px solid #f1f5f9;">
+                    @if (!string.IsNullOrEmpty(temp.ThumbnailUrl))
+                    {
+                        <img src="@temp.ThumbnailUrl" alt="@temp.Name" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <!-- Fallback Placeholder with visual gradient -->
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0369a1; padding: 20px; text-align: center;">
+                            <span style="font-size: 40px; margin-bottom: 10px;">📄</span>
+                            <span style="font-weight: 700; font-size: 16px;">@temp.Name</span>
+                            <span style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Mã: @temp.TemplateCode</span>
+                        </div>
+                    }
+
+                    <!-- Badge Type -->
+                    <div style="position: absolute; top: 15px; right: 15px;">
+                        @if (temp.IsPremium)
+                        {
+                            <span style="background: linear-gradient(135deg, #ca8a04 0%, #eab308 100%); color: white; font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(234, 179, 8, 0.3);">💎 Premium</span>
+                        }
+                        else
+                        {
+                            <span style="background: #10b981; color: white; font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 8px;">🆓 Free</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Info Body -->
+                <div style="padding: 20px; display: flex; flex-direction: column; flex-grow: 1; gap: 12px;">
+                    <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0;">@temp.Name</h3>
+                    <p style="font-size: 13px; color: #64748b; margin: 0; line-height: 1.5; flex-grow: 1;">
+                        Thiết kế theo chuẩn định dạng @(temp.TemplateCode == "modern" ? "indigo hiện đại, hài hòa" : temp.TemplateCode == "minimalist" ? "cổ điển tối giản, tập trung vào chữ" : "sidebar 2 cột chuyên nghiệp").
+                    </p>
+
+                    <!-- Interactive Buttons -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+                        <button type="button" class="btn secondary-btn" style="justify-content: center; height: 38px; font-size: 13px;" onclick="openPreviewModal('@temp.Name', '@temp.TemplateCode')">👁️ Xem trước</button>
+                        
+                        @if (isLocked)
+                        {
+                            <a asp-controller="Home" asp-action="UpgradePremium" class="btn primary-btn" style="justify-content: center; height: 38px; font-size: 13px; background: #eab308; border-color: #eab308; color: #1e293b; text-decoration: none;">💎 Mở khóa VIP</a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Home" asp-action="ResumeBuilder" asp-route-templateId="@temp.Id" class="btn primary-btn" style="justify-content: center; height: 38px; font-size: 13px; text-decoration: none;">📝 Sử dụng mẫu</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Preview Modal -->
+<div id="previewModal" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div style="background-color: #ffffff; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #e2e8f0; width: 90%; max-width: 600px; padding: 25px; position: relative; animation: slideUp 0.3s ease-out;">
+        <span onclick="closePreviewModal()" style="position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; color: #64748b; transition: 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">×</span>
+        
+        <h3 id="modalTitle" style="margin-top: 0; font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 15px;">Xem trước mẫu thiết kế</h3>
+        
+        <!-- Mockup layout of CV template -->
+        <div id="modalMockupContent" style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #f8fafc; font-family: sans-serif; font-size: 11px; color: #334155; line-height: 1.4; max-height: 380px; overflow-y: auto;">
+            <!-- Rendered dynamically -->
+        </div>
+
+        <div style="margin-top: 20px; text-align: right;">
+            <button type="button" class="btn secondary-btn" onclick="closePreviewModal()">Đóng lại</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    @@keyframes slideUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+<script>
+    function openPreviewModal(name, code) {
+        const modal = document.getElementById("previewModal");
+        const title = document.getElementById("modalTitle");
+        const content = document.getElementById("modalMockupContent");
+        
+        title.innerText = "Xem trước: " + name;
+        
+        let mockupHtml = "";
+        if (code === "modern") {
+            mockupHtml = `
+                <div style="border-top: 15px solid #4f46e5; padding-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div>
+                            <h1 style="color: #4f46e5; font-size: 18px; margin: 0; font-weight: 700;">NGUYỄN VĂN A</h1>
+                            <p style="color: #64748b; font-size: 11px; margin: 2px 0;">Software Engineer</p>
+                        </div>
+                        <div style="text-align: right; font-size: 9px; color: #64748b;">
+                            Email: nva@gmail.com | SĐT: 0987654321
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <h3 style="color: #4f46e5; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; font-size: 12px; font-weight: 700; text-transform: uppercase;">Kinh nghiệm làm việc</h3>
+                        <p style="margin: 4px 0 2px;"><strong>CÔNG TY CÔNG NGHỆ X</strong> (12/2024 - Hiện tại)</p>
+                        <p style="margin: 0; color: #64748b;">Lập trình viên Full-Stack .NET Core và React</p>
+                    </div>
+                    <div>
+                        <h3 style="color: #4f46e5; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; font-size: 12px; font-weight: 700; text-transform: uppercase;">Kỹ năng nổi bật</h3>
+                        <p style="margin: 4px 0 0;">C#, ASP.NET Core, SQL Server, HTML/CSS, JavaScript, ReactJS</p>
+                    </div>
+                </div>
+            `;
+        } else if (code === "minimalist") {
+            mockupHtml = `
+                <div style="text-align: center; border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 15px;">
+                    <h1 style="color: #0f172a; font-size: 20px; margin: 0; font-weight: 400; letter-spacing: 2px;">NGUYỄN VĂN A</h1>
+                    <p style="color: #64748b; font-size: 11px; margin: 4px 0;">Full Stack Engineer | nva@gmail.com</p>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <h3 style="color: #0f172a; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px;">HỌC VẤN</h3>
+                    <p style="margin: 0;"><strong>Đại học FPT</strong> — Cử nhân Kỹ thuật Phần mềm (2020 - 2024)</p>
+                </div>
+                <div>
+                    <h3 style="color: #0f172a; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px;">TÓM TẮT KINH NGHIỆM</h3>
+                    <p style="margin: 0; line-height: 1.5;">Hơn 2 năm kinh nghiệm thiết kế website và xây dựng giải pháp cloud. Thành thạo lập trình hướng đối tượng, cơ sở dữ liệu quan hệ và tối ưu hóa hệ thống Web APIs.</p>
+                </div>
+            `;
+        } else {
+            mockupHtml = `
+                <div style="display: grid; grid-template-columns: 150px 1fr; gap: 15px;">
+                    <!-- Sidebar Left -->
+                    <div style="background: #f1f5f9; padding: 12px; border-radius: 8px;">
+                        <h2 style="font-size: 12px; font-weight: 700; color: #020617; margin-bottom: 8px;">LIÊN HỆ</h2>
+                        <p style="margin: 0 0 6px 0;">📞 0987654321</p>
+                        <p style="margin: 0 0 12px 0;">✉️ nva@email.com</p>
+                        
+                        <h2 style="font-size: 12px; font-weight: 700; color: #020617; margin-bottom: 8px;">KỸ NĂNG</h2>
+                        <span style="display: inline-block; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px;">.NET Core</span>
+                        <span style="display: inline-block; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px;">C#</span>
+                        <span style="display: inline-block; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px;">VueJS</span>
+                    </div>
+                    <!-- Main Right -->
+                    <div>
+                        <h1 style="color: #0f172a; font-size: 18px; margin: 0 0 4px; font-weight: 700;">NGUYỄN VĂN A</h1>
+                        <p style="color: #0369a1; font-size: 11px; font-weight: 600; margin: 0 0 15px;">TRƯỞNG NHÓM PHÁT TRIỂN PHẦN MỀM</p>
+                        
+                        <h3 style="color: #0f172a; border-bottom: 2px solid #0284c7; font-size: 12px; font-weight: 700; margin-bottom: 6px; padding-bottom: 2px;">MỤC TIÊU</h3>
+                        <p style="margin: 0; color: #475569;">Đem đến những thiết kế ứng dụng có trải nghiệm mượt mà, cấu trúc mở rộng linh hoạt.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        content.innerHTML = mockupHtml;
+        modal.style.display = "flex";
+    }
+
+    function closePreviewModal() {
+        document.getElementById("previewModal").style.display = "none";
+    }
+
+    // Close on click outside modal content
+    window.onclick = function(event) {
+        const modal = document.getElementById("previewModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>

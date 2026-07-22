@@ -47,7 +47,6 @@ namespace Career_Guidance_Platform.Data
         public DbSet<JobPosting> JobPostings { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
         public DbSet<ApplicationReminder> ApplicationReminders { get; set; }
-        public DbSet<EmployerReview> EmployerReviews { get; set; }
         public DbSet<Goal> Goals { get; set; }
         public DbSet<GoalMilestone> GoalMilestones { get; set; }
         public DbSet<CareerStage> CareerStages { get; set; }
@@ -57,6 +56,7 @@ namespace Career_Guidance_Platform.Data
         public DbSet<CommunityComment> CommunityComments { get; set; }
         public DbSet<PeerConnection> PeerConnections { get; set; }
         public DbSet<TestResultScore> TestResultScores { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -201,12 +201,7 @@ namespace Career_Guidance_Platform.Data
                 .HasForeignKey(ja => ja.ResumeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // EmployerReview navigation configuration
-            modelBuilder.Entity<EmployerReview>()
-                .HasOne(er => er.User)
-                .WithMany(u => u.EmployerReviews)
-                .HasForeignKey(er => er.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+
 
             // CommunityPost author foreign key
             modelBuilder.Entity<CommunityPost>()
@@ -259,6 +254,13 @@ namespace Career_Guidance_Platform.Data
                 .HasOne(gm => gm.Goal)
                 .WithMany(g => g.GoalMilestones)
                 .HasForeignKey(gm => gm.GoalId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Notification cascade delete
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

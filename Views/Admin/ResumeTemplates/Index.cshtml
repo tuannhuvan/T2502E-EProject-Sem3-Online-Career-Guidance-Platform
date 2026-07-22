@@ -1,0 +1,102 @@
+@model IEnumerable<Career_Guidance_Platform.Models.ResumeTemplate>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Mẫu CV";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Quản trị</div>
+            <h2 class="page-title">Quản lý Mẫu CV</h2>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+            <div class="btn-list">
+                <a asp-action="Create" class="btn btn-primary d-none d-sm-inline-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    Thêm mẫu CV mới
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards">
+    <div class="col-12">
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table card-table table-vcenter text-nowrap datatable">
+                    <thead>
+                        <tr>
+                            <th class="w-1">ID</th>
+                            <th>Mẫu CV</th>
+                            <th>Mã Template Code</th>
+                            <th>Phân loại</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var temp in Model)
+                        {
+                            <tr>
+                                <td>@temp.Id</td>
+                                <td>
+                                    <div class="d-flex py-1 align-items-center">
+                                        <span class="avatar me-2" style="background-image: url(@(string.IsNullOrEmpty(temp.ThumbnailUrl) ? "/uploads/templates/default.png" : temp.ThumbnailUrl))"></span>
+                                        <div class="flex-fill">
+                                            <div class="font-weight-medium">@temp.Name</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><code>@temp.TemplateCode</code></td>
+                                <td>
+                                    @if (temp.IsPremium)
+                                    {
+                                        <span class="badge bg-yellow text-yellow-fg">💎 Premium VIP</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-green text-green-fg">🆓 Free</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (temp.IsActive)
+                                    {
+                                        <span class="badge bg-success">Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Tạm ẩn</span>
+                                    }
+                                </td>
+                                <td>@temp.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end">
+                                    <div class="btn-list justify-content-end">
+                                        <form asp-action="ToggleActive" asp-route-id="@temp.Id" method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                                @(temp.IsActive ? "Tắt kích hoạt" : "Kích hoạt")
+                                            </button>
+                                        </form>
+                                        <a asp-action="Edit" asp-route-id="@temp.Id" class="btn btn-sm btn-outline-primary">Sửa</a>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(@temp.Id)">Xóa</button>
+                                        <form id="delete-form-@temp.Id" asp-action="Delete" asp-route-id="@temp.Id" method="post" style="display:none;"></form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(id) {
+        if (confirm("Bạn có chắc chắn muốn xóa mẫu thiết kế CV này không? Hành động này không thể hoàn tác.")) {
+            document.getElementById("delete-form-" + id).submit();
+        }
+    }
+</script>

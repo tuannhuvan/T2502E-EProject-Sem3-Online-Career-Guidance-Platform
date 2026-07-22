@@ -46,7 +46,7 @@
                 {
                     <div class="info-card" style="padding: 20px; border-radius: 16px; background: #fafafa; border-color: #f1f5f9;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px;">
-                            <span style="color: #0f172a;">👤 <strong>@(comment.Author?.FullName ?? comment.Author?.UserName ?? "Thành viên")</strong></span>
+                            <span style="color: #0f172a;">👤 <strong><a href="/Profile/Details/@comment.AuthorId" style="color: inherit; text-decoration: none;">@(comment.Author?.FullName ?? comment.Author?.UserName ?? "Thành viên")</a></strong></span>
                             <span style="color: #94a3b8;">📅 @comment.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
                         </div>
                         <p style="color: #334155; font-size: 14.5px; line-height: 1.6; margin: 0; white-space: pre-line;">@comment.Content</p>

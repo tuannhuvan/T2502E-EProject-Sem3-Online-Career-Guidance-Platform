@@ -62,6 +62,13 @@
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link" href="/Admin/Mentors/PendingApprovals">
+                            <span class="nav-link-icon"><i class="ti ti-user-check"></i></span>
+                            <span class="nav-link-title">Duyệt Cố vấn</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="CareerTests">
                             <span class="nav-link-icon"><i class="ti ti-clipboard-check"></i></span>
                             <span class="nav-link-title">@(isEn ? "Career Tests" : "Bài trắc nghiệm")</span>
@@ -119,6 +126,20 @@
                             <span class="nav-link-title">@(isEn ? "Courses" : "Khóa học")</span>
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="AdminResumeTemplates" asp-action="Index">
+                            <span class="nav-link-icon"><i class="ti ti-template"></i></span>
+                            <span class="nav-link-title">Mẫu CV</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="Events">
+                            <span class="nav-link-icon"><i class="ti ti-calendar-event"></i></span>
+                            <span class="nav-link-title">Sự kiện</span>
+                        </a>
+                    </li>
+
 
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Admin" asp-action="Reports">

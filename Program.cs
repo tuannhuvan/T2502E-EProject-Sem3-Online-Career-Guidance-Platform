@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(); // Add session services
+builder.Services.AddSignalR(); // Add SignalR services
 
 // Register AppDbContext with MySQL (Pomelo)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -22,6 +23,7 @@ builder.Services.AddIdentity<User, IdentityRole<int>>()
     .AddDefaultTokenProviders()
     .AddErrorDescriber<Career_Guidance_Platform.Service.VietnameseIdentityErrorDescriber>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddSingleton<PresenceTracker>();
 var app = builder.Build();
 
 // Apply migrations on startup
@@ -162,5 +164,8 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapHub<Career_Guidance_Platform.Hubs.ChatHub>("/chatHub");
+app.MapHub<Career_Guidance_Platform.Hubs.PresenceAndNotificationHub>("/hubs/presenceNotification");
 
 app.Run();
