@@ -26,6 +26,7 @@ namespace Career_Guidance_Platform.Controllers
 
         public IActionResult Login(string? returnUrl = null)
         {
+            returnUrl = SanitizeReturnUrl(returnUrl);
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -33,6 +34,7 @@ namespace Career_Guidance_Platform.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
+            returnUrl = SanitizeReturnUrl(returnUrl);
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
@@ -91,6 +93,7 @@ namespace Career_Guidance_Platform.Controllers
 
         public IActionResult Register(string? returnUrl = null)
         {
+            returnUrl = SanitizeReturnUrl(returnUrl);
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -98,6 +101,7 @@ namespace Career_Guidance_Platform.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
         {
+            returnUrl = SanitizeReturnUrl(returnUrl);
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
@@ -213,6 +217,21 @@ namespace Career_Guidance_Platform.Controllers
 
             return View();
         }
+
+        private string? SanitizeReturnUrl(string? returnUrl)
+        {
+            if (string.IsNullOrEmpty(returnUrl))
+            {
+                return null;
+            }
+
+            if (returnUrl.Contains("/Account/Login", System.StringComparison.OrdinalIgnoreCase) || 
+                returnUrl.Contains("/Account/Register", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return returnUrl;
+        }
     }
-    
 }

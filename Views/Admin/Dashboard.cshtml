@@ -58,6 +58,20 @@
             </div>
         </div>
     </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-primary-subtle" style="background: #f8fafc;">
+            <div class="card-body">
+                <div class="subheader text-primary fw-bold">Đơn ứng tuyển mới</div>
+                <div class="h1 mb-2 text-primary">@ViewBag.PendingApplicationsCount</div>
+                <div>
+                    <a asp-controller="Admin" asp-action="JobApplications" class="text-primary text-decoration-none small fw-bold">
+                        <i class="ti ti-arrow-right me-1"></i> Xem đơn ứng tuyển →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row row-cards mt-3">
@@ -140,6 +154,91 @@
             {
                 <tr>
                     <td colspan="5" class="text-center text-muted py-3">No test results found.</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Recent Job Applications Feed -->
+<div class="card mt-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0">💼 Hồ sơ ứng tuyển việc làm mới nhất</h3>
+        <a asp-controller="Admin" asp-action="JobApplications" class="btn btn-sm btn-outline-primary">
+            Xem tất cả đơn ứng tuyển →
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+            <tr>
+                <th>Ứng viên</th>
+                <th>Vị trí tuyển dụng</th>
+                <th>Công ty</th>
+                <th>Ngày ứng tuyển</th>
+                <th>Trạng thái</th>
+                <th class="text-end">Hành động</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            @{
+                var recentApps = ViewBag.RecentApplications as List<Career_Guidance_Platform.Models.JobApplication>;
+            }
+            @if (recentApps != null && recentApps.Any())
+            {
+                foreach (var app in recentApps)
+                {
+                    <tr>
+                        <td>
+                            <div class="font-weight-medium">@(app.User?.FullName ?? app.User?.Email ?? "N/A")</div>
+                            <div class="text-muted small">@app.User?.Email</div>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-dark">@(app.JobPosting?.Title ?? "N/A")</span>
+                        </td>
+                        <td>@(app.JobPosting?.CompanyName ?? "N/A")</td>
+                        <td>@app.AppliedAt.ToString("HH:mm dd/MM/yyyy")</td>
+                        <td>
+                            @if (app.Status == "Applied")
+                            {
+                                <span class="badge bg-warning-lt">Mới (Chưa duyệt)</span>
+                            }
+                            else if (app.Status == "Accepted")
+                            {
+                                <span class="badge bg-success-lt">Đã chấp nhận</span>
+                            }
+                            else if (app.Status == "Rejected")
+                            {
+                                <span class="badge bg-danger-lt">Đã từ chối</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary-lt">@app.Status</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-list flex-nowrap justify-content-end">
+                                @if (app.ResumeId.HasValue)
+                                {
+                                    <a asp-controller="Admin" asp-action="ViewResume" asp-route-id="@app.ResumeId.Value" class="btn btn-sm btn-outline-info">
+                                        📄 Xem CV
+                                    </a>
+                                }
+                                <a asp-controller="Admin" asp-action="JobApplications" asp-route-jobId="@app.JobPostingId" class="btn btn-sm btn-primary">
+                                    Xử lý
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">Chưa có đơn ứng tuyển nào.</td>
                 </tr>
             }
             </tbody>
