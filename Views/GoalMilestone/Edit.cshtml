@@ -1,0 +1,56 @@
+@model Career_Guidance_Platform.Models.GoalMilestone
+
+@{
+    ViewData["Title"] = "Sửa Milestone";
+}
+
+<section class="content-section" style="max-width:800px;">
+    <div class="info-card" style="padding:30px;border-radius:20px;">
+        <h1>Sửa Milestone</h1>
+
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="GoalId" />
+
+            <div class="form-group">
+                <label asp-for="Title">Tên Milestone</label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="SkillId">Kỹ năng</label>
+                <select asp-for="SkillId" asp-items="ViewBag.Skills" class="form-control">
+                    <option value="">-- Không chọn --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ResourceId">Tài nguyên học tập</label>
+                <select asp-for="ResourceId" asp-items="ViewBag.Resources" class="form-control">
+                    <option value="">-- Không chọn --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="SequenceOrder">Thứ tự</label>
+                <input asp-for="SequenceOrder" type="number" min="1" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Status">Trạng thái</label>
+                <select asp-for="Status" class="form-control">
+                    <option value="In Progress">Đang thực hiện</option>
+                    <option value="Completed">Hoàn thành</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn primary-btn">Cập nhật</button>
+            <a asp-controller="Goal" asp-action="Index" class="btn secondary-btn">Quay lại</a>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

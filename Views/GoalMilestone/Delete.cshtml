@@ -1,0 +1,28 @@
+@model Career_Guidance_Platform.Models.GoalMilestone
+
+@{
+    ViewData["Title"] = "Xóa Milestone";
+}
+
+<section class="content-section" style="max-width:700px;">
+    <div class="info-card" style="padding:30px;border-radius:20px;">
+        <h1>Xóa Milestone</h1>
+
+        <p>Bạn có chắc muốn xóa milestone này không?</p>
+
+        <div style="padding:20px;border:1px solid #e2e8f0;border-radius:16px;margin-bottom:20px;">
+            <h3>@Model.Title</h3>
+            <p><strong>Kỹ năng:</strong> @(Model.Skill?.Name ?? "Không chọn")</p>
+            <p><strong>Tài nguyên:</strong> @(Model.Resource?.Title ?? "Không chọn")</p>
+            <p><strong>Thứ tự:</strong> @Model.SequenceOrder</p>
+            <p><strong>Trạng thái:</strong> @Model.Status</p>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <button type="submit" class="btn btn-danger">Xóa</button>
+            <a asp-controller="Goal" asp-action="Index" class="btn secondary-btn">Hủy</a>
+        </form>
+    </div>
+</section>
