@@ -168,6 +168,19 @@
     </nav>
 
     <div class="nav-actions">
+
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <div class="user-menu">
+                <a asp-controller="Profile" asp-action="Index" class="avatar">
+                    <img src="~/images/default-avatar.png" alt="avatar" />
+                </a>
+
+                <div class="user-dropdown">
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="logout-btn">
+                            Đăng xuất
         <!-- Language Selector -->
         <div class="language-selector" style="display: flex; gap: 10px; margin-right: 15px; align-items: center;">
             <a href="javascript:void(0)" onclick="changeSystemLanguage('vi')" title="Tiếng Việt" style="text-decoration: none; font-size: 20px; opacity: 0.5; transition: all 0.2s;" id="lang-vi">
@@ -228,6 +241,10 @@
         }
         else
         {
+            <a class="login-link" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+            <a class="register-btn" asp-controller="Account" asp-action="Register">Đăng ký</a>
+        }
+
             <a class="login-link" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">Đăng nhập</a>
             <a class="register-btn" asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">Đăng ký</a>
         }
@@ -283,6 +300,9 @@
         </div>
     </div>
 </footer>
+<script src="~/lib/jquery/jquery.min.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -403,5 +423,6 @@
 
 @await RenderSectionAsync("Scripts", required: false)
 
+@RenderSection("Scripts", required: false)
 </body>
 </html>

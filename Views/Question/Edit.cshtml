@@ -1,0 +1,126 @@
+@model Career_Guidance_Platform.Dtos.Question.QuestionFullDto
+
+@{
+    ViewData["Title"] = "Edit Question";
+}
+
+<h2>Edit Question</h2>
+
+<form asp-action="Edit" method="post">
+
+    <input type="hidden" asp-for="Id" />
+
+    <!-- Career Test -->
+    <div class="mb-3">
+        <label asp-for="CareerTestId" class="form-label">
+            Career Test
+        </label>
+
+        <select asp-for="CareerTestId"
+                asp-items="ViewBag.Tests"
+                class="form-select">
+            <option value="">-- Chọn bài test --</option>
+        </select>
+    </div>
+
+    <!-- Question Type -->
+    <div class="mb-3">
+        <label asp-for="QuestionTypeId" class="form-label">
+            Question Type
+        </label>
+
+        <select asp-for="QuestionTypeId"
+                asp-items="ViewBag.QuestionTypes"
+                class="form-select">
+            <option value="">-- Chọn loại câu hỏi --</option>
+        </select>
+    </div>
+
+    <!-- Question Content -->
+    <div class="mb-3">
+        <label asp-for="Content" class="form-label">
+            Nội dung câu hỏi
+        </label>
+
+        <input asp-for="Content"
+               class="form-control" />
+
+        <span asp-validation-for="Content"
+              class="text-danger"></span>
+    </div>
+
+    <hr />
+
+    <h4>Danh sách đáp án</h4>
+
+    @for (int i = 0; i < Model.Options.Count; i++)
+    {
+        <div class="card mb-3">
+            <div class="card-header">
+                Đáp án @(i + 1)
+            </div>
+
+            <div class="card-body">
+
+                <input asp-for="Options[i].Id" type="hidden" />
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Nội dung đáp án
+                    </label>
+
+                    <input asp-for="Options[i].Content"
+                           class="form-control" />
+                </div>
+
+                <h6>Định hướng nghề nghiệp</h6>
+
+                @for (int j = 0; j < Model.Options[i].CareerPaths.Count; j++)
+                {
+                    <div class="row mb-3">
+
+                        <div class="col-md-8">
+
+                            <label class="form-label">
+                                Career Path
+                            </label>
+
+                            <select asp-for="Options[i].CareerPaths[j].CareerPathId"
+                                    asp-items="ViewBag.CareerPaths"
+                                    class="form-select">
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+                                Weight
+                            </label>
+
+                            <input asp-for="Options[i].CareerPaths[j].Weight"
+                                   class="form-control" />
+
+                        </div>
+
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">
+        Update Question
+    </button>
+
+    <a asp-action="Index"
+       class="btn btn-secondary">
+        Back
+    </a>
+
+</form>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
