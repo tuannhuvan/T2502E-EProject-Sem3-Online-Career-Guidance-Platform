@@ -1,0 +1,187 @@
+@model IEnumerable<Career_Guidance_Platform.Models.JobApplication>
+@{
+    Layout = "_AdminLayout";
+    var currentJob = ViewBag.CurrentJob as Career_Guidance_Platform.Models.JobPosting;
+    ViewData["Title"] = currentJob != null ? $"Ứng viên: {currentJob.Title}" : "Quản lý đơn ứng tuyển";
+    var jobList = ViewBag.JobList as IEnumerable<Career_Guidance_Platform.Models.JobPosting> ?? new List<Career_Guidance_Platform.Models.JobPosting>();
+    int? selectedJobId = ViewBag.SelectedJobId as int?;
+    string? selectedStatus = ViewBag.SelectedStatus as string;
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Tuyển dụng</div>
+            <h2 class="page-title">
+                @if (currentJob != null)
+                {
+                    <span>Đơn ứng tuyển: <strong>@currentJob.Title</strong></span>
+                }
+                else
+                {
+                    <span>Tất cả đơn ứng tuyển</span>
+                }
+            </h2>
+        </div>
+        <div class="col-auto ms-auto">
+            <a asp-controller="Admin" asp-action="Jobs" class="btn btn-outline-secondary">
+                <i class="ti ti-arrow-left me-1"></i> Trở về danh sách việc làm
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="ti ti-check me-1"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="ti ti-alert-circle me-1"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" asp-controller="Admin" asp-action="JobApplications" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <label class="form-label text-muted small mb-1">Lọc theo việc làm:</label>
+                <select name="jobId" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Tất cả việc làm --</option>
+                    @foreach (var job in jobList)
+                    {
+                        <option value="@job.Id" selected="@(selectedJobId == job.Id)">@job.Title (@job.CompanyName)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-muted small mb-1">Lọc theo trạng thái:</label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="Applied" selected="@(selectedStatus == "Applied")">Applied (Mới nộp)</option>
+                    <option value="Interviewing" selected="@(selectedStatus == "Interviewing")">Interviewing (Phỏng vấn)</option>
+                    <option value="Offered" selected="@(selectedStatus == "Offered")">Offered (Trúng tuyển)</option>
+                    <option value="Rejected" selected="@(selectedStatus == "Rejected")">Rejected (Từ chối)</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <a asp-controller="Admin" asp-action="JobApplications" class="btn btn-outline-secondary w-100 mt-4">
+                    <i class="ti ti-rotate-clockwise me-1"></i> Xóa bộ lọc
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table card-table table-vcenter">
+            <thead>
+                <tr>
+                    <th>Ứng viên</th>
+                    <th>Công việc ứng tuyển</th>
+                    <th>Hồ sơ CV</th>
+                    <th>Ghi chú</th>
+                    <th>Ngày nộp</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end" width="200">Cập nhật trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var app in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="font-weight-bold">@(app.User?.FullName ?? "N/A")</div>
+                                <div class="small text-muted"><i class="ti ti-mail me-1"></i>@(app.User?.Email ?? "N/A")</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@(app.JobPosting?.Title ?? "N/A")</div>
+                                <div class="small text-muted">@(app.JobPosting?.CompanyName)</div>
+                            </td>
+                            <td>
+                                @if (app.Resume != null)
+                                {
+                                    <div class="mb-1 fw-bold text-primary">
+                                        <i class="ti ti-file-text me-1"></i>@app.Resume.Title
+                                    </div>
+                                    <a asp-controller="Admin" asp-action="ViewResume" asp-route-id="@app.ResumeId" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="ti ti-eye me-1"></i> Xem CV
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Chưa gắn CV</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(app.Notes))
+                                {
+                                    <span class="small text-secondary" title="@app.Notes">
+                                        @(app.Notes.Length > 50 ? app.Notes.Substring(0, 50) + "..." : app.Notes)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Không có ghi chú</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="small text-muted">@app.AppliedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            </td>
+                            <td>
+                                @switch (app.Status)
+                                {
+                                    case "Applied":
+                                        <span class="badge bg-blue-lt"><i class="ti ti-clock me-1"></i>Mới nộp</span>
+                                        break;
+                                    case "Interviewing":
+                                        <span class="badge bg-warning-lt"><i class="ti ti-user-check me-1"></i>Phỏng vấn</span>
+                                        break;
+                                    case "Offered":
+                                        <span class="badge bg-success"><i class="ti ti-check me-1"></i>Trúng tuyển</span>
+                                        break;
+                                    case "Rejected":
+                                        <span class="badge bg-danger-lt"><i class="ti ti-x me-1"></i>Từ chối</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@app.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-end">
+                                <form asp-controller="Admin" asp-action="UpdateApplicationStatus" method="post" class="d-inline-flex gap-1 align-items-center">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="applicationId" value="@app.Id" />
+                                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                        <option value="Applied" selected="@(app.Status == "Applied")">Applied</option>
+                                        <option value="Interviewing" selected="@(app.Status == "Interviewing")">Interviewing</option>
+                                        <option value="Offered" selected="@(app.Status == "Offered")">Offered</option>
+                                        <option value="Rejected" selected="@(app.Status == "Rejected")">Rejected</option>
+                                    </select>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="ti ti-inbox fs-2 mb-2 d-block text-secondary"></i>
+                            Chưa có đơn ứng tuyển nào phù hợp.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

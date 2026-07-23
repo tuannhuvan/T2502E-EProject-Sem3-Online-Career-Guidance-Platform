@@ -1,0 +1,213 @@
+@model IEnumerable<Career_Guidance_Platform.Models.Category>
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Categories";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Management</div>
+            <h2 class="page-title">Categories</h2>
+        </div>
+        <div class="col-auto ms-auto">
+            <a asp-action="CreateCategory" class="btn btn-primary">
+                <i class="ti ti-plus me-1"></i>
+                Add Category
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-9">
+                <input id="category-search" class="form-control"
+                       placeholder="Tìm kiếm theo tên hoặc mô tả danh mục..." />
+            </div>
+
+            <div class="col-md-3">
+                <select id="status-select" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th class="w-1">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr class="category-row"
+                        data-name="@item.Name?.ToLower()"
+                        data-description="@item.Description?.ToLower()"
+                        data-status="@(item.Status == 1 ? "active" : "inactive")">
+                        <td><strong>@item.Name</strong></td>
+                        <td class="text-muted">@item.Description</td>
+                        <td>
+                            @if (item.Status == 1)
+                            {
+                                <span class="badge bg-green-lt">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-red-lt">Inactive</span>
+                            }
+                        </td>
+                        <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td class="table-actions">
+                            <a asp-action="EditCategory" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                            <a asp-action="DeleteCategory" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        <span id="entryText">
+            Showing 1 to 10 of @(Model?.Count() ?? 0) entries
+        </span>
+        <ul class="pagination m-0 ms-auto" id="pagination-ul">
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById('category-search');
+            const statusSelect = document.getElementById('status-select');
+            const rows = document.querySelectorAll('.category-row');
+
+            let currentPage = 1;
+            const pageSize = 10;
+
+            function filterAndPaginateCategories(resetPage = false) {
+                if (resetPage === true) {
+                    currentPage = 1;
+                }
+
+                const query = searchInput.value.toLowerCase().trim();
+                const status = statusSelect.value;
+
+                const matchedRows = [];
+
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name') || '';
+                    const description = row.getAttribute('data-description') || '';
+                    const categoryStatus = row.getAttribute('data-status') || '';
+
+                    const matchesSearch = !query || 
+                        name.includes(query) || 
+                        description.includes(query);
+
+                    const matchesStatus = !status || categoryStatus === status;
+
+                    if (matchesSearch && matchesStatus) {
+                        matchedRows.push(row);
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const totalItems = matchedRows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                matchedRows.forEach((row, index) => {
+                    if (index >= startIdx && index < endIdx) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update entry text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} danh mục`;
+
+                // Render pagination
+                const paginationUl = document.getElementById('pagination-ul');
+                if (paginationUl) {
+                    paginationUl.innerHTML = '';
+
+                    // Prev Button
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                    if (currentPage > 1) {
+                        prevLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            filterAndPaginateCategories();
+                        });
+                    }
+                    paginationUl.appendChild(prevLi);
+
+                    // Page buttons
+                    const maxButtons = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                        li.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage = i;
+                            filterAndPaginateCategories();
+                        });
+                        paginationUl.appendChild(li);
+                    }
+
+                    // Next Button
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                    if (currentPage < totalPages) {
+                        nextLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            filterAndPaginateCategories();
+                        });
+                    }
+                    paginationUl.appendChild(nextLi);
+                }
+            }
+
+            searchInput.addEventListener('input', () => filterAndPaginateCategories(true));
+            statusSelect.addEventListener('change', () => filterAndPaginateCategories(true));
+
+            // Initial run
+            filterAndPaginateCategories(true);
+        });
+    </script>
+}

@@ -1,0 +1,48 @@
+@model Career_Guidance_Platform.Models.MentorshipMeeting
+@{
+    ViewData["Title"] = "Đánh giá chất lượng Cố vấn";
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #fef3c7 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #e2e8f0; padding: 40px 24px; text-align: center;">
+    <span class="page-badge" style="background: #fef3c7; color: #d97706; border: 1px solid #fde68a; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;">PHẢN HỒI Ý KIẾN</span>
+    <h1 style="font-size: 28px; font-weight: 900; color: #0f172a; margin: 12px 0 6px;">Đánh giá Buổi tư vấn cùng Cố vấn</h1>
+    <p style="color: #64748b; font-size: 15px; max-width: 500px; margin: 0 auto; line-height: 1.5;">Ý kiến đóng góp của bạn giúp cải thiện chất lượng đội ngũ cố vấn và gợi ý lộ trình phù hợp hơn cho các học viên khác.</p>
+</section>
+
+<section class="content-section" style="max-width: 600px; margin: 0 auto; padding: 40px 24px;">
+    
+    <div class="info-card" style="padding: 30px; border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+        <div style="margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+            <h3 style="margin: 0 0 6px; font-size: 18px; color: #0f172a;">Thông tin buổi gặp:</h3>
+            <p style="font-size: 14.5px; color: #475569; margin: 0 0 4px;"><strong>Chủ đề:</strong> @Model.Title</p>
+            <p style="font-size: 14px; color: #475569; margin: 0;"><strong>Cố vấn:</strong> @Model.Mentor?.FullName</p>
+        </div>
+
+        <form asp-controller="Mentorship" asp-action="SubmitReview" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="meetingId" value="@Model.Id" />
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Xếp hạng Cố vấn (1 - 5 sao):</label>
+                <select name="rating" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white;">
+                    <option value="5">⭐⭐⭐⭐⭐ 5/5 - Rất tốt & Chuyên nghiệp</option>
+                    <option value="4">⭐⭐⭐⭐ 4/5 - Tốt & Nhiệt tình</option>
+                    <option value="3">⭐⭐⭐ 3/5 - Bình thường / Đạt yêu cầu</option>
+                    <option value="2">⭐⭐ 2/5 - Chưa tốt</option>
+                    <option value="1">⭐ 1/5 - Kém / Thái độ không tốt</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Nhận xét / Góp ý chi tiết:</label>
+                <textarea name="comment" required placeholder="Ghi rõ trải nghiệm học tập, sự hữu ích của buổi gặp và những lời khuyên hữu ích mà bạn nhận được..." style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 120px; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <a asp-controller="Mentorship" asp-action="Details" asp-route-id="@Model.MentorId" class="btn secondary-btn" style="border-radius: 10px; font-weight: 700; padding: 10px 20px; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; height: 40px; box-sizing: border-box;">Hủy bỏ</a>
+                <button type="submit" class="btn primary-btn" style="border-radius: 10px; font-weight: 700; padding: 10px 24px; border: none; font-size: 14px; cursor: pointer; height: 40px;">Gửi đánh giá</button>
+            </div>
+        </form>
+    </div>
+
+</section>

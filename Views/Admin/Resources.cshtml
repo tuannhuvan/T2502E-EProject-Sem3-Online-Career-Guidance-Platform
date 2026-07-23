@@ -1,28 +1,338 @@
-﻿@{
-    Layout = "_AdminLayout";
+@model IEnumerable<Career_Guidance_Platform.Models.Resource>
+@{
     ViewData["Title"] = "Resources";
+    Layout = "_AdminLayout";
 }
 
-<h2 class="page-title mb-3">Learning Resources</h2>
-
-<div class="row row-cards">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h3>ASP.NET Core MVC Course</h3>
-                <p class="text-muted">Backend development path.</p>
-                <span class="badge bg-blue-lt">Course</span>
-            </div>
+<div class="page-header d-print-none mb-3">
+    <div class="row align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Management</div>
+            <h2 class="page-title">Resources</h2>
+            <div class="text-muted mt-1">Manage online courses, websites, documents, and reference materials</div>
+        </div>
+        <div class="col-auto ms-auto">
+            <a asp-controller="Admin" asp-action="CreateResource" class="btn btn-primary">
+                <i class="ti ti-plus me-1"></i> Add Resource
+            </a>
         </div>
     </div>
+</div>
 
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h3>UI/UX Fundamentals</h3>
-                <p class="text-muted">Design thinking and Figma.</p>
-                <span class="badge bg-purple-lt">Article</span>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="ti ti-check"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="ti ti-alert-circle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Optimized Filter Bar (Single Row) -->
+<div class="card mb-3">
+    <div class="card-body py-3">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-icon">
+                    <span class="input-icon-addon">
+                        <i class="ti ti-search text-muted"></i>
+                    </span>
+                    <input type="text" id="resource-search" class="form-control" placeholder="Search by title, description..." />
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <select id="category-select" class="form-select">
+                    <option value="">All Categories</option>
+                    @{
+                        var categories = ViewBag.Categories as IEnumerable<Career_Guidance_Platform.Models.Category>;
+                    }
+                    @if (categories != null)
+                    {
+                        foreach (var category in categories)
+                        {
+                            <option value="@category.Id">
+                                @category.Name
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <select id="skill-select" class="form-select">
+                    <option value="">All Skills</option>
+                    @{
+                        var skills = ViewBag.Skills as IEnumerable<Career_Guidance_Platform.Models.Skill>;
+                    }
+                    @if (skills != null)
+                    {
+                        foreach (var skill in skills)
+                        {
+                            <option value="@skill.Id">
+                                @skill.Name
+                            </option>
+                        }
+                    }
+                </select>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Optimized Resources Table -->
+<div class="card mt-2">
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table align-middle">
+            <thead>
+                <tr>
+                    <th>Resource Details</th>
+                    <th width="120">Type</th>
+                    <th>Category & Skill</th>
+                    <th>Hierarchy</th>
+                    <th width="100">Status</th>
+                    <th width="150" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr class="resource-row"
+                            data-title="@item.Title?.ToLower()"
+                            data-description="@item.Description?.ToLower()"
+                            data-category-id="@item.CategoryId"
+                            data-skill-id="@item.SkillId">
+                            <td>
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="badge bg-secondary-lt text-secondary me-2">#@item.Id</span>
+                                    <strong class="text-dark" style="font-size: 15px;">@item.Title</strong>
+                                    @if (!string.IsNullOrEmpty(item.Url))
+                                    {
+                                        <a href="@item.Url" target="_blank" class="ms-2 text-primary" title="Open Link">
+                                            <i class="ti ti-external-link small"></i>
+                                        </a>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <div class="text-muted small mb-1 text-truncate" style="max-width: 480px;">
+                                        @item.Description
+                                    </div>
+                                }
+                                <div class="text-muted small" style="font-size: 11px;">
+                                    Created by <span class="text-secondary">@item.CreatedBy</span> on @item.CreatedAt.ToString("dd/MM/yyyy")
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-blue-lt">@item.ResourceType</span>
+                            </td>
+                            <td>
+                                @if (item.Category != null)
+                                {
+                                    <div class="mb-1"><span class="badge bg-yellow-lt">@item.Category.Name</span></div>
+                                }
+                                @if (item.Skill != null)
+                                {
+                                    <div><span class="badge bg-purple-lt">@item.Skill.Name</span></div>
+                                }
+                                @if (item.Category == null && item.Skill == null)
+                                {
+                                    <span class="text-muted small">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.ParentResource != null)
+                                {
+                                    <div class="small text-secondary">Child of:</div>
+                                    <div class="font-weight-medium small text-truncate" style="max-width: 150px;" title="@item.ParentResource.Title">
+                                        @item.ParentResource.Title
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-lt text-secondary">Independent</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Status == 1)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-list flex-nowrap justify-content-end">
+                                    <a asp-controller="Admin"
+                                       asp-action="EditResource"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="ti ti-edit"></i> Edit
+                                    </a>
+                                    <a asp-controller="Admin"
+                                       asp-action="DeleteResource"
+                                       asp-route-id="@item.Id"
+                                       class="btn btn-sm btn-outline-danger">
+                                        <i class="ti ti-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No resources found matching the criteria.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        <span id="entryText">
+            Showing 1 to 10 of @(Model?.Count() ?? 0) entries
+        </span>
+        <ul class="pagination m-0 ms-auto" id="pagination-ul">
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById('resource-search');
+            const categorySelect = document.getElementById('category-select');
+            const skillSelect = document.getElementById('skill-select');
+            const rows = document.querySelectorAll('.resource-row');
+
+            let currentPage = 1;
+            const pageSize = 5;
+
+            function filterAndPaginateResources(resetPage = false) {
+                if (resetPage === true) {
+                    currentPage = 1;
+                }
+
+                const query = searchInput.value.toLowerCase().trim();
+                const categoryId = categorySelect.value;
+                const skillId = skillSelect.value;
+
+                const matchedRows = [];
+
+                rows.forEach(row => {
+                    const title = row.getAttribute('data-title') || '';
+                    const description = row.getAttribute('data-description') || '';
+                    const rowCategoryId = row.getAttribute('data-category-id') || '';
+                    const rowSkillId = row.getAttribute('data-skill-id') || '';
+
+                    const matchesSearch = !query || 
+                        title.includes(query) || 
+                        description.includes(query);
+
+                    const matchesCategory = !categoryId || rowCategoryId === categoryId;
+                    const matchesSkill = !skillId || rowSkillId === skillId;
+
+                    if (matchesSearch && matchesCategory && matchesSkill) {
+                        matchedRows.push(row);
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const totalItems = matchedRows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                matchedRows.forEach((row, index) => {
+                    if (index >= startIdx && index < endIdx) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update entry text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} tài nguyên`;
+
+                // Render pagination
+                const paginationUl = document.getElementById('pagination-ul');
+                if (paginationUl) {
+                    paginationUl.innerHTML = '';
+
+                    // Prev Button
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                    if (currentPage > 1) {
+                        prevLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            filterAndPaginateResources();
+                        });
+                    }
+                    paginationUl.appendChild(prevLi);
+
+                    // Page buttons
+                    const maxButtons = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                        li.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage = i;
+                            filterAndPaginateResources();
+                        });
+                        paginationUl.appendChild(li);
+                    }
+
+                    // Next Button
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                    if (currentPage < totalPages) {
+                        nextLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            filterAndPaginateResources();
+                        });
+                    }
+                    paginationUl.appendChild(nextLi);
+                }
+            }
+
+            searchInput.addEventListener('input', () => filterAndPaginateResources(true));
+            categorySelect.addEventListener('change', () => filterAndPaginateResources(true));
+            skillSelect.addEventListener('change', () => filterAndPaginateResources(true));
+
+            // Initial run
+            filterAndPaginateResources(true);
+        });
+    </script>
+}

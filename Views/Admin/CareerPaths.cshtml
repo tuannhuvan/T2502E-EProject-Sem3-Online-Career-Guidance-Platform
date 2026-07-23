@@ -1,0 +1,252 @@
+@model IEnumerable<Career_Guidance_Platform.Models.CareerPath>
+
+@{
+    ViewData["Title"] = "Quản lý Career Paths";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Quản lý Career Paths</h2>
+            <div class="text-muted mt-1">Danh sách lộ trình nghề nghiệp trong hệ thống</div>
+        </div>
+        <div class="col-auto">
+            <a asp-controller="Admin" asp-action="CreateCareerPath" class="btn btn-primary">
+                <i class="ti ti-plus me-1"></i>
+                Thêm Career Path
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3 mb-3">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-9">
+                <input id="path-search" class="form-control"
+                       placeholder="Tìm kiếm theo tên lộ trình, nội dung hoặc danh mục..." />
+            </div>
+
+            <div class="col-md-3">
+                <select id="status-select" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Career Path</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                    <tr class="path-row"
+                        data-title="@item.Title?.ToLower()"
+                        data-content="@item.Content?.ToLower()"
+                        data-category="@item.Category?.Name?.ToLower()"
+                        data-status="@(item.Status == 1 ? "active" : "inactive")">
+                    <td>@item.Id</td>
+                    <td>
+                        <strong style="font-size: 15px; color: #1e293b;">@item.Title</strong>
+                        <div class="text-muted small my-1">
+                            @(item.Content?.Length > 120 ? item.Content.Substring(0, 120) + "..." : item.Content)
+                        </div>
+                        <div class="d-flex gap-2 mt-1">
+                            <span class="badge bg-purple-lite text-purple">
+                                <i class="ti ti-timeline me-1"></i> @(ViewBag.StageCounts.ContainsKey(item.Id) ? ViewBag.StageCounts[item.Id] : 0) Giai đoạn
+                            </span>
+                            <span class="badge bg-indigo-lite text-indigo">
+                                <i class="ti ti-bulb me-1"></i> @(ViewBag.SkillCounts.ContainsKey(item.Id) ? ViewBag.SkillCounts[item.Id] : 0) Kỹ năng yêu cầu
+                            </span>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-azure-lite text-azure">@item.Category?.Name</span></td>
+                    <td>
+                        @if (item.Status == 1)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-controller="CareerPath"
+                           asp-action="Details"
+                           asp-route-id="@item.Id"
+                           class="btn btn-sm btn-info">
+                            View
+                        </a>
+
+                        <a asp-controller="Admin"
+                           asp-action="EditCareerPath"
+                           asp-route-id="@item.Id"
+                           class="btn btn-sm btn-warning">
+                            Edit
+                        </a>
+
+                        <form asp-controller="Admin"
+                              asp-action="DeleteCareerPath"
+                              asp-route-id="@item.Id"
+                              method="post"
+                              style="display:inline;"
+                              onsubmit="return confirm('Bạn có chắc muốn xóa Career Path này?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        <span id="entryText">
+            Showing 1 to 10 of @(Model?.Count() ?? 0) entries
+        </span>
+        <ul class="pagination m-0 ms-auto" id="pagination-ul">
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById('path-search');
+            const statusSelect = document.getElementById('status-select');
+            const rows = document.querySelectorAll('.path-row');
+
+            let currentPage = 1;
+            const pageSize = 5;
+
+            function filterAndPaginatePaths(resetPage = false) {
+                if (resetPage === true) {
+                    currentPage = 1;
+                }
+
+                const query = searchInput.value.toLowerCase().trim();
+                const status = statusSelect.value;
+
+                const matchedRows = [];
+
+                rows.forEach(row => {
+                    const title = row.getAttribute('data-title') || '';
+                    const content = row.getAttribute('data-content') || '';
+                    const category = row.getAttribute('data-category') || '';
+                    const pathStatus = row.getAttribute('data-status') || '';
+
+                    const matchesSearch = !query || 
+                        title.includes(query) || 
+                        content.includes(query) || 
+                        category.includes(query);
+
+                    const matchesStatus = !status || pathStatus === status;
+
+                    if (matchesSearch && matchesStatus) {
+                        matchedRows.push(row);
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const totalItems = matchedRows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                matchedRows.forEach((row, index) => {
+                    if (index >= startIdx && index < endIdx) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update entry text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} lộ trình`;
+
+                // Render pagination
+                const paginationUl = document.getElementById('pagination-ul');
+                if (paginationUl) {
+                    paginationUl.innerHTML = '';
+
+                    // Prev Button
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                    if (currentPage > 1) {
+                        prevLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            filterAndPaginatePaths();
+                        });
+                    }
+                    paginationUl.appendChild(prevLi);
+
+                    // Page buttons
+                    const maxButtons = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                        li.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage = i;
+                            filterAndPaginatePaths();
+                        });
+                        paginationUl.appendChild(li);
+                    }
+
+                    // Next Button
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                    if (currentPage < totalPages) {
+                        nextLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            filterAndPaginatePaths();
+                        });
+                    }
+                    paginationUl.appendChild(nextLi);
+                }
+            }
+
+            searchInput.addEventListener('input', () => filterAndPaginatePaths(true));
+            statusSelect.addEventListener('change', () => filterAndPaginatePaths(true));
+
+            // Initial run
+            filterAndPaginatePaths(true);
+        });
+    </script>
+}

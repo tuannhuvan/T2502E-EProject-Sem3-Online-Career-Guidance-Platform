@@ -1,0 +1,162 @@
+@model Resource
+
+@{
+    ViewData["Title"] = "Xóa Resource";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="fas fa-trash"></i> Xóa Resource</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card border-danger shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Xác nhận xóa Resource
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Bạn có chắc chắn muốn xóa resource sau không?</p>
+
+                    <div class="alert alert-info">
+                        <dl class="row">
+                            <dt class="col-sm-4"><strong>ID:</strong></dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-secondary">@Model?.Id</span>
+                            </dd>
+
+                            <dt class="col-sm-4"><strong>Tên:</strong></dt>
+                            <dd class="col-sm-8">@Model?.Title</dd>
+
+                            <dt class="col-sm-4"><strong>Loại:</strong></dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-info text-dark">@Model?.ResourceType</span>
+                            </dd>
+
+                            <dt class="col-sm-4"><strong>Danh mục:</strong></dt>
+                            <dd class="col-sm-8">
+                                @if (Model?.Category != null)
+                                {
+                                    <span class="badge bg-warning text-dark">@Model?.Category.Name</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </dd>
+
+                            @if (!string.IsNullOrEmpty(Model?.Description))
+                            {
+                                <dt class="col-sm-4"><strong>Mô tả:</strong></dt>
+                                <dd class="col-sm-8">
+                                    <p class="mb-0 text-muted">@Model?.Description</p>
+                                </dd>
+                            }
+
+                            <dt class="col-sm-4"><strong>Tạo bởi:</strong></dt>
+                            <dd class="col-sm-8">
+                                <small class="text-muted">
+                                    @Model?.CreatedBy - @Model?.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </small>
+                            </dd>
+                        </dl>
+                    </div>
+
+                    @if (Model?.ChildResources != null && Model.ChildResources.Any())
+                    {
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-ban"></i> ⚠️ Không thể xóa</h6>
+                            <p class="mb-2">
+                                Resource này có <strong>@Model.ChildResources.Count resource con</strong> liên kết:
+                            </p>
+                            <ul class="mb-0">
+                                @foreach (var child in Model.ChildResources.Take(5))
+                                {
+                                    <li>@child.Title</li>
+                                }
+                                @if (Model.ChildResources.Count > 5)
+                                {
+                                    <li><em>... và @(Model.ChildResources.Count - 5) resource khác</em></li>
+                                }
+                            </ul>
+                            <p class="mt-2 mb-0 text-muted">
+                                <strong>Vui lòng xóa các resource con trước khi xóa resource cha.</strong>
+                            </p>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="@Url.Action("Index")" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <form method="post" action="@Url.Action("DeleteConfirmed")">
+                            <input type="hidden" name="id" value="@Model?.Id" />
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="fas fa-trash"></i> Xóa Resource
+                                </button>
+                                <a href="@Url.Action("Index")" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-times"></i> Hủy
+                                </a>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="col-lg-6">
+            <div class="card bg-light shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Lưu ý</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Về việc xóa Resource:</h6>
+                    <ul class="text-muted">
+                        <li>Hành động này <strong>không thể hoàn tác</strong></li>
+                        <li>Nếu resource có con, bạn phải xóa chúng trước</li>
+                        <li>Dữ liệu sẽ bị xóa vĩnh viễn khỏi database</li>
+                    </ul>
+
+                    <hr />
+
+                    <h6>Resource liên quan:</h6>
+                    @if (Model?.ParentResource != null)
+                    {
+                        <div class="alert alert-info">
+                            <strong>Resource Cha:</strong>
+                            <br />
+                            <a href="@Url.Action("Details", new { id = Model.ParentResource.Id })">
+                                @Model.ParentResource.Title
+                            </a>
+                        </div>
+                    }
+                    @if (Model?.ChildResources != null && Model.ChildResources.Any())
+                    {
+                        <div class="alert alert-warning">
+                            <strong>Resource Con:</strong>
+                            <ul class="mb-0">
+                                @foreach (var child in Model.ChildResources)
+                                {
+                                    <li>
+                                        <a href="@Url.Action("Details", new { id = child.Id })">
+                                            @child.Title
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

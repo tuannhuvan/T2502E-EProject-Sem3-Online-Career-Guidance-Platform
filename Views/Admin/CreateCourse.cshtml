@@ -1,0 +1,58 @@
+@model Career_Guidance_Platform.Models.CareerPathCourse
+
+@{
+    ViewData["Title"] = "Thêm Course";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-xl py-4">
+    <h2 class="fw-bold mb-4">Thêm Course</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form asp-controller="Admin" asp-action="CreateCourse" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label">Career Path</label>
+                    <select asp-for="CareerPathId" asp-items="ViewBag.CareerPaths" class="form-select">
+                        <option value="">-- Chọn Career Path --</option>
+                    </select>
+                    <span asp-validation-for="CareerPathId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Tên Course</label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mô tả</label>
+                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Số ngày học</label>
+                    <input asp-for="EstimatedDays" type="number" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Thứ tự</label>
+                    <input asp-for="SortOrder" type="number" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Lưu</button>
+                <a asp-controller="Admin" asp-action="Courses" class="btn btn-secondary">Quay lại</a>
+            </form>
+        </div>
+    </div>
+</div>

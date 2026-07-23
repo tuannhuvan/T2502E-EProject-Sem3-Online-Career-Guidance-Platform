@@ -1,53 +1,559 @@
-﻿@{
-    ViewData["Title"] = "Việc làm";
+@model IEnumerable<Career_Guidance_Platform.Models.JobPosting>
+@{
+    ViewData["Title"] = "Bảng tin Việc làm cá nhân hóa";
+    var resumes = ViewBag.Resumes as List<Career_Guidance_Platform.Models.Resume> ?? new List<Career_Guidance_Platform.Models.Resume>();
+    var appliedJobIds = ViewBag.AppliedJobIds as List<int> ?? new List<int>();
+    var savedJobIds = ViewBag.SavedJobIds as List<int> ?? new List<int>();
+    var recPathId = ViewBag.RecommendedPathId as int?;
 }
 
-<section class="page-hero">
+<style>
+    /* Premium Jobs & Pagination Styling */
+    .job-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 28px;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+    }
+    .job-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        border-color: #cbd5e1;
+    }
+    .job-card.recommended {
+        background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+        border-left: 4px solid #6366f1;
+        border-color: #c7d2fe;
+    }
+    .job-badge {
+        font-size: 11px;
+        font-weight: 700;
+        color: #475569;
+        background: #f1f5f9;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .job-badge.path-badge {
+        background: #eef2ff;
+        color: #4f46e5;
+        border-color: #e0e7ff;
+    }
+    .job-badge.recommend-badge {
+        background: #f5f3ff;
+        color: #7c3aed;
+        border-color: #ddd6fe;
+        position: absolute;
+        right: 28px;
+        top: 28px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .job-title {
+        font-size: 22px;
+        color: #0f172a;
+        margin: 8px 0;
+        font-weight: 800;
+        line-height: 1.3;
+        transition: color 0.2s;
+    }
+    .job-title:hover {
+        color: #4f46e5;
+    }
+    .job-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        font-size: 13.5px;
+        color: #475569;
+        margin-bottom: 16px;
+        align-items: center;
+    }
+    .job-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .job-meta .salary {
+        color: #059669;
+        font-weight: 700;
+        background: #ecfdf5;
+        padding: 2px 8px;
+        border-radius: 6px;
+    }
+    .job-desc {
+        font-size: 14.5px;
+        color: #64748b;
+        line-height: 1.6;
+        margin: 0 0 20px;
+    }
+    .job-footer {
+        border-top: 1px dashed #e2e8f0;
+        padding-top: 18px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+    }
+    .apply-btn {
+        background: #4f46e5;
+        color: #ffffff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    }
+    .apply-btn:hover {
+        background: #4338ca;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+    }
+    .applied-btn {
+        background: #f1f5f9;
+        color: #94a3b8;
+        border: 1px solid #e2e8f0;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: not-allowed;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .page-btn {
+        padding: 10px 18px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        background: #ffffff;
+        color: #475569;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .page-btn:hover:not(:disabled) {
+        border-color: #4f46e5;
+        color: #4f46e5;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .page-btn.active {
+        background: #4f46e5;
+        color: #ffffff;
+        border-color: #4f46e5;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+    .page-btn:disabled {
+        background: #f8fafc;
+        color: #cbd5e1;
+        border-color: #e2e8f0;
+        cursor: not-allowed;
+    }
+</style>
 
-    <span class="page-badge">💼 Jobs</span>
-
-    <h1>Việc làm & Thực tập</h1>
-
-    <p>
-        Kết nối với các cơ hội nghề nghiệp phù hợp.
-    </p>
-
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
+    <span class="page-badge">💼 Personalized Job Board</span>
+    <h1>Việc làm đề xuất cho bạn</h1>
+    <p>Khám phá các cơ hội nghề nghiệp thực tế được đề xuất và tối ưu hóa dựa trên lộ trình kỹ năng của bạn.</p>
 </section>
 
-<section class="content-section">
-
-    <div class="faq-list">
-
-        <div class="faq-item">
-
-            <h3>Junior .NET Developer</h3>
-
-            <p>
-                Công ty ABC - Hà Nội
-            </p>
-
+<section class="content-section" style="max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
+    @if (TempData["ApplySuccess"] != null)
+    {
+        <div style="background: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; padding: 16px 24px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; box-shadow: 0 4px 12px rgba(21, 128, 61, 0.05);">
+            🎉 @TempData["ApplySuccess"]
         </div>
-
-        <div class="faq-item">
-
-            <h3>Frontend React Intern</h3>
-
-            <p>
-                Công ty XYZ - Hồ Chí Minh
-            </p>
-
+    }
+    @if (TempData["ApplyWarning"] != null)
+    {
+        <div style="background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c; padding: 16px 24px; border-radius: 12px; margin-bottom: 24px; font-weight: 600; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.05);">
+            ⚠️ @TempData["ApplyWarning"]
         </div>
+    }
 
-        <div class="faq-item">
-
-            <h3>UI/UX Designer</h3>
-
-            <p>
-                Startup DEF - Remote
-            </p>
-
+    <!-- Automatic Filter Bar -->
+    <div class="info-card print-hide" style="padding: 24px; border-radius: 24px; border: 1px solid #e2e8f0; background: #ffffff; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px;">Tìm kiếm từ khóa</label>
+                <input type="text" id="searchKeyword" placeholder="Tiêu đề, công ty, mô tả..." style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14px; outline: none; transition: 0.2s;" />
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px;">Lộ trình nghề nghiệp</label>
+                <select id="filterCareerPath" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14px; background: white; outline: none;">
+                    <option value="">Tất cả lộ trình</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px;">Hình thức làm việc</label>
+                <select id="filterJobType" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14px; background: white; outline: none;">
+                    <option value="">Tất cả hình thức</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px;">Địa điểm</label>
+                <select id="filterLocation" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 14px; background: white; outline: none;">
+                    <option value="">Tất cả địa điểm</option>
+                </select>
+            </div>
         </div>
-
     </div>
 
+    <div id="jobListContainer" style="display: flex; flex-direction: column; gap: 24px;">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var job in Model)
+            {
+                var isRecommended = recPathId.HasValue && job.CareerPathId == recPathId.Value;
+                var isApplied = appliedJobIds.Contains(job.Id);
+
+                <div class="job-item job-card @(isRecommended ? "recommended" : "")" 
+                     data-title="@job.Title"
+                     data-company="@job.CompanyName"
+                     data-careerpath="@(job.CareerPath?.Title ?? "")"
+                     data-location="@job.Location"
+                     data-jobtype="@job.JobType"
+                     data-description="@job.Description">
+                    
+                    @if (isRecommended)
+                    {
+                        <span class="job-badge recommend-badge">
+                            ✨ Phù hợp nhất
+                        </span>
+                    }
+
+                    <div>
+                        <span class="job-badge path-badge">
+                            @(job.CareerPath?.Title ?? "Tổng quan")
+                        </span>
+                        
+                        <h3 class="job-title">@job.Title</h3>
+                        
+                        <div class="job-meta">
+                            <span style="font-weight: 600; color: #020617;">🏢 @job.CompanyName</span>
+                            <span>📍 @job.Location</span>
+                            <span>💼 @job.JobType</span>
+                            <span>⏱ @job.ExperienceLevel</span>
+                            @if (job.Salary > 0)
+                            {
+                                <span class="salary">💰 @job.Salary.ToString("N0") VNĐ</span>
+                            }
+                        </div>
+
+                        <p class="job-desc">
+                            @job.Description
+                        </p>
+                    </div>
+
+                    <div class="job-footer" style="display: flex; gap: 10px; align-items: center;">
+                        @{
+                            var isSaved = savedJobIds.Contains(job.Id);
+                        }
+                        <button type="button" class="btn-save-job" onclick="toggleSaveJob(this, @job.Id)" style="border: 1px solid @(isSaved ? "#ef4444" : "#cbd5e1"); background: transparent; padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.2s; color: @(isSaved ? "#ef4444" : "#64748b"); font-weight: 600; height: 44px; font-size: 13.5px; display: flex; align-items: center; justify-content: center;">
+                            @(isSaved ? "❤️ Đã lưu" : "🤍 Lưu tin")
+                        </button>
+
+                        @if (isApplied)
+                        {
+                            <button class="applied-btn" disabled style="height: 44px; margin: 0;">
+                                ✓ Đã ứng tuyển
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="apply-btn" onclick="openApplyModal(@job.Id, '@job.Title', '@job.CompanyName')" style="height: 44px; margin: 0;">
+                                Ứng tuyển ngay
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        
+        <div id="noJobsAlert" class="info-card" style="display: none; text-align: center; padding: 50px; width: 100%;">
+            <p style="color: #64748b; font-style: italic; margin: 0;">Không tìm thấy công việc nào phù hợp với bộ lọc của bạn.</p>
+        </div>
+    </div>
+
+    <!-- Pagination Container -->
+    <div id="paginationContainer" style="display: flex; justify-content: center; gap: 8px; margin-top: 32px; align-items: center;">
+    </div>
 </section>
+
+<!-- Apply Job Modal -->
+<div id="applyModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div class="info-card" style="background-color: #ffffff; padding: 32px; border-radius: 24px; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); margin: auto;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 20px; color: #0f172a; font-weight: 800;">Ứng tuyển Việc làm</h3>
+            <span style="font-size: 24px; color: #94a3b8; cursor: pointer; font-weight: 700;" onclick="closeApplyModal()">&times;</span>
+        </div>
+
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <form asp-controller="Home" asp-action="ApplyJob" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="applyJobPostingId" name="jobPostingId" value="" />
+
+                <div style="margin-bottom: 18px;">
+                    <p style="font-size: 14.5px; color: #475569; margin: 0 0 4px;">Vị trí tuyển dụng:</p>
+                    <strong id="applyJobTitle" style="font-size: 16px; color: #0f172a; display: block; margin-bottom: 10px;">...</strong>
+                    <span id="applyCompanyName" style="font-size: 14px; color: #64748b;">...</span>
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                    <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Chọn CV để ứng tuyển</label>
+                    @if (resumes.Any())
+                    {
+                        <select name="resumeId" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white;">
+                            @foreach (var res in resumes)
+                            {
+                                <option value="@res.Id">@res.Title (Tạo ngày @res.CreatedAt.ToString("dd/MM/yyyy"))</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        <div style="background: #fffbeb; border: 1px solid #fef3c7; padding: 12px 16px; border-radius: 8px; font-size: 13px; color: #b45309; line-height: 1.5; margin-bottom: 10px;">
+                            ⚠️ Bạn chưa có CV nào lưu trong hệ thống. Hãy tạo CV trước khi ứng tuyển.
+                        </div>
+                        <a asp-controller="Home" asp-action="ResumeBuilder" class="btn secondary-btn" style="display: inline-block; font-size: 13px; text-decoration: none; padding: 8px 16px;">Tới trang Tạo CV ngay →</a>
+                    }
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Thư giới thiệu (Không bắt buộc)</label>
+                    <textarea name="notes" placeholder="Giới thiệu bản thân ngắn gọn hoặc lý do bạn phù hợp với công việc này..." style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 80px; resize: vertical;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn secondary-btn" style="border-radius: 10px; font-weight: 700; padding: 10px 20px;" onclick="closeApplyModal()">Hủy bỏ</button>
+                    @if (resumes.Any())
+                    {
+                        <button type="submit" class="btn" style="background: #4f46e5; color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 700; cursor: pointer;">Gửi đơn ứng tuyển</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn" disabled style="background: #cbd5e1; color: #64748b; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 700; cursor: not-allowed;">Gửi đơn ứng tuyển</button>
+                    }
+                </div>
+            </form>
+        }
+        else
+        {
+            <div style="text-align: center; padding: 10px 0;">
+                <p style="font-size: 15px; color: #475569; margin-bottom: 20px;">Vui lòng đăng nhập tài khoản học viên để ứng tuyển công việc này.</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <a asp-controller="Account" asp-action="Login" class="btn primary-btn" style="padding: 10px 24px; text-decoration: none;">Đăng nhập</a>
+                    <button type="button" class="btn secondary-btn" style="padding: 10px 20px;" onclick="closeApplyModal()">Đóng</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    function openApplyModal(jobId, jobTitle, companyName) {
+        document.getElementById("applyJobPostingId").value = jobId;
+        document.getElementById("applyJobTitle").textContent = jobTitle;
+        document.getElementById("applyCompanyName").textContent = "Công ty: " + companyName;
+        document.getElementById("applyModal").style.display = "flex";
+    }
+
+    function closeApplyModal() {
+        document.getElementById("applyModal").style.display = "none";
+    }
+
+    // Close when clicking outside modal
+    window.onclick = function(event) {
+        var modal = document.getElementById("applyModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const jobElements = Array.from(document.querySelectorAll(".job-item"));
+        const searchInput = document.getElementById("searchKeyword");
+        const careerPathSelect = document.getElementById("filterCareerPath");
+        const jobTypeSelect = document.getElementById("filterJobType");
+        const locationSelect = document.getElementById("filterLocation");
+        const paginationContainer = document.getElementById("paginationContainer");
+        const noJobsAlert = document.getElementById("noJobsAlert");
+
+        const pageSize = 3;
+        let currentPage = 1;
+        let filteredJobs = [...jobElements];
+
+        // Populate dropdown filters dynamically from the existing jobs on page load
+        const careerPaths = new Set();
+        const jobTypes = new Set();
+        const locations = new Set();
+
+        jobElements.forEach(el => {
+            const cp = el.getAttribute("data-careerpath");
+            const jt = el.getAttribute("data-jobtype");
+            const loc = el.getAttribute("data-location");
+            if (cp) careerPaths.add(cp);
+            if (jt) jobTypes.add(jt);
+            if (loc) locations.add(loc);
+        });
+
+        careerPaths.forEach(cp => {
+            const opt = document.createElement("option");
+            opt.value = cp;
+            opt.textContent = cp;
+            careerPathSelect.appendChild(opt);
+        });
+
+        jobTypes.forEach(jt => {
+            const opt = document.createElement("option");
+            opt.value = jt;
+            opt.textContent = jt;
+            jobTypeSelect.appendChild(opt);
+        });
+
+        locations.forEach(loc => {
+            const opt = document.createElement("option");
+            opt.value = loc;
+            opt.textContent = loc;
+            locationSelect.appendChild(opt);
+        });
+
+        function filterJobs() {
+            const query = searchInput.value.toLowerCase().trim();
+            const cpVal = careerPathSelect.value;
+            const jtVal = jobTypeSelect.value;
+            const locVal = locationSelect.value;
+
+            filteredJobs = jobElements.filter(el => {
+                const title = el.getAttribute("data-title").toLowerCase();
+                const company = el.getAttribute("data-company").toLowerCase();
+                const desc = el.getAttribute("data-description").toLowerCase();
+                const cp = el.getAttribute("data-careerpath");
+                const jt = el.getAttribute("data-jobtype");
+                const loc = el.getAttribute("data-location");
+
+                const matchesSearch = !query || title.includes(query) || company.includes(query) || desc.includes(query);
+                const matchesCP = !cpVal || cp === cpVal;
+                const matchesJT = !jtVal || jt === jtVal;
+                const matchesLoc = !locVal || loc === locVal;
+
+                return matchesSearch && matchesCP && matchesJT && matchesLoc;
+            });
+
+            currentPage = 1;
+            updateUI();
+        }
+
+        // Add event listeners to trigger filter automatically
+        searchInput.addEventListener("input", filterJobs);
+        careerPathSelect.addEventListener("change", filterJobs);
+        jobTypeSelect.addEventListener("change", filterJobs);
+        locationSelect.addEventListener("change", filterJobs);
+
+        function updateUI() {
+            if (filteredJobs.length === 0) {
+                if (noJobsAlert) noJobsAlert.style.display = "block";
+                paginationContainer.innerHTML = "";
+                jobElements.forEach(el => el.style.display = "none");
+                return;
+            } else {
+                if (noJobsAlert) noJobsAlert.style.display = "none";
+            }
+
+            const totalPages = Math.ceil(filteredJobs.length / pageSize);
+
+            // Hide all jobs first
+            jobElements.forEach(el => el.style.display = "none");
+
+            // Show jobs for the current page
+            const startIdx = (currentPage - 1) * pageSize;
+            const endIdx = startIdx + pageSize;
+            const pageJobs = filteredJobs.slice(startIdx, endIdx);
+            pageJobs.forEach(el => el.style.display = "block");
+
+            // Render pagination buttons
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            paginationContainer.innerHTML = "";
+
+            function createBtn(text, page, isActive = false, isDisabled = false) {
+                const btn = document.createElement("button");
+                btn.textContent = text;
+                btn.type = "button";
+                btn.className = "page-btn";
+
+                if (isActive) {
+                    btn.classList.add("active");
+                }
+
+                if (isDisabled) {
+                    btn.disabled = true;
+                } else if (!isActive) {
+                    btn.addEventListener("click", () => {
+                        currentPage = page;
+                        updateUI();
+                        // Scroll to top of listing smoothly on page change
+                        window.scrollTo({ top: document.getElementById("jobListContainer").offsetTop - 100, behavior: 'smooth' });
+                    });
+                }
+                return btn;
+            }
+
+            paginationContainer.appendChild(createBtn("‹ Trước", currentPage - 1, false, currentPage === 1));
+
+            for (let i = 1; i <= totalPages; i++) {
+                paginationContainer.appendChild(createBtn(i, i, i === currentPage));
+            }
+
+            paginationContainer.appendChild(createBtn("Sau ›", currentPage + 1, false, currentPage === totalPages));
+        }
+
+        window.toggleSaveJob = function(btn, jobId) {
+            fetch("/Home/ToggleSaveJob?jobPostingId=" + jobId, {
+                method: "POST"
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.isSaved) {
+                        btn.innerHTML = "❤️ Đã lưu";
+                        btn.style.borderColor = "#ef4444";
+                        btn.style.color = "#ef4444";
+                        showToast("Đã lưu việc làm thành công!", "success");
+                    } else {
+                        btn.innerHTML = "🤍 Lưu tin";
+                        btn.style.borderColor = "#cbd5e1";
+                        btn.style.color = "#64748b";
+                        showToast("Đã bỏ lưu việc làm.", "info");
+                    }
+                } else {
+                    showToast("Vui lòng đăng nhập để lưu công việc.", "warning");
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi lưu việc làm:", err);
+                showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+            });
+        };
+
+        // Initial load
+        updateUI();
+    });
+</script>

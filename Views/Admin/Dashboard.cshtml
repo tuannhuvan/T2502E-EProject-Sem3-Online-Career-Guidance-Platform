@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Dashboard";
 }
@@ -23,8 +23,8 @@
         <div class="card">
             <div class="card-body">
                 <div class="subheader">Total Users</div>
-                <div class="h1 mb-2">1,240</div>
-                <div class="text-success"><i class="ti ti-trending-up"></i> +12% this month</div>
+                <div class="h1 mb-2">@ViewBag.TotalUsers</div>
+                <div class="text-success"><i class="ti ti-trending-up"></i> Registered members</div>
             </div>
         </div>
     </div>
@@ -33,8 +33,8 @@
         <div class="card">
             <div class="card-body">
                 <div class="subheader">Mentors</div>
-                <div class="h1 mb-2">86</div>
-                <div class="text-muted">24 verified mentors</div>
+                <div class="h1 mb-2">@ViewBag.TotalMentors</div>
+                <div class="text-muted">@ViewBag.VerifiedMentors verified mentors</div>
             </div>
         </div>
     </div>
@@ -43,7 +43,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="subheader">Career Tests</div>
-                <div class="h1 mb-2">3,420</div>
+                <div class="h1 mb-2">@ViewBag.TotalTests</div>
                 <div class="text-success">Completed tests</div>
             </div>
         </div>
@@ -53,8 +53,22 @@
         <div class="card">
             <div class="card-body">
                 <div class="subheader">Jobs Posted</div>
-                <div class="h1 mb-2">312</div>
+                <div class="h1 mb-2">@ViewBag.TotalJobs</div>
                 <div class="text-muted">Active job listings</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-primary-subtle" style="background: #f8fafc;">
+            <div class="card-body">
+                <div class="subheader text-primary fw-bold">Đơn ứng tuyển mới</div>
+                <div class="h1 mb-2 text-primary">@ViewBag.PendingApplicationsCount</div>
+                <div>
+                    <a asp-controller="Admin" asp-action="JobApplications" class="text-primary text-decoration-none small fw-bold">
+                        <i class="ti ti-arrow-right me-1"></i> Xem đơn ứng tuyển →
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -80,18 +94,23 @@
             </div>
 
             <div class="list-group list-group-flush">
-                <div class="list-group-item d-flex justify-content-between">
-                    Software Engineer <span class="badge bg-blue-lt">420</span>
-                </div>
-                <div class="list-group-item d-flex justify-content-between">
-                    UI/UX Designer <span class="badge bg-purple-lt">310</span>
-                </div>
-                <div class="list-group-item d-flex justify-content-between">
-                    Business Analyst <span class="badge bg-green-lt">180</span>
-                </div>
-                <div class="list-group-item d-flex justify-content-between">
-                    Data Analyst <span class="badge bg-yellow-lt">120</span>
-                </div>
+                @{
+                    var labels = ViewBag.PathLabels as List<string>;
+                    var counts = ViewBag.PathCounts as List<int>;
+                }
+                @if (labels != null && counts != null && labels.Count > 0)
+                {
+                    for (int i = 0; i < labels.Count; i++)
+                    {
+                        <div class="list-group-item d-flex justify-content-between">
+                            @labels[i] <span class="badge bg-blue-lt">@counts[i]</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="list-group-item text-muted text-center py-3">No career test data available.</div>
+                }
             </div>
         </div>
     </div>
@@ -115,21 +134,113 @@
             </thead>
 
             <tbody>
-            <tr>
-                <td>Nguyễn Minh Anh</td>
-                <td>Software Engineer</td>
-                <td><span class="badge bg-green-lt">92%</span></td>
-                <td><span class="badge bg-blue-lt">Completed</span></td>
-                <td>12/06/2026</td>
-            </tr>
+            @{
+                var recentResults = ViewBag.RecentResults as List<TestResult>;
+            }
+            @if (recentResults != null && recentResults.Any())
+            {
+                foreach (var tr in recentResults)
+                {
+                    <tr>
+                        <td>@(tr.User?.FullName ?? "Anonymous")</td>
+                        <td>@(tr.RecommendedCareerPath?.Title ?? "None")</td>
+                        <td><span class="badge bg-green-lt">@((tr.CompatibilityScore ?? 0).ToString("0"))%</span></td>
+                        <td><span class="badge bg-blue-lt">@(tr.Status == 1 ? "Completed" : "Pending")</span></td>
+                        <td>@tr.DateTaken.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-3">No test results found.</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
 
+<!-- Recent Job Applications Feed -->
+<div class="card mt-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0">💼 Hồ sơ ứng tuyển việc làm mới nhất</h3>
+        <a asp-controller="Admin" asp-action="JobApplications" class="btn btn-sm btn-outline-primary">
+            Xem tất cả đơn ứng tuyển →
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
             <tr>
-                <td>Trần Hà Linh</td>
-                <td>UI/UX Designer</td>
-                <td><span class="badge bg-green-lt">84%</span></td>
-                <td><span class="badge bg-blue-lt">Completed</span></td>
-                <td>12/06/2026</td>
+                <th>Ứng viên</th>
+                <th>Vị trí tuyển dụng</th>
+                <th>Công ty</th>
+                <th>Ngày ứng tuyển</th>
+                <th>Trạng thái</th>
+                <th class="text-end">Hành động</th>
             </tr>
+            </thead>
+
+            <tbody>
+            @{
+                var recentApps = ViewBag.RecentApplications as List<Career_Guidance_Platform.Models.JobApplication>;
+            }
+            @if (recentApps != null && recentApps.Any())
+            {
+                foreach (var app in recentApps)
+                {
+                    <tr>
+                        <td>
+                            <div class="font-weight-medium">@(app.User?.FullName ?? app.User?.Email ?? "N/A")</div>
+                            <div class="text-muted small">@app.User?.Email</div>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-dark">@(app.JobPosting?.Title ?? "N/A")</span>
+                        </td>
+                        <td>@(app.JobPosting?.CompanyName ?? "N/A")</td>
+                        <td>@app.AppliedAt.ToString("HH:mm dd/MM/yyyy")</td>
+                        <td>
+                            @if (app.Status == "Applied")
+                            {
+                                <span class="badge bg-warning-lt">Mới (Chưa duyệt)</span>
+                            }
+                            else if (app.Status == "Accepted")
+                            {
+                                <span class="badge bg-success-lt">Đã chấp nhận</span>
+                            }
+                            else if (app.Status == "Rejected")
+                            {
+                                <span class="badge bg-danger-lt">Đã từ chối</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary-lt">@app.Status</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-list flex-nowrap justify-content-end">
+                                @if (app.ResumeId.HasValue)
+                                {
+                                    <a asp-controller="Admin" asp-action="ViewResume" asp-route-id="@app.ResumeId.Value" class="btn btn-sm btn-outline-info">
+                                        📄 Xem CV
+                                    </a>
+                                }
+                                <a asp-controller="Admin" asp-action="JobApplications" asp-route-jobId="@app.JobPostingId" class="btn btn-sm btn-primary">
+                                    Xử lý
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">Chưa có đơn ứng tuyển nào.</td>
+                </tr>
+            }
             </tbody>
         </table>
     </div>
@@ -140,12 +251,24 @@
     new Chart(document.getElementById("careerChart"), {
         type: "bar",
         data: {
-            labels: ["Software", "UI/UX", "Business Analyst", "Data Analyst"],
+            labels: @Html.Raw(Json.Serialize(ViewBag.PathLabels ?? new List<string>())),
             datasets: [{
                 label: "Career Match Count",
-                data: [420, 310, 180, 120],
-                borderWidth: 1
+                data: @Html.Raw(Json.Serialize(ViewBag.PathCounts ?? new List<int>())),
+                borderWidth: 1,
+                backgroundColor: 'rgba(32, 107, 196, 0.1)',
+                borderColor: 'rgba(32, 107, 196, 1)'
             }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
         }
     });
 </script>

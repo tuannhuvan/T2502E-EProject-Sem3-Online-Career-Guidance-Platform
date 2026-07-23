@@ -1,128 +1,271 @@
-﻿@{
+@model IEnumerable<Career_Guidance_Platform.Models.MentorProfile>
+@{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Mentors";
+    ViewData["Title"] = "Quản lý Cố vấn (Mentors)";
 }
 
 <div class="page-header d-print-none mb-3">
     <div class="row g-2 align-items-center">
         <div class="col">
-            <div class="page-pretitle">Management</div>
-            <h2 class="page-title">Mentor CRUD Demo</h2>
+            <div class="page-pretitle">Hệ thống</div>
+            <h2 class="page-title">Quản lý & Duyệt Hồ sơ Cố vấn</h2>
         </div>
     </div>
 </div>
 
-<div class="row row-cards">
-    <div class="col-lg-5">
-        <form class="card">
-            <div class="card-header">
-                <h3 class="card-title">Mentor Form</h3>
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-9">
+                <input id="mentor-search" class="form-control"
+                       placeholder="Tìm kiếm theo tên, email, chuyên môn hoặc chức danh..." />
             </div>
 
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Full Name</label>
-                    <input class="form-control is-invalid" placeholder="Nguyễn Văn An" />
-                    <div class="invalid-feedback">Name is required</div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Expertise</label>
-                    <select class="form-select">
-                        <option>.NET Developer</option>
-                        <option>UI/UX Designer</option>
-                        <option>Business Analyst</option>
-                        <option>Data Analyst</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Gender</label>
-
-                    <label class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="gender" checked />
-                        <span class="form-check-label">Male</span>
-                    </label>
-
-                    <label class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="gender" />
-                        <span class="form-check-label">Female</span>
-                    </label>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Available Date</label>
-                    <input type="date" class="form-control" />
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Avatar Upload</label>
-                    <input type="file" class="form-control" />
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Bio / CKEditor Demo</label>
-                    <textarea rows="5" class="form-control">Senior mentor with 8 years of experience...</textarea>
-                </div>
-
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" checked />
-                    <span class="form-check-label">Verified Mentor</span>
-                </label>
+            <div class="col-md-3">
+                <select id="status-select" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="verified">Đã duyệt (Verified)</option>
+                    <option value="pending">Chờ duyệt (Pending)</option>
+                </select>
             </div>
-
-            <div class="card-footer text-end">
-                <button type="button" class="btn btn-secondary">Cancel</button>
-                <button type="button" class="btn btn-primary">Save Mentor</button>
-            </div>
-        </form>
+        </div>
     </div>
+</div>
 
-    <div class="col-lg-7">
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row row-cards">
+    <div class="col-lg-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Mentor List</h3>
+                <h3 class="card-title">Danh sách Đăng ký Cố vấn</h3>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-vcenter card-table">
                     <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Expertise</th>
-                        <th>Rating</th>
-                        <th>Status</th>
-                        <th></th>
+                        <th>Họ và tên</th>
+                        <th>Lĩnh vực / Chuyên môn</th>
+                        <th>Kinh nghiệm</th>
+                        <th>Điểm Đánh giá</th>
+                        <th>Trạng thái</th>
+                        <th class="w-1">Hành động</th>
                     </tr>
                     </thead>
 
                     <tbody>
-                    <tr>
-                        <td>Nguyễn Văn An</td>
-                        <td>.NET Developer</td>
-                        <td>4.9</td>
-                        <td><span class="badge bg-green-lt">Verified</span></td>
-                        <td><a class="btn btn-sm btn-outline-primary">Edit</a></td>
-                    </tr>
-
-                    <tr>
-                        <td>Trần Mai Linh</td>
-                        <td>UI/UX Designer</td>
-                        <td>4.8</td>
-                        <td><span class="badge bg-green-lt">Verified</span></td>
-                        <td><a class="btn btn-sm btn-outline-primary">Edit</a></td>
-                    </tr>
-
-                    <tr>
-                        <td>Phạm Minh Huy</td>
-                        <td>Business Analyst</td>
-                        <td>4.7</td>
-                        <td><span class="badge bg-yellow-lt">Pending</span></td>
-                        <td><a class="btn btn-sm btn-outline-primary">Edit</a></td>
-                    </tr>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var mentor in Model)
+                        {
+                            <tr class="mentor-row" 
+                                data-name="@(mentor.User?.FullName?.ToLower())" 
+                                data-email="@(mentor.User?.Email?.ToLower())"
+                                data-specialization="@(mentor.Specialization?.ToLower())"
+                                data-jobtitle="@(mentor.JobTitle?.ToLower())"
+                                data-status="@(mentor.IsVerified ? "verified" : "pending")">
+                                <td>
+                                    <div class="d-flex py-1 align-items-center">
+                                        <span class="avatar me-2" style="background-image: url(https://api.dicebear.com/7.x/initials/svg?seed=@(mentor.User?.FullName))"></span>
+                                        <div class="flex-fill">
+                                            <div class="font-weight-medium">@mentor.User?.FullName</div>
+                                            <div class="text-secondary">@mentor.User?.Email</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-weight-medium">@mentor.JobTitle</span>
+                                    <div class="text-secondary font-size-sm">@mentor.Specialization</div>
+                                </td>
+                                <td>
+                                    <div style="max-width: 250px;" class="text-truncate" title="@mentor.Biography">
+                                        @mentor.Biography
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-yellow">★</span> @mentor.Rating.ToString("0.0")
+                                </td>
+                                <td>
+                                    @if (mentor.IsVerified)
+                                    {
+                                        <span class="badge bg-green-lt">Đã duyệt (Verified)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-lt">Chờ duyệt (Pending)</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-list flex-nowrap">
+                                        @if (!mentor.IsVerified)
+                                        {
+                                            <form asp-controller="Admin" asp-action="ApproveMentor" asp-route-id="@mentor.UserId" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-success">Duyệt hồ sơ</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-controller="Admin" asp-action="RejectMentor" asp-route-id="@mentor.UserId" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Hủy duyệt</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-secondary py-4">Chưa có cố vấn nào đăng ký trên hệ thống.</td>
+                        </tr>
+                    }
                     </tbody>
                 </table>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <span id="entryText">
+                    Showing 1 to 10 of @(Model?.Count() ?? 0) entries
+                </span>
+                <ul class="pagination m-0 ms-auto" id="pagination-ul">
+                </ul>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById('mentor-search');
+            const statusSelect = document.getElementById('status-select');
+            const rows = document.querySelectorAll('.mentor-row');
+
+            let currentPage = 1;
+            const pageSize = 5;
+
+            function filterAndPaginateMentors(resetPage = false) {
+                if (resetPage === true) {
+                    currentPage = 1;
+                }
+
+                const query = searchInput.value.toLowerCase().trim();
+                const status = statusSelect.value;
+
+                const matchedRows = [];
+
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name') || '';
+                    const email = row.getAttribute('data-email') || '';
+                    const specialization = row.getAttribute('data-specialization') || '';
+                    const jobTitle = row.getAttribute('data-jobtitle') || '';
+                    const mentorStatus = row.getAttribute('data-status') || '';
+
+                    const matchesSearch = !query || 
+                        name.includes(query) || 
+                        email.includes(query) || 
+                        specialization.includes(query) || 
+                        jobTitle.includes(query);
+
+                    const matchesStatus = !status || mentorStatus === status;
+
+                    if (matchesSearch && matchesStatus) {
+                        matchedRows.push(row);
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const totalItems = matchedRows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                matchedRows.forEach((row, index) => {
+                    if (index >= startIdx && index < endIdx) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update entry text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} cố vấn`;
+
+                // Render pagination
+                const paginationUl = document.getElementById('pagination-ul');
+                if (paginationUl) {
+                    paginationUl.innerHTML = '';
+
+                    // Prev Button
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                    if (currentPage > 1) {
+                        prevLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            filterAndPaginateMentors();
+                        });
+                    }
+                    paginationUl.appendChild(prevLi);
+
+                    // Page buttons
+                    const maxButtons = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                        li.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage = i;
+                            filterAndPaginateMentors();
+                        });
+                        paginationUl.appendChild(li);
+                    }
+
+                    // Next Button
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                    if (currentPage < totalPages) {
+                        nextLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            filterAndPaginateMentors();
+                        });
+                    }
+                    paginationUl.appendChild(nextLi);
+                }
+            }
+
+            searchInput.addEventListener('input', () => filterAndPaginateMentors(true));
+            statusSelect.addEventListener('change', () => filterAndPaginateMentors(true));
+
+            // Initial run
+            filterAndPaginateMentors(true);
+        });
+    </script>
+}

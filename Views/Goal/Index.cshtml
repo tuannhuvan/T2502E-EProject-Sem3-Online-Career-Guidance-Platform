@@ -1,0 +1,306 @@
+@model List<Career_Guidance_Platform.Models.Goal>
+
+@{
+    ViewData["Title"] = "Goal Dashboard";
+
+    var goals = Model ?? new List<Career_Guidance_Platform.Models.Goal>();
+
+    var completed = ViewBag.Completed as List<Career_Guidance_Platform.Models.UserSkill>
+        ?? new List<Career_Guidance_Platform.Models.UserSkill>();
+
+    var resumes = ViewBag.Resumes as List<Career_Guidance_Platform.Models.Resume>
+        ?? new List<Career_Guidance_Platform.Models.Resume>();
+}
+
+<section class="page-hero">
+    <span class="page-badge">🎯 Goal Dashboard</span>
+    <h1>Quản lý mục tiêu nghề nghiệp</h1>
+    <p>Theo dõi mục tiêu cá nhân, kỹ năng cần hoàn thành, tiến độ học tập và đồng bộ vào CV.</p>
+</section>
+
+<section class="content-section goal-page">
+
+    <div class="goal-header">
+        <div>
+            <h2>🎯 Goal cá nhân</h2>
+            <p>Quản lý mục tiêu ngắn hạn, dài hạn và các kỹ năng cần hoàn thành.</p>
+        </div>
+
+        <a asp-controller="Goal" asp-action="Create" class="btn primary-btn">
+            + Tạo Goal
+        </a>
+    </div>
+
+    @if (goals.Count == 0)
+    {
+        <div class="empty-box">
+            <span>🧭</span>
+            <h3>Bạn chưa có Goal nào</h3>
+            <p>Hãy tạo mục tiêu nghề nghiệp đầu tiên để bắt đầu theo dõi tiến độ.</p>
+            <a asp-controller="Goal" asp-action="Create" class="btn primary-btn">Tạo Goal ngay</a>
+        </div>
+    }
+    else
+    {
+        <div class="goal-grid">
+            @foreach (var goal in goals)
+            {
+                var milestones = goal.GoalMilestones?.ToList() ?? new List<Career_Guidance_Platform.Models.GoalMilestone>();
+                var totalMilestones = milestones.Count;
+                var completedMilestones = milestones.Count(m => m.Status == "Completed");
+                var progress = totalMilestones > 0
+                    ? (int)Math.Round((double)completedMilestones / totalMilestones * 100)
+                    : goal.Progress;
+
+                <div class="goal-card">
+
+                    <div class="goal-card-top">
+                        <div>
+                            <span class="goal-type">
+                                @(goal.GoalType == "LongTerm" ? "Dài hạn" : "Ngắn hạn")
+                            </span>
+
+                            <h3>@goal.Title</h3>
+
+                            <p>
+                                <strong>Career Path:</strong>
+                                @(goal.CareerPath?.Title ?? "Không chọn")
+                            </p>
+                        </div>
+
+                        <div class="goal-actions">
+                            <a asp-controller="Goal"
+                               asp-action="Details"
+                               asp-route-id="@goal.Id"
+                               class="goal-btn view"
+                               title="Xem">
+                                <i class="bi bi-eye-fill"></i>
+                            </a>
+
+                            <a asp-controller="Goal"
+                               asp-action="Edit"
+                               asp-route-id="@goal.Id"
+                               class="goal-btn edit"
+                               title="Sửa">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+
+                            <a asp-controller="Goal"
+                               asp-action="Delete"
+                               asp-route-id="@goal.Id"
+                               class="goal-btn delete"
+                               title="Xóa">
+                                <i class="bi bi-trash-fill"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="goal-meta">
+                        <div>
+                            <span>Tiến độ</span>
+                            <strong>@progress%</strong>
+                        </div>
+
+                        <div>
+                            <span>Deadline</span>
+                            <strong>@(goal.TargetDate?.ToString("dd/MM/yyyy") ?? "Chưa đặt")</strong>
+                        </div>
+
+                        <div>
+                            <span>Milestones</span>
+                            <strong>@completedMilestones / @totalMilestones</strong>
+                        </div>
+                    </div>
+
+                    <div class="goal-progress-bar">
+                        <div style="width:@progress%"></div>
+                    </div>
+
+                    <div class="goal-milestones">
+                        <h4>📚 Kỹ năng / Milestones</h4>
+
+                        @if (milestones.Count == 0)
+                        {
+                            <div class="milestone-empty">
+                                Goal này chưa có milestone.
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var milestone in milestones)
+                            {
+                                var isDone = milestone.Status == "Completed";
+                                var skill = milestone.Skill;
+
+                                <div class="milestone-item">
+                                    <div class="milestone-left">
+                                        <span class="milestone-status @(isDone ? "done" : "")">
+                                            @(isDone ? "✓" : "□")
+                                        </span>
+
+                                        <div>
+                                            <strong>@(skill?.Name ?? "Tên kỹ năng")</strong>
+                                            <p>@(skill?.Description ?? "Kỹ năng thuộc mục tiêu này.")</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="milestone-actions">
+                                        @if (!isDone && skill != null)
+                                        {
+                                            <a asp-controller="Goal"
+                                               asp-action="Learn"
+                                               asp-route-skillId="@skill.Id"
+                                               class="small-btn learn">
+                                                📖 Học
+                                            </a>
+
+                                            <a asp-controller="Goal"
+                                               asp-action="Test"
+                                               asp-route-skillId="@skill.Id"
+                                               class="small-btn test">
+                                                📝 Test
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="completed-badge">Hoàn thành</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @{
+        var allSkills = ViewBag.AllSkills as List<Career_Guidance_Platform.Models.UserSkill>
+            ?? new List<Career_Guidance_Platform.Models.UserSkill>();
+    }
+
+    <div class="goal-tabs">
+        <button onclick="switchTab('tab-inventory')" id="btn-tab-inventory" class="tab-nav-btn active">
+            💼 Kho kỹ năng (@allSkills.Count)
+        </button>
+
+        <button onclick="switchTab('tab-cv-sync')" id="btn-tab-cv-sync" class="tab-nav-btn">
+            📝 Đồng bộ CV (@completed.Count)
+        </button>
+    </div>
+
+    <div id="tab-inventory" class="tab-pane active">
+        @if (allSkills.Count == 0)
+        {
+            <div class="empty-box small">
+                <span>🏆</span>
+                <h3>Kho kỹ năng trống</h3>
+                <p>Hãy hoàn thành bài kiểm tra kỹ năng hoặc thêm kỹ năng mục tiêu để lưu tại đây.</p>
+            </div>
+        }
+        else
+        {
+            <div class="skill-grid">
+                @foreach (var item in allSkills)
+                {
+                    <div class="skill-card" style="position: relative;">
+                        <span>🛡️</span>
+                        <div>
+                            <h4>@(item.Skill?.Name ?? "Tên kỹ năng")</h4>
+                            <p style="margin-top: 4px;">
+                                @if (item.Status == "Completed" || item.Status == "Acquired")
+                                {
+                                    <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.75rem; border-radius: 4px;">Đã hoàn thành</span>
+                                }
+                                else if (item.Status == "Learning")
+                                {
+                                    <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.75rem; border-radius: 4px;">Đang học</span>
+                                }
+                                else if (item.Status == "In-Goals")
+                                {
+                                    <span class="badge bg-info text-white px-2 py-1" style="font-size: 0.75rem; border-radius: 4px;">Mục tiêu học</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.75rem; border-radius: 4px;">@item.Status</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div id="tab-cv-sync" class="tab-pane">
+        @if (completed.Count == 0)
+        {
+            <div class="empty-box small">
+                <span>📝</span>
+                <h3>Không thể đồng bộ CV</h3>
+                <p>Bạn cần hoàn thành ít nhất một kỹ năng.</p>
+            </div>
+        }
+        else
+        {
+            <div class="cv-card">
+                <h3>Chọn kỹ năng muốn đưa vào CV</h3>
+
+                <div class="cv-skill-list">
+                    @foreach (var item in completed)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   class="cv-skill-checkbox"
+                                   value="@(item.Skill?.Name)"
+                                   checked />
+
+                            <span>@(item.Skill?.Name)</span>
+                        </label>
+                    }
+                </div>
+
+                @if (resumes.Count == 0)
+                {
+                    <form asp-controller="Goal" asp-action="CreateCVFromSkills" method="post" id="createCvForm">
+                        <div id="hiddenSkillsContainer"></div>
+
+                        <button type="submit"
+                                onclick="submitCreateCV(event)"
+                                class="btn primary-btn">
+                            ✨ Tạo CV mẫu mới
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form asp-controller="Goal" asp-action="UpdateCV" method="post" id="updateCvForm">
+                        <div id="hiddenSkillsContainerUpdate"></div>
+
+                        <select name="resumeId" required class="form-control">
+                            @foreach (var r in resumes)
+                            {
+                                <option value="@r.Id">@r.Title</option>
+                            }
+                        </select>
+
+                        <button type="submit"
+                                onclick="submitUpdateCV(event)"
+                                class="btn primary-btn">
+                            🔄 Đồng bộ vào CV
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/goal.js" asp-append-version="true"></script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/goal.css" asp-append-version="true" />
+}

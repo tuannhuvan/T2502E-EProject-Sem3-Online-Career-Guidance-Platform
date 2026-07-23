@@ -1,0 +1,209 @@
+@model Career_Guidance_Platform.Models.Resource
+
+@{
+    ViewData["Title"] = "Sửa Resource";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Sửa Resource</h2>
+            <div class="text-muted mt-1">@Model?.Title</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <form asp-controller="Admin" asp-action="EditResource" asp-route-id="@Model!.Id" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="CreatedAt" />
+            <input type="hidden" asp-for="CreatedBy" />
+
+            @if (ViewData.ModelState.ErrorCount > 0)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong><i class="ti ti-alert-circle"></i> Vui lòng sửa các lỗi sau:</strong>
+                    <ul class="mb-0 mt-2">
+                        @foreach (var modelState in ViewData.ModelState.Values)
+                        {
+                            @foreach (var error in modelState.Errors)
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        }
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- Tên Resource -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-heading"></i> Tên Resource 
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Title" class="form-control" required />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Mô tả -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-align-left"></i> Mô tả
+                        </label>
+                        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <!-- Loại Resource -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-tag"></i> Loại Resource 
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="ResourceType" class="form-select" required>
+                            <option value="">-- Chọn loại --</option>
+                            <option value="Khóa học">📚 Khóa học</option>
+                            <option value="Website">🌐 Website</option>
+                            <option value="Tài liệu">📄 Tài liệu</option>
+                            <option value="Video">🎥 Video</option>
+                            <option value="Bài viết">✍️ Bài viết</option>
+                        </select>
+                        <span asp-validation-for="ResourceType" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Link -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-link"></i> Link Liên Kết
+                        </label>
+                        <input asp-for="Url" type="url" class="form-control" />
+                        <span asp-validation-for="Url" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Danh Mục -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-folder"></i> Danh Mục Resource
+                        </label>
+                        <select asp-for="CategoryId" class="form-select">
+                            <option value="">-- Chọn danh mục --</option>
+                            @foreach (var category in ViewBag.Categories as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>())
+                            {
+                                <option value="@category.Value">
+                                    @category.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Career Path -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-map-pin"></i> Career Path
+                        </label>
+                        <select asp-for="PathId" class="form-select">
+                            <option value="0">-- Không có --</option>
+                            @foreach (var path in ViewBag.CareerPaths as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>())
+                            {
+                                <option value="@path.Value">
+                                    @path.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Resource Cha -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-sitemap"></i> Resource Cha
+                        </label>
+                        <select asp-for="ParentResourceId" class="form-select">
+                            <option value="">-- Không có (Resource độc lập) --</option>
+                            @foreach (var parent in ViewBag.ParentResources as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>())
+                            {
+                                <option value="@parent.Value">
+                                    @parent.Text
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Kỹ Năng Liên Kết (Skill) -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="ti ti-bulb"></i> Kỹ Năng Liên Kết (Skill)
+                        </label>
+                        <select asp-for="SkillId" class="form-select">
+                            <option value="">-- Chọn kỹ năng liên kết (Không bắt buộc) --</option>
+                            @foreach (var skill in ViewBag.Skills as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>())
+                            {
+                                <option value="@skill.Value" selected="@(Model?.SkillId?.ToString() == skill.Value ? "selected" : "")">
+                                    @skill.Text
+                                </option>
+                            }
+                        </select>
+                        <small class="text-muted">
+                            Lựa chọn kỹ năng mà tài nguyên này hỗ trợ học tập hoặc rèn luyện.
+                        </small>
+                    </div>
+
+                    <!-- Metadata -->
+                    <div class="border-top pt-3 mt-4">
+                        <small class="text-muted">
+                            <strong>Tạo bởi:</strong> @Model?.CreatedBy (@Model?.CreatedAt.ToString("dd/MM/yyyy HH:mm"))<br />
+                            @if (Model?.UpdatedAt.HasValue == true)
+                            {
+                                <text>
+                                    <strong>Cập nhật bởi:</strong> @Model?.UpdatedBy (@Model?.UpdatedAt?.ToString("dd/MM/yyyy HH:mm"))<br />
+                                </text>
+                            }
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="alert alert-info">
+                        <h6><i class="ti ti-info-circle"></i> Thông tin</h6>
+                        <p class="small mb-0">
+                            <strong>ID Resource:</strong> @Model?.Id
+                        </p>
+                    </div>
+
+                    @if (Model?.ChildResources != null && Model.ChildResources.Any())
+                    {
+                        <div class="alert alert-warning">
+                            <h6><i class="ti ti-alert-triangle"></i> Resource con</h6>
+                            <p class="small text-muted mb-2">
+                                Resource này có @Model.ChildResources.Count resource con
+                            </p>
+                            <ul class="small mb-0">
+                                @foreach (var child in Model.ChildResources)
+                                {
+                                    <li>@child.Title</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ti ti-device-floppy me-1"></i> Cập nhật
+                </button>
+                <a asp-controller="Admin" asp-action="Resources" class="btn btn-secondary">
+                    Quay lại
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

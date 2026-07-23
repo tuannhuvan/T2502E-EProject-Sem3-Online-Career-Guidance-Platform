@@ -1,16 +1,59 @@
 ﻿@model Career_Guidance_Platform.Models.Question
+@model IEnumerable<Career_Guidance_Platform.Models.QuestionTest>
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Career Tests";
 }
 
-<h2 class="page-title mb-3">Career Tests</h2>
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Management</div>
+            <h2 class="page-title">Career Test Questions</h2>
+            <div class="text-muted mt-1">Configure diagnostic questions, answers, and career path weight scoring</div>
+        </div>
+        <div class="col-auto ms-auto">
+            <button class="btn btn-primary"
+                    id="btnAddQuestion"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#questionModal"
+                    onclick="openAddModal()">
+                <i class="ti ti-plus me-1"></i> Add Question
+            </button>
+        </div>
+    </div>
+</div>
 
 <div class="card">
-    <div class="card-header">
-        <h3 class="card-title">Career Test Questions</h3>
-        <div class="card-actions">
-            <a href="#" class="btn btn-primary">Add Question</a>
+    <div class="card-body border-bottom py-3">
+        <div class="row g-2">
+            <div class="col-md-6">
+                <input type="text"
+                       id="searchInput"
+                       class="form-control"
+                       placeholder="Search question content (Press Enter)..."
+                       value="@ViewBag.Search"
+                       onkeyup="if(event.key === 'Enter') applyFilters()">
+            </div>
+
+            <div class="col-md-4">
+                <select class="form-select"
+                        id="filterType"
+                        onchange="applyFilters()">
+                    <option value="" selected="@(string.IsNullOrEmpty(ViewBag.Type) ? "selected" : null)">All Types</option>
+                    <option value="Interests" selected="@(ViewBag.Type == "Interests" ? "selected" : null)">Interests</option>
+                    <option value="Skills" selected="@(ViewBag.Type == "Skills" ? "selected" : null)">Skills</option>
+                    <option value="Personality" selected="@(ViewBag.Type == "Personality" ? "selected" : null)">Personality</option>
+                    <option value="Values" selected="@(ViewBag.Type == "Values" ? "selected" : null)">Values</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button class="btn btn-outline-primary w-100" onclick="applyFilters()">
+                    Filter
+                </button>
+            </div>
         </div>
     </div>
 
@@ -18,28 +61,276 @@
         <table class="table card-table table-vcenter">
             <thead>
             <tr>
+                <th width="150">Career Test</th>
                 <th>Question</th>
-                <th>Group</th>
-                <th>Answers</th>
-                <th>Status</th>
+                <th width="120">Type</th>
+                <th width="120">Options</th>
+                <th width="100">Status</th>
+                <th width="150" class="text-end">Actions</th>
             </tr>
             </thead>
 
-            <tbody>
-            <tr>
-                <td>Bạn thích hoạt động nào nhất?</td>
-                <td>Interest</td>
-                <td>4</td>
-                <td><span class="badge bg-green-lt">Active</span></td>
-            </tr>
+            <tbody id="questionTableBody">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    var badgeClass = item.Status == 1 ? "bg-green-lt" : "bg-red-lt";
+                    var statusText = item.Status == 1 ? "Active" : "Inactive";
+                    <tr class="question-row" data-id="@item.Id">
+                        @{
+                            var testTitle = item.Test?.Title ?? "Unknown";
+                            if (testTitle.EndsWith(" Test") && testTitle != "Base Test")
+                            {
+                                testTitle = testTitle.Substring(0, testTitle.Length - 5);
+                            }
+                        }
+                        <td class="question-test">@testTitle</td>
+                        <td class="question-content"><strong>@item.Content</strong></td>
+                        <td class="question-type"><span class="badge bg-purple-lt">@item.TestType</span></td>
+                        
+                        @{
+                            var optCount = item.QuestionOptions?.Count ?? 0;
+                            string optionsJson = "[]";
+                            if (item.QuestionOptions != null)
+                            {
+                                var optionsList = item.QuestionOptions.Select(o => new {
+                                    content = o.Content,
+                                    career = o.OptionCareerPaths?.FirstOrDefault()?.CareerPathId.ToString() ?? "",
+                                    weight = o.OptionCareerPaths?.FirstOrDefault()?.Weight.ToString() ?? ""
+                                }).ToList();
+                                optionsJson = System.Text.Json.JsonSerializer.Serialize(optionsList);
+                            }
+                        }
+                        <td class="question-options"
+                            data-test-id="@item.TestId"
+                            data-test-type="@item.TestType"
+                            data-status="@statusText"
+                            data-options="@optionsJson">
+                            @optCount Options
+                        </td>
 
-            <tr>
-                <td>Bạn tự tin nhất với kỹ năng nào?</td>
-                <td>Skill</td>
-                <td>4</td>
-                <td><span class="badge bg-green-lt">Active</span></td>
-            </tr>
+                        <td class="question-status">
+                            <span class="badge @badgeClass">@statusText</span>
+                        </td>
+
+                        <td class="text-end">
+                            <div class="btn-list justify-content-end">
+                                <button class="btn btn-sm btn-outline-primary btn-edit-question"
+                                        type="button"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#questionModal"
+                                        onclick="openEditModal(this)">
+                                    Edit
+                                </button>
+
+                                <button class="btn btn-sm btn-outline-danger btn-delete-question"
+                                        type="button"
+                                        onclick="deleteQuestion(@item.Id)">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">No questions found in database.</td>
+                </tr>
+            }
             </tbody>
         </table>
     </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        @{
+            int startEntry = ViewBag.TotalItems == 0 ? 0 : (ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1;
+            int endEntry = Math.Min(ViewBag.CurrentPage * ViewBag.PageSize, ViewBag.TotalItems);
+        }
+        <p class="m-0 text-muted">Showing <span>@startEntry</span> to <span>@endEntry</span> of <span>@ViewBag.TotalItems</span> entries</p>
+        <ul class="pagination m-0 ms-auto" id="paginationUl">
+            <!-- Prev Button -->
+            <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="@(ViewBag.CurrentPage == 1 ? "#" : Url.Action("CareerTests", "Admin", new { page = ViewBag.CurrentPage - 1, search = ViewBag.Search, type = ViewBag.Type }))" tabindex="-1" aria-disabled="@(ViewBag.CurrentPage == 1)">
+                    <i class="ti ti-chevron-left"></i> prev
+                </a>
+            </li>
+
+            <!-- Page Numbers -->
+            @{
+                int maxButtons = 5;
+                int startPage = Math.Max(1, ViewBag.CurrentPage - maxButtons / 2);
+                int endPage = Math.Min(ViewBag.TotalPages, startPage + maxButtons - 1);
+                
+                if (endPage - startPage + 1 < maxButtons)
+                {
+                    startPage = Math.Max(1, endPage - maxButtons + 1);
+                }
+            }
+
+            @for (int i = startPage; i <= endPage; i++)
+            {
+                <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("CareerTests", "Admin", new { page = i, search = ViewBag.Search, type = ViewBag.Type })">@i</a>
+                </li>
+            }
+
+            <!-- Next Button -->
+            <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="@(ViewBag.CurrentPage == ViewBag.TotalPages ? "#" : Url.Action("CareerTests", "Admin", new { page = ViewBag.CurrentPage + 1, search = ViewBag.Search, type = ViewBag.Type }))">
+                    next <i class="ti ti-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
 </div>
+
+<!-- Modal -->
+<div class="modal modal-blur fade"
+     id="questionModal"
+     tabindex="-1"
+     aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Create Question</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="editingQuestionId" />
+
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h3 class="card-title">Question Information</h3>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required">Career Test</label>
+                                <select id="testInput" class="form-select">
+                                    @{
+                                        var tests = ViewBag.Tests as IEnumerable<Career_Guidance_Platform.Models.Test>;
+                                    }
+                                    @if (tests != null)
+                                    {
+                                        foreach (var t in tests)
+                                        {
+                                            <option value="@t.Id">@t.Title</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required">Question Aspect/Type</label>
+                                <select id="groupInput" class="form-select">
+                                    <option value="Interests">Interests</option>
+                                    <option value="Skills">Skills</option>
+                                    <option value="Personality">Personality</option>
+                                    <option value="Values">Values</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label required">Question Content</label>
+                            <textarea id="questionInput"
+                                      class="form-control"
+                                      rows="3"
+                                      placeholder="Enter question text..."></textarea>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label">Status</label>
+                            <select id="statusInput" class="form-select">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h3 class="card-title">Answer Options & Weighting</h3>
+                    </div>
+
+                    <div class="card-body">
+                        @for (int i = 1; i <= 4; i++)
+                        {
+                            <div class="card mb-3 option-card" data-index="@i">
+                                <div class="card-body py-3">
+                                    <h4 class="mb-2 text-primary">Option @i</h4>
+
+                                    <div class="row g-2">
+                                        <div class="col-md-5 mb-2">
+                                            <label class="form-label small text-muted">Answer Content</label>
+                                            <input type="text"
+                                                   class="form-control option-input"
+                                                   placeholder="Nội dung đáp án">
+                                        </div>
+
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label small text-muted">Target Career Path</label>
+                                            <select class="form-select career-path-input">
+                                                <option value="">-- Select Career Path --</option>
+                                                @{
+                                                    var paths = ViewBag.CareerPaths as IEnumerable<Career_Guidance_Platform.Models.CareerPath>;
+                                                }
+                                                @if (paths != null)
+                                                {
+                                                    foreach (var cp in paths)
+                                                    {
+                                                        <option value="@cp.Id">@cp.Title</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-3 mb-2">
+                                            <label class="form-label small text-muted">Score Weight (1-10)</label>
+                                            <input type="number"
+                                                   class="form-control weight-input"
+                                                   placeholder="Weight"
+                                                   min="1"
+                                                   max="10">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary"
+                        type="button"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button class="btn btn-primary"
+                        id="btnSaveQuestion"
+                        type="button"
+                        onclick="saveQuestion()">
+                    Save Question
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin/career-tests.js" asp-append-version="true"></script>
+}

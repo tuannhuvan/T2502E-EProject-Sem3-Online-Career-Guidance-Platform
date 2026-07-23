@@ -47,6 +47,17 @@ int resultId = ViewBag.ResultId ?? 0;   // FIX NULL SAFE
             <p>Career Test</p>
         </div>
     </div>
+@model Career_Guidance_Platform.Models.ViewModels.TakeTestViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Đánh giá nghề nghiệp";
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9; padding: 100px 24px 70px;">
+    <span class="page-badge">🧭 Career Assessment</span>
+    <h1>Định hướng nghề nghiệp phù hợp</h1>
+    <p>Hãy trả lời các câu hỏi trắc nghiệm dưới đây một cách khách quan để hệ thống tính điểm và đề xuất lộ trình phát triển phù hợp nhất.</p>
 </section>
 }
 
@@ -157,3 +168,58 @@ int resultId = ViewBag.ResultId ?? 0;   // FIX NULL SAFE
 
     });
 </script>
+<section class="content-section" style="max-width: 800px; padding: 50px 20px;">
+    <div class="career-test-main-full">
+        <!-- Progress Bar -->
+        <div class="test-progress-container" style="margin-bottom: 2.5rem; max-width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 14px; font-weight: 700; color: #475569;">
+                <span id="questionCounter" style="background: #eef2ff; color: #4f46e5; padding: 4px 12px; border-radius: 999px; border: 1px solid #e0e7ff;">Câu hỏi 0/0</span>
+                <span id="progressText" style="color: #06b6d4;">Hoàn thành 0%</span>
+            </div>
+            <div style="width: 100%; height: 10px; background: #e2e8f0; border-radius: 999px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
+                <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 100%); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 999px;"></div>
+            </div>
+        </div>
+
+        <div id="questionCard" class="question-card" style="border: 1px solid #e2e8f0; padding: 40px; border-radius: 24px; background: #ffffff; box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.06);">
+            <!-- JS will render question content -->
+            <div class="question-header" style="margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+                <strong id="questionGroup" style="font-size: 13px; text-transform: uppercase; color: #4f46e5; letter-spacing: 0.5px;">Nhóm: ...</strong>
+            </div>
+            <h2 id="questionTitle" style="font-size: 26px; font-weight: 800; color: #0f172a; line-height: 1.4; margin-bottom: 12px;">Loading...</h2>
+            <p class="question-desc" style="color: #64748b; font-size: 15px; margin-bottom: 28px;">Hãy chọn phương án mô tả chính xác nhất suy nghĩ hoặc sở thích của bạn.</p>
+            
+            <div id="answerList" class="answer-list detailed"></div>
+            
+            <div class="test-actions" style="margin-top: 35px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 25px;">
+                <button id="prevBtn" class="btn secondary-btn" type="button" style="padding: 12px 28px;">Quay lại</button>
+                <button id="nextBtn" class="btn primary-btn" type="button" style="padding: 12px 32px;">Tiếp tục</button>
+            </div>
+        </div>
+
+        <div id="resultBox" class="sample-result hidden" style="border: 1px solid #e2e8f0; padding: 40px; border-radius: 24px; background: #ffffff; box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.06); text-align: center;">
+            <div class="section-title" style="margin-bottom: 24px;">
+                <span style="font-size: 32px; display: block; margin-bottom: 12px;">📊</span>
+                <h3 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0;">Hoàn thành bài kiểm tra</h3>
+            </div>
+            <div id="resultGrid" class="result-grid"></div>
+            <div class="result-actions" style="margin-top: 30px; display: flex; justify-content: center; gap: 16px;">
+                <button id="restartBtn" class="btn secondary-btn" type="button" style="padding: 12px 28px;">Làm lại bài test</button>
+                <a class="btn primary-btn" asp-controller="Home" asp-action="CareerPath" style="padding: 12px 32px;">Xem lộ trình nghề nghiệp</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* Hidden antiforgery token (rendered into a tiny hidden form for JS to copy) *@
+<form id="__antiForgeryForm" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+@* Embed server questions JSON for the JS to consume *@
+<script>
+    var serverQuestions = @Html.Raw(JsonSerializer.Serialize(Model.Questions));
+    var serverTestId = @Model.TestId;
+</script>
+
+<script src="~/js/career-test.js" asp-append-version="true"></script>

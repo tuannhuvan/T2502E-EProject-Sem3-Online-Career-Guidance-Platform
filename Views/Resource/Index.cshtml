@@ -1,0 +1,161 @@
+@model List<Resource>
+
+@{
+    ViewData["Title"] = "Danh sách Resource";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1>📚 Quản lý Resource</h1>
+            <p class="text-muted">Quản lý các khóa học, trang web, và tài liệu học tập</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="@Url.Action("Create")" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Thêm mới Resource
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filter Card -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-3"><i class="fas fa-filter"></i> Bộ lọc</h5>
+            <form method="get" action="@Url.Action("Index")" class="row g-3">
+                <div class="col-md-8">
+                    <label for="categoryId" class="form-label">Lọc theo Danh mục</label>
+                    <select id="categoryId" name="categoryId" class="form-select">
+                        <option value="">-- Tất cả danh mục --</option>
+                        @foreach (var category in ViewBag.Categories)
+                        {
+                            <option value="@category.Id" 
+                                    selected="@(ViewBag.SelectedCategoryId == category.Id ? "selected" : "")">
+                                @category.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-info w-100">
+                        <i class="fas fa-search"></i> Tìm kiếm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resources Table -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 5%">ID</th>
+                        <th style="width: 25%">Tên Resource</th>
+                        <th style="width: 15%">Loại</th>
+                        <th style="width: 15%">Danh mục</th>
+                        <th style="width: 15%">Resource Cha</th>
+                        <th style="width: 10%">Link</th>
+                        <th style="width: 15%">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        @foreach (var resource in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="badge bg-secondary">@resource.Id</span>
+                                </td>
+                                <td>
+                                    <strong>@resource.Title</strong>
+                                    @if (!string.IsNullOrEmpty(resource.Description))
+                                    {
+                                        <br />
+                                        <small class="text-muted">@resource.Description.Substring(0, Math.Min(50, resource.Description.Length))...</small>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info text-dark">@resource.ResourceType</span>
+                                </td>
+                                <td>
+                                    @if (resource.Category != null)
+                                    {
+                                        <span class="badge bg-warning text-dark">@resource.Category.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (resource.ParentResource != null)
+                                    {
+                                        <span class="badge bg-success">@resource.ParentResource.Title</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Độc lập</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(resource.Url))
+                                    {
+                                        <a href="@resource.Url" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("Edit", new { id = resource.Id })" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i> Sửa
+                                    </a>
+                                    <a href="@Url.Action("Delete", new { id = resource.Id })" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Xóa
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2">Không có resource nào</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+</style>

@@ -1,20 +1,153 @@
-﻿<!DOCTYPE html>
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
-    <title>@ViewData["Title"] - CareerPath</title>
+    <title>@ViewData["Title"] - CareerPath | Nền tảng hướng nghiệp thông minh</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="CareerPath - Nền tảng hướng nghiệp thông minh giúp học sinh, sinh viên đánh giá năng lực, xây dựng lộ trình sự nghiệp và kết nối việc làm với các doanh nghiệp hàng đầu." />
+    <meta name="keywords" content="hướng nghiệp, đánh giá nghề nghiệp, test Holland, MBTI, lộ trình sự nghiệp, học tập, kết nối việc làm" />
+    <meta name="robots" content="index, follow" />
 
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">`
     <link rel="stylesheet" href="~/css/base.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/footer.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/page.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
+    <style>
+        /* Modern Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 380px;
+            width: calc(100% - 48px);
+            pointer-events: none;
+        }
+
+        .toast-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 16px -6px rgba(15, 23, 42, 0.04);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            pointer-events: auto;
+            cursor: pointer;
+            transform: translateX(120%);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+        }
+
+        .toast-card.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-card.hide {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+
+        .toast-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+        }
+
+        .toast-card.toast-success {
+            border-left: 4px solid #10b981;
+        }
+        .toast-card.toast-success .toast-icon {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .toast-card.toast-error {
+            border-left: 4px solid #ef4444;
+        }
+        .toast-card.toast-error .toast-icon {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .toast-card.toast-warning {
+            border-left: 4px solid #f59e0b;
+        }
+        .toast-card.toast-warning .toast-icon {
+            background: #fffbeb;
+            color: #f59e0b;
+        }
+
+        .toast-card.toast-info {
+            border-left: 4px solid #3b82f6;
+        }
+        .toast-card.toast-info .toast-icon {
+            background: #eff6ff;
+            color: #3b82f6;
+        }
+
+        .toast-content {
+            flex-grow: 1;
+        }
+
+        .toast-message {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Google Translate Hiding Styles */
+        iframe.goog-te-banner-frame {
+            display: none !important;
+        }
+        .goog-te-balloon-frame {
+            display: none !important;
+        }
+        #google_translate_element, .skiptranslate {
+            display: none !important;
+        }
+        body {
+            top: 0 !important;
+        }
+        .language-selector a.active-lang {
+            opacity: 1 !important;
+            transform: scale(1.25);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+        }
+    </style>
 </head>
 <body>
 
@@ -25,12 +158,13 @@
     </a>
 
     <nav class="nav-menu">
-        <a asp-controller="Home" asp-action="Index">Trang chủ</a>
-        <a asp-controller="Home" asp-action="CareerTest">Đánh giá nghề nghiệp</a>
-        <a asp-controller="Home" asp-action="CareerPath">Gợi ý & Lộ trình</a>
-        <a asp-controller="Home" asp-action="Training">Đào tạo</a>
-        <a asp-controller="Home" asp-action="Jobs">Việc làm</a>
-        <a asp-controller="Home" asp-action="Community">Cộng đồng</a>
+        <a class='@(currentController == "Home" && currentAction == "Index" ? "active" : "")' asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <a class='@(currentController == "Home" && currentAction == "CareerTest" ? "active" : "")' asp-controller="Home" asp-action="CareerTest">Đánh giá nghề nghiệp</a>
+        <a class='@(currentController == "Home" && currentAction == "CareerPath" ? "active" : "")' asp-controller="Home" asp-action="CareerPath">Gợi ý & Lộ trình</a>
+        <a class='@(currentController == "Mentorship" ? "active" : "")' asp-controller="Mentorship" asp-action="Index">Cố vấn</a>
+        <a class='@(currentController == "Goal" ? "active" : "")' asp-controller="Goal" asp-action="Index">Mục tiêu của tôi</a>
+        <a class='@(currentController == "Home" && currentAction == "Jobs" ? "active" : "")' asp-controller="Home" asp-action="Jobs">Việc làm</a>
+        <a class='@(currentController == "Home" && currentAction == "Community" ? "active" : "")' asp-controller="Home" asp-action="Community">Cộng đồng</a>
     </nav>
 
     <div class="nav-actions">
@@ -47,6 +181,59 @@
                         @Html.AntiForgeryToken()
                         <button type="submit" class="logout-btn">
                             Đăng xuất
+        <!-- Language Selector -->
+        <div class="language-selector" style="display: flex; gap: 10px; margin-right: 15px; align-items: center;">
+            <a href="javascript:void(0)" onclick="changeSystemLanguage('vi')" title="Tiếng Việt" style="text-decoration: none; font-size: 20px; opacity: 0.5; transition: all 0.2s;" id="lang-vi">
+                <span>🇻🇳</span>
+            </a>
+            <a href="javascript:void(0)" onclick="changeSystemLanguage('en')" title="English" style="text-decoration: none; font-size: 20px; opacity: 0.5; transition: all 0.2s;" id="lang-en">
+                <span>🇬🇧</span>
+            </a>
+        </div>
+
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <div class="user-profile-dropdown">
+                <button class="profile-trigger-btn">
+                    <div class="profile-avatar">
+                        <span>@UserManager.GetUserName(User)?[0].ToString().ToUpper()</span>
+                    </div>
+                    <span class="profile-username">@UserManager.GetUserName(User)</span>
+                    <span class="profile-chevron">▼</span>
+                </button>
+                <div class="profile-dropdown-content">
+                    <div class="dropdown-header-info">
+                        <strong>@UserManager.GetUserName(User)</strong>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <p>Quản trị viên</p>
+                        }
+                        else if (User.IsInRole("Mentor"))
+                        {
+                            <p>Cố vấn</p>
+                        }
+                        else
+                        {
+                            <p>Học viên</p>
+                        }
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a asp-controller="Manage" asp-action="Index">👤 Thông tin cá nhân</a>
+                    <a asp-controller="Goal" asp-action="Index">🎯 Mục tiêu học tập</a>
+                    <a asp-controller="PeerConnection" asp-action="Index">👥 Mạng lưới bạn bè</a>
+                    <a asp-controller="Chat" asp-action="Index">💬 Tin nhắn trực tuyến</a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Admin" asp-action="Dashboard" class="admin-link">🛡️ Admin Panel</a>
+                    }
+                    @if (User.IsInRole("Mentor"))
+                    {
+                        <a asp-controller="Mentorship" asp-action="Dashboard">💼 Mentor Dashboard</a>
+                    }
+                    <div class="dropdown-divider"></div>
+                    <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" style="margin: 0;">
+                        <button type="submit" class="logout-btn">
+                            <span>🚪 Đăng xuất</span>
                         </button>
                     </form>
                 </div>
@@ -58,6 +245,9 @@
             <a class="register-btn" asp-controller="Account" asp-action="Register">Đăng ký</a>
         }
 
+            <a class="login-link" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">Đăng nhập</a>
+            <a class="register-btn" asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">Đăng ký</a>
+        }
     </div>
 </header>
 
@@ -77,26 +267,27 @@
 
         <div class="footer-col">
             <h4>Về chúng tôi</h4>
-            <a href="#">Giới thiệu</a>
-            <a href="#">Đội ngũ</a>
-            <a href="#">Tin tức</a>
-            <a href="#">Liên hệ</a>
+            <a asp-controller="Home" asp-action="About">Giới thiệu & Đội ngũ</a>
+            <a asp-controller="Home" asp-action="News">Tin tức</a>
+            <a asp-controller="CareerEvent" asp-action="Index">Sự kiện & Hội thảo</a>
+            <a asp-controller="Home" asp-action="Contact">Liên hệ</a>
         </div>
 
         <div class="footer-col">
             <h4>Dịch vụ</h4>
-            <a href="#">Đánh giá nghề nghiệp</a>
-            <a href="#">Gợi ý lộ trình</a>
-            <a href="#">Tìm mentor</a>
-            <a href="#">Tìm việc làm</a>
+            <a asp-controller="Home" asp-action="CareerTest">Đánh giá nghề nghiệp</a>
+            <a asp-controller="Home" asp-action="CareerPath">Gợi ý lộ trình</a>
+            <a asp-controller="Home" asp-action="Training">Đào tạo</a>
+            <a asp-controller="Mentorship" asp-action="Index">Cố vấn</a>
+            <a asp-controller="Home" asp-action="Jobs">Việc làm</a>
         </div>
 
         <div class="footer-col">
-            <h4>Hỗ trợ</h4>
-            <a href="#">Trung tâm trợ giúp</a>
-            <a href="#">Điều khoản sử dụng</a>
-            <a href="#">Chính sách bảo mật</a>
-            <a href="#">FAQ</a>
+            <h4>Tài nguyên & Hỗ trợ</h4>
+            <a asp-controller="Resume" asp-action="Templates">Mẫu CV (Career Tools)</a>
+            <a asp-controller="Home" asp-action="FAQ">Trung tâm trợ giúp</a>
+            <a asp-controller="Home" asp-action="Terms">Điều khoản sử dụng</a>
+            <a asp-controller="Home" asp-action="Policy">Chính sách bảo mật</a>
         </div>
     </div>
 
@@ -112,6 +303,125 @@
 <script src="~/lib/jquery/jquery.min.js"></script>
 <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
 <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Global Toast Container -->
+<div id="toast-container" class="toast-container"></div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="tempDataSuccess" style="display:none;" data-message="@TempData["SuccessMessage"]"></div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div id="tempDataError" style="display:none;" data-message="@TempData["ErrorMessage"]"></div>
+}
+
+<script>
+    window.showToast = function(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const card = document.createElement('div');
+        card.className = `toast-card toast-${type}`;
+
+        let icon = 'ℹ️';
+        if (type === 'success') icon = '✅';
+        else if (type === 'error') icon = '❌';
+        else if (type === 'warning') icon = '⚠️';
+
+        card.innerHTML = `
+            <div class="toast-icon">${icon}</div>
+            <div class="toast-content">
+                <p class="toast-message">${message}</p>
+            </div>
+        `;
+
+        container.appendChild(card);
+
+        // Trigger animate-in
+        setTimeout(() => card.classList.add('show'), 10);
+
+        // Auto-remove after 4 seconds
+        const autoHide = setTimeout(() => {
+            card.classList.remove('show');
+            card.classList.add('hide');
+            setTimeout(() => card.remove(), 400);
+        }, 4000);
+
+        // Click to dismiss
+        card.onclick = () => {
+            clearTimeout(autoHide);
+            card.classList.remove('show');
+            card.classList.add('hide');
+            setTimeout(() => card.remove(), 400);
+        };
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const successEl = document.getElementById('tempDataSuccess');
+        const errorEl = document.getElementById('tempDataError');
+        if (successEl) showToast(successEl.getAttribute('data-message'), 'success');
+        if (errorEl) showToast(errorEl.getAttribute('data-message'), 'error');
+    });
+</script>
+
+<!-- Google Translate Widget Elements -->
+<div id="google_translate_element" style="display:none;"></div>
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'vi',
+            includedLanguages: 'en,vi',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false
+        }, 'google_translate_element');
+    }
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script>
+    function changeSystemLanguage(lang) {
+        let domain = window.location.hostname;
+        if (lang === 'en') {
+            document.cookie = "googtrans=/vi/en; path=/; domain=" + domain;
+            document.cookie = "googtrans=/vi/en; path=/";
+            document.cookie = "selected_lang=en; path=/; domain=" + domain;
+            document.cookie = "selected_lang=en; path=/";
+        } else {
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + domain;
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+            document.cookie = "selected_lang=vi; path=/; domain=" + domain;
+            document.cookie = "selected_lang=vi; path=/";
+        }
+        window.location.reload();
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Highlight active flag based on Cookie
+        let match = document.cookie.match(new RegExp('(^| )selected_lang=([^;]+)'));
+        let currentLang = match ? match[2] : 'vi';
+        
+        let flagVi = document.getElementById('lang-vi');
+        let flagEn = document.getElementById('lang-en');
+        if (flagVi && flagEn) {
+            if (currentLang === 'en') {
+                flagVi.style.opacity = '0.4';
+                flagVi.classList.remove('active-lang');
+                flagEn.style.opacity = '1';
+                flagEn.classList.add('active-lang');
+            } else {
+                flagVi.style.opacity = '1';
+                flagVi.classList.add('active-lang');
+                flagEn.style.opacity = '0.4';
+                flagEn.classList.remove('active-lang');
+            }
+        }
+    });
+</script>
+
+@await RenderSectionAsync("Scripts", required: false)
 
 @RenderSection("Scripts", required: false)
 </body>

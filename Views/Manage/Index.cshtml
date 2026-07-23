@@ -1,0 +1,429 @@
+@model Career_Guidance_Platform.Models.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Trang cá nhân của bạn";
+}
+
+<section class="page-hero">
+    <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+        <span class="page-badge">👤 Trang cá nhân</span>
+        @if (Model.User.IsPremium || User.IsInRole("Admin") || User.IsInRole("Mentor"))
+        {
+            <span class="page-badge" style="background: #eff6ff; color: #3b82f6; border-color: #bfdbfe;">💎 Premium Account</span>
+        }
+    </div>
+    <h1>Bảng điều khiển của bạn</h1>
+    <p>Quản lý hồ sơ cá nhân, xem lại lịch sử các bài trắc nghiệm và danh sách các CV chuyên nghiệp đã lưu của bạn.</p>
+</section>
+
+<section class="content-section" style="padding-top: 10px;">
+    @if (!Model.User.IsPremium && !User.IsInRole("Admin") && !User.IsInRole("Mentor") && Model.User.TestAttemptsCount >= 3)
+    {
+        <div class="premium-upgrade-banner" style="background: linear-gradient(135deg, #fffbeb 0%, #fef08a 100%); border: 1px solid #eab308; border-left: 6px solid #eab308; padding: 20px 24px; border-radius: 16px; margin-bottom: 30px; color: #854d0e; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px -10px rgba(234,179,8,0.15); width: 100%;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="font-size: 32px;">⚠️</span>
+                <div style="text-align: left;">
+                    <h4 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 800;">Gói thành viên Free đã đạt giới hạn</h4>
+                    <p style="margin: 0; font-size: 13.5px; opacity: 0.9;">Bạn đã hết lượt làm bài trắc nghiệm miễn phí. Hãy nâng cấp Premium để tiếp tục lộ trình học tập và xem toàn bộ học liệu.</p>
+                </div>
+            </div>
+            <a href="/Home/UpgradePremium" class="btn primary-btn" style="background: #0f172a; border-color: #0f172a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 13px; white-space: nowrap;">Nâng cấp VIP ngay</a>
+        </div>
+    }
+    <div class="profile-dashboard-layout">
+        
+        <!-- Left Pane: User Card Info -->
+        <div class="profile-sidebar-card info-card">
+            <div class="user-avatar-badge">
+                <span class="avatar-emoji">🎓</span>
+            </div>
+            
+            <h2 class="user-fullname">@Model.User.FullName</h2>
+            <div class="user-role-label">@Model.User.Role</div>
+            
+            <div class="user-meta-details">
+                <div class="meta-item">
+                    <span class="meta-label">Tài khoản:</span>
+                    <span class="meta-val">@Model.User.UserName</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Email:</span>
+                    <span class="meta-val">@Model.User.Email</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Ngày tham gia:</span>
+                    <span class="meta-val">@Model.User.CreatedAt.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Trạng thái:</span>
+                    <span class="meta-val text-success">Hoạt động</span>
+                </div>
+            </div>
+            
+            <hr class="profile-hr" />
+            
+            <div class="profile-sidebar-actions">
+                <a class="btn secondary-btn w-100" asp-controller="Manage" asp-action="ChangePassword">
+                    🔑 Đổi mật khẩu
+                </a>
+            </div>
+        </div>
+
+        <!-- Right Pane: Tabs and Details -->
+        <div class="profile-main-content">
+            <!-- Navigation Tabs -->
+            <div class="profile-tabs">
+                <button type="button" class="profile-tab-btn active" data-target="tab-tests">
+                    📊 Lịch sử đánh giá (@Model.TestResults.Count)
+                </button>
+                <button type="button" class="profile-tab-btn" data-target="tab-resumes">
+                    📄 CV đã lưu (@Model.Resumes.Count)
+                </button>
+                <button type="button" class="profile-tab-btn" data-target="tab-jobs">
+                    💼 Đơn ứng tuyển (@Model.JobApplications.Count)
+                </button>
+                <button type="button" class="profile-tab-btn" data-target="tab-saved-jobs">
+                    ❤️ Việc làm đã lưu (@Model.SavedJobs.Count)
+                </button>
+            </div>
+
+            <!-- Tab Content: Test Results -->
+            <div class="profile-tab-pane active" id="tab-tests">
+                <div class="info-card">
+                    <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #020617;">Lịch sử trắc nghiệm sự nghiệp</h3>
+                    
+                    @if (Model.TestResults.Count == 0)
+                    {
+                        <div class="empty-state-panel">
+                            <span class="empty-icon">🧭</span>
+                            <h4>Bạn chưa thực hiện bài trắc nghiệm hướng nghiệp nào</h4>
+                            <p>Hãy làm bài đánh giá Holland & MBTI để tìm lộ trình nghề nghiệp tương thích nhất với năng lực bản thân.</p>
+                            <a class="btn primary-btn" asp-controller="Home" asp-action="CareerTest" style="margin-top: 10px;">
+                                Bắt đầu làm trắc nghiệm →
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Lần làm</th>
+                                        <th>Ngày thực hiện</th>
+                                        <th>Nghề gợi ý</th>
+                                        <th>Độ tương thích</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var result in Model.TestResults)
+                                    {
+                                        <tr>
+                                            <td><strong>Lần #@result.AttemptNumber</strong></td>
+                                            <td>@result.DateTaken.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                <span class="recommendation-badge">
+                                                    @(result.RecommendedCareerPath?.Title ?? "Đang phân tích...")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div class="progress-bar-mini">
+                                                        <div class="progress-fill" style="width: @(result.CompatibilityScore ?? 0)%"></div>
+                                                    </div>
+                                                    <strong>@(result.CompatibilityScore?.ToString("0.#"))%</strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a class="btn secondary-btn" asp-controller="CareerTest" asp-action="GetResultDetail" asp-route-id="@result.Id" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px;">
+                                                    🔍 Xem chi tiết
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Tab Content: Saved Resumes -->
+            <div class="profile-tab-pane" id="tab-resumes">
+                <div class="info-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin: 0; font-size: 18px; color: #020617;">Danh sách CV của bạn</h3>
+                        <a class="btn primary-btn" asp-controller="Home" asp-action="ResumeBuilder" style="min-height: auto; padding: 8px 16px; font-size: 13px; border-radius: 8px;">
+                            ➕ Tạo CV mới
+                        </a>
+                    </div>
+                    
+                    @if (Model.Resumes.Count == 0)
+                    {
+                        <div class="empty-state-panel">
+                            <span class="empty-icon">📄</span>
+                            <h4>Bạn chưa lưu CV nào vào tài khoản</h4>
+                            <p>Tạo CV chuyên nghiệp từ các mẫu chuẩn A4 có sẵn và lưu lại để dễ dàng chỉnh sửa sau này.</p>
+                            <a class="btn primary-btn" asp-controller="Home" asp-action="ResumeBuilder" style="margin-top: 10px;">
+                                Tạo CV đầu tiên ngay →
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tên CV</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Cập nhật cuối</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var resume in Model.Resumes)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 10px;">
+                                                    <span style="font-size: 22px;">📄</span>
+                                                    <div>
+                                                        <strong style="color: #020617; font-size: 14.5px;">@resume.Title</strong>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@resume.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>@(resume.UpdatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa cập nhật")</td>
+                                            <td>
+                                                <div style="display: flex; gap: 8px;">
+                                                    <a class="btn secondary-btn" asp-controller="Home" asp-action="ViewCV" asp-route-id="@resume.Id" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px; background: #eef2ff; color: #4f46e5; border-color: #e0e7ff;">
+                                                        👁️ Xem
+                                                    </a>
+                                                    <a class="btn secondary-btn" asp-controller="Home" asp-action="ResumeBuilder" asp-route-id="@resume.Id" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px;">
+                                                        ✏️ Sửa
+                                                    </a>
+                                                    <form asp-controller="Manage" asp-action="DeleteResume" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa CV này?');" style="margin: 0; display: inline-block;">
+                                                        <input type="hidden" name="id" value="@resume.Id" />
+                                                        <button type="submit" class="btn secondary-btn danger" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px;">
+                                                            🗑️ Xóa
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Tab Content: Job Applications / Application Tracker -->
+            <div class="profile-tab-pane" id="tab-jobs">
+                <div class="info-card">
+                    <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #020617;">Lịch sử ứng tuyển & Theo dõi trạng thái</h3>
+                    
+                    @if (Model.JobApplications.Count == 0)
+                    {
+                        <div class="empty-state-panel">
+                            <span class="empty-icon">💼</span>
+                            <h4>Bạn chưa ứng tuyển công việc nào</h4>
+                            <p>Hãy truy cập Bảng tin việc làm cá nhân hóa để tìm các vị trí phù hợp với lộ trình của bạn và ứng tuyển.</p>
+                            <a class="btn primary-btn" asp-controller="Home" asp-action="Jobs" style="margin-top: 10px; text-decoration: none;">
+                                Khám phá việc làm ngay →
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Công việc & Công ty</th>
+                                        <th>Ngày nộp</th>
+                                        <th>CV sử dụng</th>
+                                        <th>Trạng thái đơn</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var app in Model.JobApplications)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight: 700; color: #020617;">@(app.JobPosting?.Title ?? "N/A")</div>
+                                                <div style="font-size: 13px; color: #64748b;">🏢 @(app.JobPosting?.CompanyName ?? "N/A")</div>
+                                            </td>
+                                            <td>@app.AppliedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                <span style="font-size: 13.5px; color: #4f46e5; font-weight: 600;">
+                                                    📄 @(app.Resume?.Title ?? "CV Hệ thống")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (app.Status == "Applied")
+                                                {
+                                                    <span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Đã nộp đơn
+                                                    </span>
+                                                }
+                                                else if (app.Status == "Interviewing")
+                                                {
+                                                    <span style="background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Đang phỏng vấn ⏳
+                                                    </span>
+                                                }
+                                                else if (app.Status == "Offered")
+                                                {
+                                                    <span style="background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Nhận thư mời 🎉
+                                                    </span>
+                                                }
+                                                else if (app.Status == "Rejected")
+                                                {
+                                                    <span style="background: #fee2e2; color: #b91c1c; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Từ chối
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        @app.Status
+                                                    </span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Tab Content: Saved Jobs -->
+            <div class="profile-tab-pane" id="tab-saved-jobs">
+                <div class="info-card">
+                    <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #020617;">Danh sách việc làm đã lưu</h3>
+
+                    @if (Model.SavedJobs.Count == 0)
+                    {
+                        <div class="empty-state-panel" style="text-align: center; padding: 30px;">
+                            <span class="empty-icon" style="font-size: 48px; display: block; margin-bottom: 10px;">❤️</span>
+                            <h4 style="font-size: 16px; margin-bottom: 6px;">Bạn chưa lưu tin tuyển dụng nào</h4>
+                            <p style="color: #64748b; font-size: 13px; margin-bottom: 15px;">Hãy truy cập trang tìm kiếm việc làm để lưu các vị trí phù hợp.</p>
+                            <a href="/Home/Jobs" class="btn primary-btn" style="text-decoration: none; display: inline-flex; justify-content: center; align-items: center; height: 38px; font-size: 13px;">Tìm việc làm</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vị trí tuyển dụng</th>
+                                        <th>Công ty / Địa điểm</th>
+                                        <th>Nhóm ngành</th>
+                                        <th>Mức lương</th>
+                                        <th>Ngày lưu</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var saved in Model.SavedJobs)
+                                    {
+                                        var job = saved.JobPosting;
+                                        if (job == null) continue;
+                                        <tr>
+                                            <td>
+                                                <strong style="color: #0f172a; font-size: 13.5px;">@job.Title</strong>
+                                                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Hình thức: @job.JobType</div>
+                                            </td>
+                                            <td>
+                                                <div style="font-weight: 600; color: #334155; font-size: 13px;">🏢 @job.CompanyName</div>
+                                                <div style="font-size: 12px; color: #64748b;">📍 @job.Location</div>
+                                            </td>
+                                            <td>
+                                                <span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: inline-block;">
+                                                    @(job.CareerPath?.Title ?? "Tổng hợp")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span style="font-weight: 700; color: #059669; font-size: 13px;">
+                                                    @(job.Salary > 0 ? $"{job.Salary.ToString("N0")} VNĐ" : "Thỏa thuận")
+                                                </span>
+                                            </td>
+                                            <td style="font-size: 12.5px; color: #64748b;">@saved.SavedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                <div style="display: flex; gap: 8px;">
+                                                    <a href="/Home/Jobs" class="btn btn-sm btn-outline-primary" style="padding: 4px 8px; font-size: 11.5px; border-radius: 8px; text-decoration: none; border: 1px solid #0284c7; color: #0284c7; font-weight: 600;">Xem tin</a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="unsaveJob(this, @job.Id)" style="padding: 4px 8px; font-size: 11.5px; border-radius: 8px; background: transparent; border: 1px solid #ef4444; color: #ef4444; font-weight: 600; cursor: pointer;">Bỏ lưu</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- Dashboard Interaction Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabBtns = document.querySelectorAll(".profile-tab-btn");
+        const tabPanes = document.querySelectorAll(".profile-tab-pane");
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const target = btn.getAttribute("data-target");
+
+                tabBtns.forEach(b => b.classList.remove("active"));
+                tabPanes.forEach(p => p.classList.remove("active"));
+
+                btn.classList.add("active");
+                document.getElementById(target).classList.add("active");
+            });
+        });
+
+        window.unsaveJob = function(btn, jobId) {
+            if (!confirm("Bạn có chắc chắn muốn bỏ lưu vị trí này?")) return;
+            fetch("/Home/ToggleSaveJob?jobPostingId=" + jobId, {
+                method: "POST"
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && !data.isSaved) {
+                    const row = btn.closest("tr");
+                    if (row) {
+                        row.style.transition = "all 0.3s";
+                        row.style.opacity = 0;
+                        setTimeout(() => {
+                            row.remove();
+                            // check if table is empty
+                            const tableBody = document.querySelector("#tab-saved-jobs tbody");
+                            if (tableBody && tableBody.querySelectorAll("tr").length === 0) {
+                                location.reload();
+                            }
+                        }, 300);
+                    }
+                    showToast("Đã bỏ lưu việc làm.", "info");
+                } else {
+                    showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi bỏ lưu:", err);
+                showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+            });
+        };
+    });
+</script>

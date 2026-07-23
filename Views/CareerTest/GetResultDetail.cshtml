@@ -1,0 +1,296 @@
+@model Career_Guidance_Platform.Models.TestResult
+
+@{
+    ViewData["Title"] = "Kết quả bài test";
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9; padding: 80px 24px 60px;">
+    <span class="page-badge">📊 Kết quả đánh giá</span>
+    <h1>Kết quả định hướng nghề nghiệp</h1>
+    <p>Dưới đây là phân tích chi tiết độ tương thích của bạn đối với các ngành nghề dựa trên câu trả lời.</p>
+</section>
+
+<section class="content-section result-detail" style="max-width: 1200px; padding: 50px 24px;">
+    <div class="result-summary" style="border: 1px solid #e2e8f0; border-radius: 24px; background: #ffffff; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); display: flex; gap: 40px; flex-wrap: wrap;">
+        
+        <!-- Left Side: Result summary and CTA -->
+        <div class="result-left" style="flex: 1 1 45%; min-width: 320px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
+                🎯 Nghề nghiệp đề xuất
+            </h2>
+
+            @if (Model.RecommendedCareerPath != null)
+            {
+                <div class="recommended-career" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border: 1px solid #c7d2fe; padding: 24px; border-radius: 16px; margin-bottom: 20px;">
+                    <h3 style="font-size: 22px; font-weight: 800; color: #3730a3; margin: 0 0 10px 0;">
+                        @Model.RecommendedCareerPath.Title
+                    </h3>
+                    @if (!string.IsNullOrWhiteSpace(Model.RecommendedCareerPath.Content))
+                    {
+                        <div class="career-content" style="font-size: 14.5px; line-height: 1.6; color: #4338ca; opacity: 0.9;">
+                            @Html.Raw(Model.RecommendedCareerPath.Content.Length > 200 ? Model.RecommendedCareerPath.Content.Substring(0, 197) + "..." : Model.RecommendedCareerPath.Content)
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <p style="color: #64748b; font-style: italic; margin: 0;">Không có nghề nghiệp gợi ý phù hợp.</p>
+                </div>
+            }
+
+            <div class="compatibility" style="margin-bottom: 20px; background: #f0fdf4; border: 1px solid #d1fae5; border-radius: 12px; padding: 12px 20px; display: inline-flex; align-items: center; gap: 8px;">
+                <strong style="color: #065f46; font-size: 15px;">Độ tương thích chính xác:</strong>
+                @if (Model.CompatibilityScore.HasValue)
+                {
+                    <span class="score" style="font-size: 22px; font-weight: 800; color: #10b981; text-shadow: 0 1px 2px rgba(16, 185, 129, 0.1);">@Model.CompatibilityScore.Value.ToString("0.##") %</span>
+                }
+                else
+                {
+                    <span class="score" style="font-size: 22px; font-weight: 800; color: #64748b;">—</span>
+                }
+            </div>
+
+            <div class="meta" style="margin-bottom: 28px; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 13.5px; color: #64748b; line-height: 1.6;">
+                <div>📅 <strong>Ngày làm bài:</strong> @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                <div>🔄 <strong>Lần thực hiện:</strong> Lần thứ @Model.AttemptNumber</div>
+                <div>👤 <strong>Học viên:</strong> @(Model.User?.FullName ?? "Học viên CareerPath")</div>
+            </div>
+
+            <div class="chart-container" style="margin-bottom: 28px; padding: 20px; background: #ffffff; border-radius: 18px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);">
+                <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                    <span>📊</span> Biểu đồ tương thích các ngành nghề
+                </h4>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="compatibilityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="result-actions" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px;">
+                @if (Model.RecommendedCareerPathId.HasValue)
+                {
+                    <!-- Button 1: Xem lộ trình nghề nghiệp (CTA chính) -->
+                    <a asp-controller="CareerPath" asp-action="Details" asp-route-id="@Model.RecommendedCareerPathId.Value" class="btn primary-btn" style="font-weight: 700; width: 100%; justify-content: center; padding: 14px;">🚀 Xem lộ trình học tập & Nghề nghiệp</a>
+
+                    <!-- Button 2: Nâng cấp nghề nghiệp (Bồi dưỡng kiến thức) -->
+                    @if (Model.CompatibilityScore.HasValue && Model.CompatibilityScore.Value < 80)
+                    {
+                        <a asp-controller="Home" asp-action="Training" asp-route-careerPathId="@Model.RecommendedCareerPathId.Value" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 700; border: none; width: 100%; justify-content: center; padding: 14px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);">📚 Đăng ký bồi dưỡng nâng cao kiến thức</a>
+                    }
+                    else
+                    {
+                        <button class="btn" disabled style="background-color: #cbd5e1; color: #64748b; cursor: not-allowed; opacity: 0.8; font-weight: 700; width: 100%; justify-content: center; padding: 14px; border: 1px solid #cbd5e1;" title="Bạn đã đạt chuẩn kiến thức cho lộ trình này, sẵn sàng kết nối doanh nghiệp!">Nâng cấp kiến thức 🔒 (Đã hoàn thành)</button>
+                    }
+                }
+
+                <!-- Button 3: Làm lại bài test -->
+                <a asp-controller="Home" asp-action="CareerTest" class="btn secondary-btn" style="font-weight: 700; width: 100%; justify-content: center; padding: 14px;">📝 Thực hiện lại bài đánh giá</a>
+            </div>
+
+            @if (ViewBag.Jobs != null && ((IEnumerable<Career_Guidance_Platform.Models.JobPosting>)ViewBag.Jobs).Any())
+            {
+                <div class="recommended-jobs" style="padding: 24px; border-radius: 18px; background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%); border: 1px solid #bbf7d0; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.03);">
+                    <h3 style="color: #065f46; margin: 0 0 10px 0; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                        <span>🏢</span> Cơ hội việc làm đề xuất
+                    </h3>
+                    <p style="font-size: 13.5px; color: #047857; margin-bottom: 20px; line-height: 1.5;">Dựa trên định hướng nghề nghiệp, đối tác của chúng tôi tuyển dụng:</p>
+                    <div class="jobs-list" style="display: flex; flex-direction: column; gap: 16px;">
+                        @foreach (var job in (IEnumerable<Career_Guidance_Platform.Models.JobPosting>)ViewBag.Jobs)
+                        {
+                            <div class="job-item" style="background: #ffffff; padding: 18px; border: 1px solid #e6f4ea; border-radius: 12px;">
+                                <h4 style="margin: 0 0 6px 0; color: #065f46; font-size: 15.5px; font-weight: 800;">@job.Title</h4>
+                                <div style="font-size: 13px; color: #047857; font-weight: 700; margin-bottom: 6px;">💼 @job.CompanyName</div>
+                                @if (job.Salary > 0)
+                                {
+                                    <div style="font-size: 13px; color: #10b981; font-weight: 700; margin-bottom: 10px;">💰 Mức lương: @job.Salary.ToString("N0") VNĐ</div>
+                                }
+                                <p style="margin: 0 0 14px 0; font-size: 13px; color: #64748b; line-height: 1.5;">@job.Description</p>
+                                <button class="btn" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%;" onclick="alert('Đã gửi thông tin định hướng của bạn đến doanh nghiệp!')">Ứng tuyển nhanh</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Right Side: Questions & selected answers review -->
+        <div class="result-right" style="flex: 1 1 50%; max-height: 85vh; overflow-y: auto; padding-left: 10px;">
+            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
+                📋 Đáp án chi tiết bài làm
+            </h2>
+
+            @if (Model.TestAnswers != null && Model.TestAnswers.Any())
+            {
+                <ol class="answer-list">
+                    @foreach (var ans in Model.TestAnswers)
+                    {
+                        <li class="answer-item" style="margin-bottom: 16px;">
+                            <div class="question" style="font-size: 15px; font-weight: 700; color: #0f172a; line-height: 1.5; margin-bottom: 10px;">
+                                @(
+                                    !string.IsNullOrWhiteSpace(ans.QuestionTest?.Content)
+                                    ? ans.QuestionTest.Content
+                                    : $"Câu hỏi #{ans.QuestionId}"
+                                )
+                            </div>
+                            <div class="selected-option" style="background: #ffffff; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+                                <div class="option-content">
+                                    <span style="font-size: 12.5px; color: #64748b; display: block; margin-bottom: 2px;">Lựa chọn của bạn:</span>
+                                    @if (ans.QuestionOption != null)
+                                    {
+                                        <strong style="color: #4f46e5; font-size: 14.5px;">@ans.QuestionOption.Content</strong>
+                                    }
+                                    else
+                                    {
+                                        <em style="color: #ef4444;">Không tìm thấy đáp án</em>
+                                    }
+                                </div>
+                                <span style="font-size: 20px;">✔️</span>
+                            </div>
+                        </li>
+                    }
+                </ol>
+            }
+            else
+            {
+                <p style="color: #64748b; font-style: italic;">Không có câu trả lời lưu trữ trên hệ thống.</p>
+            }
+        </div>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var ctx = document.getElementById('compatibilityChart').getContext('2d');
+        
+        var labels = [];
+        var dataValues = [];
+        
+        @if (Model.TestResultScores != null && Model.TestResultScores.Any())
+        {
+            foreach (var score in Model.TestResultScores.OrderByDescending(s => s.Score))
+            {
+                <text>
+                (function() {
+                    var title = "@Html.Raw(score.CareerPath?.Title ?? "Chưa đặt tên")";
+                    var scoreVal = @score.Score.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                    var parts = title.split(" (");
+                    if (parts.length > 1) {
+                        // Split into Vietnamese title on Line 1, and English title on Line 2
+                        labels.push([parts[0], "(" + parts[1]]);
+                    } else {
+                        labels.push(title);
+                    }
+                    dataValues.push(scoreVal);
+                })();
+                </text>
+            }
+        }
+        
+        if (labels.length === 0) {
+            labels = ["Chưa có dữ liệu"];
+            dataValues = [0];
+        }
+
+        // Custom plugin to draw values at the end of each horizontal bar
+        const chartDataLabelsPlugin = {
+            id: 'chartDataLabels',
+            afterDatasetsDraw(chart, args, pluginOptions) {
+                const { ctx, chartArea: { right }, scales: { y } } = chart;
+                ctx.save();
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillStyle = '#4f46e5';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    meta.data.forEach((bar, index) => {
+                        const val = dataset.data[index];
+                        if (val > 0) {
+                            const xPos = bar.x + 8; // 8px spacing from end of bar
+                            const yPos = bar.y;
+                            ctx.fillText(val + '%', xPos, yPos);
+                        }
+                    });
+                });
+                ctx.restore();
+            }
+        };
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Độ tương thích (%)',
+                    data: dataValues,
+                    backgroundColor: 'rgba(79, 70, 229, 0.85)',
+                    borderColor: 'rgb(79, 70, 229)',
+                    borderWidth: 1.5,
+                    borderRadius: 8,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.8
+                }]
+            },
+            plugins: [chartDataLabelsPlugin],
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 10,
+                        right: 40 // Space for labels at the end of bars
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return ' ' + context.raw + '% tương thích';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: '#f1f5f9',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            font: { size: 11, weight: '600' },
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#334155',
+                            font: { size: 11, weight: '700' },
+                            autoSkip: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>

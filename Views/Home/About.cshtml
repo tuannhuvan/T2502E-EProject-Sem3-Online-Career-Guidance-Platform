@@ -1,6 +1,76 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@model IEnumerable<Career_Guidance_Platform.Models.TeamMember>
+@{
+    ViewData["Title"] = "Giới thiệu & Đội ngũ";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>Community
+<section class="page-hero">
+    <span class="page-badge">✨ Về chúng tôi</span>
+    <h1>Đồng hành định hướng tương lai</h1>
+    <p>CareerPath là nền tảng hướng nghiệp thông minh hàng đầu, kết hợp giữa thuật toán phân tích tư duy hiện đại và sự cố vấn chuyên sâu từ các chuyên gia.</p>
+</section>
+
+<section class="content-section">
+    <div class="two-column" style="margin-bottom: 80px;">
+        <div>
+            <h2>Tầm nhìn & Sứ mệnh</h2>
+            <p>Chúng tôi tin rằng mỗi cá nhân đều sở hữu những năng lực đặc biệt phù hợp với những con đường sự nghiệp khác nhau. Tuy nhiên, việc thiếu thông tin và định hướng đúng đắn khiến nhiều bạn trẻ gặp khó khăn trong việc tìm kiếm đam mê đích thực.</p>
+            <p>Sứ mệnh của CareerPath là cung cấp bộ công cụ đánh giá chính xác, hệ thống lộ trình học tập, thông tin việc làm và kết nối với các mentor uy tín để thắp sáng con đường tương lai của thế hệ trẻ Việt Nam.</p>
+        </div>
+        <div class="info-card">
+            <h3>Giá trị cốt lõi</h3>
+            <ul style="padding-left: 20px;">
+                <li><strong>Thấu hiểu:</strong> Lắng nghe nhu cầu và phân tích hành vi của từng người dùng.</li>
+                <li><strong>Chuyên nghiệp:</strong> Cung cấp kiến thức chuẩn hóa, liên tục cập nhật xu hướng thị trường.</li>
+                <li><strong>Gắn kết:</strong> Tạo cầu nối bền vững giữa Học viên - Chuyên gia - Doanh nghiệp.</li>
+                <li><strong>Đổi mới:</strong> Áp dụng công nghệ hiện đại mang lại trải nghiệm hướng nghiệp tối ưu.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="team-section">
+        <div class="section-title" style="text-align: center; margin-bottom: 50px;">
+            <span style="font-weight: 700; color: #64748b;">👥 Ban điều hành & Phát triển</span>
+            <h2 style="font-size: 34px; margin: 10px 0; color: #020617;">Gặp gỡ đội ngũ CareerPath</h2>
+            <p style="max-width: 600px; margin: 0 auto; color: #64748b;">Những con người nhiệt huyết, đam mê công nghệ và giáo dục đứng sau sự thành công của hệ thống.</p>
+        </div>
+
+        <div class="team-grid">
+            @foreach (var member in Model)
+            {
+                <div class="team-card">
+                    <div class="team-avatar-wrapper">
+                        @if (!string.IsNullOrEmpty(member.AvatarUrl))
+                        {
+                            <img src="@member.AvatarUrl" alt="@member.Name" class="team-avatar" />
+                        }
+                        else
+                        {
+                            var initials = "";
+                            if (!string.IsNullOrEmpty(member.Name))
+                            {
+                                var words = member.Name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                if (words.Length >= 2)
+                                {
+                                    initials = (words[words.Length - 2][0].ToString() + words[words.Length - 1][0].ToString()).ToUpper();
+                                }
+                                else if (words.Length == 1)
+                                {
+                                    initials = words[0][0].ToString().ToUpper();
+                                }
+                            }
+                            <div class="team-avatar-placeholder">
+                                <span>@initials</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="team-card-info">
+                        <h3>@member.Name</h3>
+                        <span class="team-role">@member.Role</span>
+                        <p class="team-bio">@member.Bio</p>
+                        <a href="mailto:@member.Email" class="team-email">📧 @member.Email</a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

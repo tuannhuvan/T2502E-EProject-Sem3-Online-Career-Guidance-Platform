@@ -1,4 +1,5 @@
-﻿@{
+@model IEnumerable<Career_Guidance_Platform.Models.User>
+@{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Users";
 }
@@ -11,110 +12,273 @@
         </div>
 
         <div class="col-auto ms-auto">
-            <a href="#" class="btn btn-primary">
+            <button class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#userModal"
+                    onclick="openAddUserModal()">
                 <i class="ti ti-plus me-1"></i>
                 Add User
-            </a>
+            </button>
         </div>
     </div>
 </div>
 
 <div class="card">
+
     <div class="card-body border-bottom py-3">
         <div class="row g-2">
-            <div class="col-md-4">
-                <input class="form-control" placeholder="Search user..." />
-            </div>
 
             <div class="col-md-3">
-                <select class="form-select">
-                    <option>All Roles</option>
-                    <option>User</option>
-                    <option>Mentor</option>
-                    <option>Admin</option>
-                </select>
+                <input id="searchInput"
+                       type="search"
+                       class="form-control"
+                       placeholder="Search user..."
+                       onkeyup="filterUsers()"
+                       autocomplete="new-password" />
             </div>
 
-            <div class="col-md-3">
-                <select class="form-select">
-                    <option>All Status</option>
-                    <option>Active</option>
-                    <option>Pending</option>
-                    <option>Blocked</option>
+            <div class="col-md-2">
+                <select id="roleFilter"
+                        class="form-select"
+                        onchange="filterUsers()">
+                    <option value="">All Roles</option>
+                    <option value="User">User</option>
+                    <option value="Mentor">Mentor</option>
+                    <option value="Admin">Admin</option>
                 </select>
             </div>
 
             <div class="col-md-2">
-                <button class="btn btn-outline-primary w-100">Filter</button>
+                <select id="statusFilter"
+                        class="form-select"
+                        onchange="filterUsers()">
+                    <option value="">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Blocked">Blocked</option>
+                </select>
             </div>
+
+            <div class="col-md-3">
+                <select id="membershipFilter"
+                        class="form-select"
+                        onchange="filterUsers()">
+                    <option value="">All Membership</option>
+                    <option value="premium">Premium</option>
+                    <option value="free">Regular</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button class="btn btn-outline-primary w-100"
+                        onclick="filterUsers()">
+                    Filter
+                </button>
+            </div>
+
         </div>
     </div>
 
     <div class="table-responsive">
+
         <table class="table table-vcenter card-table">
+
             <thead>
             <tr>
-                <th><input type="checkbox" class="form-check-input" /></th>
+                <th width="40">
+                    <input type="checkbox" class="form-check-input">
+                </th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
-                <th>Career Goal</th>
+                <th>Membership</th>
                 <th>Status</th>
-                <th class="w-1">Actions</th>
+                <th width="150">Actions</th>
             </tr>
             </thead>
 
-            <tbody>
-            <tr>
-                <td><input type="checkbox" class="form-check-input" /></td>
-                <td>Nguyễn Minh Anh</td>
-                <td>minhanh@gmail.com</td>
-                <td>User</td>
-                <td>Software Engineer</td>
-                <td><span class="badge bg-green-lt">Active</span></td>
-                <td class="table-actions">
-                    <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-                    <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
-                </td>
-            </tr>
+            <tbody id="userTableBody">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var user in Model)
+                {
+                    var displayRole = user.Role == "Student" ? "User" : user.Role;
+                    var displayStatus = user.Status == 1 ? "Active" : (user.Status == 2 ? "Pending" : "Blocked");
+                    var badgeClass = user.Status == 1 ? "bg-green-lt" : (user.Status == 2 ? "bg-yellow-lt" : "bg-red-lt");
+                    <tr class="user-row" data-premium="@user.IsPremium.ToString().ToLower()">
+                        <td>
+                            <input type="checkbox" class="form-check-input">
+                        </td>
+                        <td class="user-name">@user.FullName</td>
+                        <td class="user-email">@user.Email</td>
+                        <td class="user-role">@displayRole</td>
+                        <td>
+                            @if (user.IsPremium)
+                            {
+                                <span class="badge bg-purple-lt"><i class="ti ti-crown me-1"></i>Premium</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary-lt">Regular</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge status-badge @badgeClass">@displayStatus</span>
+                        </td>
+                        <td class="table-actions">
+                            <button class="btn btn-sm btn-outline-primary me-1"
+                                    data-id="@user.Id"
+                                    data-fullname="@user.FullName"
+                                    data-email="@user.Email"
+                                    data-role="@displayRole"
+                                    data-status="@displayStatus"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#userModal"
+                                    onclick="openEditUserModal(this)">
+                                Edit
+                            </button>
 
-            <tr>
-                <td><input type="checkbox" class="form-check-input" /></td>
-                <td>Trần Hà Linh</td>
-                <td>halinh@gmail.com</td>
-                <td>User</td>
-                <td>UI/UX Designer</td>
-                <td><span class="badge bg-green-lt">Active</span></td>
-                <td class="table-actions">
-                    <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-                    <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
-                </td>
-            </tr>
-
-            <tr>
-                <td><input type="checkbox" class="form-check-input" /></td>
-                <td>Phạm Quốc Huy</td>
-                <td>huypham@gmail.com</td>
-                <td>Mentor</td>
-                <td>Business Analyst</td>
-                <td><span class="badge bg-yellow-lt">Pending</span></td>
-                <td class="table-actions">
-                    <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-                    <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
-                </td>
-            </tr>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteUser(@user.Id)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-3">No users found in database.</td>
+                </tr>
+            }
             </tbody>
+
         </table>
+
     </div>
 
-    <div class="card-footer d-flex align-items-center">
-        <p class="m-0 text-muted">Showing 1 to 3 of 20 entries</p>
-
-        <ul class="pagination m-0 ms-auto">
-            <li class="page-item disabled"><a class="page-link" href="#">prev</a></li>
-            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">next</a></li>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        <span id="entryText">
+            Showing 1 to @(Model?.Count() ?? 0) entries
+        </span>
+        <ul class="pagination m-0 ms-auto" id="pagination-ul">
         </ul>
     </div>
+
 </div>
+
+<!-- Modal -->
+
+<div class="modal modal-blur fade"
+     id="userModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title"
+                    id="modalTitle">
+                    Add User
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden"
+                       id="editingUserId">
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Full Name
+                        </label>
+
+                        <input id="fullNameInput"
+                               class="form-control">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Email
+                        </label>
+
+                        <input id="emailInput"
+                               type="email"
+                               class="form-control">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Role
+                        </label>
+
+                        <select id="roleInput"
+                                class="form-select">
+                            <option>User</option>
+                            <option>Mentor</option>
+                            <option>Admin</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Status
+                        </label>
+
+                        <select id="statusInput"
+                                class="form-select">
+                            <option>Active</option>
+                            <option>Pending</option>
+                            <option>Blocked</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 mb-3" id="passwordGroup">
+                        <label class="form-label">
+                            Password <span class="text-muted">(Default: User@123456)</span>
+                        </label>
+                        <input id="passwordInput"
+                               type="password"
+                               class="form-control"
+                               placeholder="Enter password or leave blank for default">
+                    </div>
+
+
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button class="btn btn-primary"
+                        onclick="saveUser()">
+                    Save User
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <script src="~/js/admin/users.js"></script>
+}

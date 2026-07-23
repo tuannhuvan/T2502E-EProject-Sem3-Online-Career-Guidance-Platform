@@ -1,0 +1,151 @@
+@model IEnumerable<Career_Guidance_Platform.Models.MentorProfile>
+@{
+    ViewData["Title"] = "Danh bạ Cố vấn";
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
+    <span class="page-badge">👥 Mentorship Directory</span>
+    <h1>Đội ngũ Cố vấn chuyên môn</h1>
+    <p>Kết nối trực tiếp 1-1 với những chuyên gia hàng đầu để định hình tương lai sự nghiệp và giải đáp các khúc mắc nghề nghiệp.</p>
+</section>
+
+<section class="content-section">
+    @if (TempData["BookingSuccess"] != null)
+    {
+        <div style="background: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; padding: 16px 24px; border-radius: 12px; margin-bottom: 30px; font-weight: 600; box-shadow: 0 4px 12px rgba(21, 128, 61, 0.05);">
+            🎉 @TempData["BookingSuccess"]
+        </div>
+    }
+
+    <!-- Mentor Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px;">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var mentor in Model)
+            {
+                <div class="info-card" style="padding: 28px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 24px; transition: all 0.3s; position: relative; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.02);" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='#4f46e5';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#e2e8f0';">
+                    <div>
+                        <!-- Header with Avatar and Rating -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                            <div style="width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 8px 16px rgba(79, 70, 229, 0.1);">
+                                👨‍🏫
+                            </div>
+                            <span style="font-size: 13px; font-weight: 700; color: #f59e0b; background: #fef3c7; padding: 4px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
+                                ⭐ @mentor.Rating.ToString("0.##")
+                            </span>
+                        </div>
+
+                        <!-- Mentor Info -->
+                        <h3 style="font-size: 21px; color: #0f172a; margin: 0 0 4px; font-weight: 800;">@mentor.User?.FullName</h3>
+                        <div style="font-size: 14.5px; font-weight: 600; color: #4f46e5; margin-bottom: 12px;">
+                            @mentor.JobTitle @(string.IsNullOrEmpty(mentor.Company) ? "" : $"tại {mentor.Company}")
+                        </div>
+
+                        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 20px; min-height: 70px;">
+                            @mentor.Biography
+                        </p>
+
+                        <!-- Specializations -->
+                        <div style="margin-bottom: 24px;">
+                            <strong style="font-size: 12.5px; color: #1e293b; display: block; margin-bottom: 8px;">Lĩnh vực cố vấn:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                @if (!string.IsNullOrEmpty(mentor.Specialization))
+                                {
+                                    foreach (var spec in mentor.Specialization.Split(",").Select(s => s.Trim()))
+                                    {
+                                        <span style="font-size: 11.5px; font-weight: 600; color: #334155; background: #f1f5f9; padding: 4px 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                            @spec
+                                        </span>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Book Action -->
+                    <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 12px; color: #64748b;">
+                            📅 Lịch rảnh:<br/>
+                            <strong style="color: #0f172a;">Có sẵn trong tuần</strong>
+                        </div>
+                        <button type="button" class="btn" style="background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 13.5px;" onclick="openBookingModal(@mentor.UserId, '@mentor.User?.FullName', '@mentor.AvailabilityJson')">
+                            Đặt lịch tư vấn
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="info-card" style="grid-column: 1 / -1; text-align: center; padding: 50px;">
+                <p style="color: #64748b; font-style: italic; margin: 0;">Hiện chưa có Mentor nào hoạt động trên hệ thống.</p>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Modal Booking Form -->
+<div id="bookingModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div class="info-card" style="background-color: #ffffff; padding: 32px; border-radius: 24px; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); margin: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 20px; color: #0f172a; font-weight: 800;">Đặt lịch hẹn cố vấn</h3>
+            <span style="font-size: 24px; color: #94a3b8; cursor: pointer; font-weight: 700;" onclick="closeBookingModal()">&times;</span>
+        </div>
+        
+        <form asp-controller="Home" asp-action="BookMentor" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="modalMentorId" name="mentorId" value="" />
+
+            <p style="font-size: 14.5px; color: #475569; margin-bottom: 20px;">
+                Cố vấn: <strong id="modalMentorName" style="color: #4f46e5;">...</strong>
+            </p>
+
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Chọn Ngày tư vấn</label>
+                <input type="date" name="meetingDate" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;" />
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Chọn Giờ tư vấn</label>
+                <select name="meetingTime" required style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: white;">
+                    <option value="09:00">09:00 - 10:00 (Sáng)</option>
+                    <option value="10:30">10:30 - 11:30 (Sáng)</option>
+                    <option value="14:00">14:00 - 15:00 (Chiều)</option>
+                    <option value="15:30">15:30 - 16:30 (Chiều)</option>
+                    <option value="19:00">19:00 - 20:00 (Tối)</option>
+                    <option value="20:30">20:30 - 21:30 (Tối)</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 6px;">Câu hỏi/Mục tiêu bạn cần giải đáp</label>
+                <textarea name="notes" required placeholder="Ghi rõ các câu hỏi hoặc khó khăn bạn đang gặp phải để Mentor chuẩn bị tốt nhất..." style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 100px; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" class="btn secondary-btn" style="border-radius: 10px; font-weight: 700; padding: 10px 20px; font-size: 14px;" onclick="closeBookingModal()">Hủy bỏ</button>
+                <button type="submit" class="btn" style="background: #4f46e5; color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px;">Xác nhận đặt lịch</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openBookingModal(mentorId, mentorName, availability) {
+        document.getElementById("modalMentorId").value = mentorId;
+        document.getElementById("modalMentorName").textContent = mentorName;
+        document.getElementById("bookingModal").style.display = "flex";
+    }
+
+    function closeBookingModal() {
+        document.getElementById("bookingModal").style.display = "none";
+    }
+
+    // Close when clicking outside modal content
+    window.onclick = function(event) {
+        var modal = document.getElementById("bookingModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>

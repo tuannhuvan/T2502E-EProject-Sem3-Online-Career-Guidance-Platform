@@ -148,3 +148,35 @@
         align-items: flex-start;
     }
 }
+
+/* Validation Summary Styling */
+.validation-summary-errors {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.validation-summary-errors ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.validation-summary-errors li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.validation-summary-errors li::before {
+    content: "⚠️";
+}
+
+.validation-summary-valid {
+    display: none;
+}

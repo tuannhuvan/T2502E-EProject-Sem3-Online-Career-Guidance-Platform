@@ -1,0 +1,116 @@
+@model Career_Guidance_Platform.Models.Skill
+
+@{
+    ViewData["Title"] = "Thêm Kỹ năng";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-header d-print-none">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">Thêm Kỹ năng mới</h2>
+            <div class="text-muted mt-1">Cấu hình các thuộc tính và thời lượng của kỹ năng</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <form asp-controller="Admin" asp-action="CreateSkill" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label required">Tên Kỹ năng</label>
+                <input asp-for="Name" class="form-control" placeholder="Ví dụ: Lập trình C#, Kỹ năng Giao tiếp..." />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Phân loại kỹ năng</label>
+                    <select asp-for="SkillType" class="form-select">
+                        <option value="Hard Skill">Kỹ năng chuyên môn (Hard Skill)</option>
+                        <option value="Soft Skill">Kỹ năng mềm (Soft Skill)</option>
+                    </select>
+                    <span asp-validation-for="SkillType" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Độ khó</label>
+                    <select asp-for="Difficulty" class="form-select">
+                        <option value="Easy">Dễ (Easy)</option>
+                        <option value="Medium">Trung bình (Medium)</option>
+                        <option value="Hard">Khó (Hard)</option>
+                    </select>
+                    <span asp-validation-for="Difficulty" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Thời gian tự học ước tính (giờ)</label>
+                    <input type="number" asp-for="EstimatedHours" class="form-control" min="1" placeholder="10" />
+                    <span asp-validation-for="EstimatedHours" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Mô tả chi tiết kỹ năng</label>
+                <textarea asp-for="Description" class="form-control" rows="5" placeholder="Nhập mục tiêu học tập và tóm tắt kỹ năng..."></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Tài nguyên liên kết (Resources)</label>
+                <div class="border rounded p-3 bg-light" style="max-height: 220px; overflow-y: auto;">
+                    @{
+                        var resources = ViewBag.Resources as IEnumerable<Career_Guidance_Platform.Models.Resource>;
+                    }
+                    @if (resources != null && resources.Any())
+                    {
+                        foreach (var res in resources)
+                        {
+                            <label class="form-check mb-2">
+                                <input type="checkbox" name="selectedResourceIds" value="@res.Id" class="form-check-input" />
+                                <span class="form-check-label text-dark">
+                                    <span class="badge bg-blue-lt me-1">@res.ResourceType</span>
+                                    <strong>@res.Title</strong>
+                                    @if (res.Category != null)
+                                    {
+                                        <span class="text-muted small">(@res.Category.Name)</span>
+                                    }
+                                </span>
+                            </label>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted small">Không có tài nguyên khả dụng.</span>
+                    }
+                </div>
+                <small class="text-muted">Chọn các tài nguyên học tập hỗ trợ cho kỹ năng này.</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Trạng thái hoạt động</label>
+                <select asp-for="Status" class="form-select">
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
+                </select>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ti ti-device-floppy me-1"></i>
+                    Lưu kỹ năng
+                </button>
+
+                <a asp-controller="Admin" asp-action="Skills" class="btn btn-secondary">
+                    Quay lại
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

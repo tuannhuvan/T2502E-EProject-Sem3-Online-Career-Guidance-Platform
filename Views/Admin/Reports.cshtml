@@ -1,56 +1,390 @@
-﻿@{
+@model List<Career_Guidance_Platform.Models.PaymentHistory>
+@{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Reports";
+    ViewData["Title"] = "Reports & Revenue Analytics";
+    
+    // Calculate conversion rate
+    int premiumCount = ViewBag.PremiumUsers ?? 0;
+    int freeCount = ViewBag.FreeUsers ?? 0;
+    int totalCount = premiumCount + freeCount;
+    double conversionRate = totalCount > 0 ? ((double)premiumCount / totalCount) * 100 : 0.0;
 }
 
-<h2 class="page-title mb-3">Reports</h2>
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Báo cáo & Phân tích</div>
+            <h2 class="page-title text-primary"><i class="ti ti-chart-bar me-2"></i>Thống kê doanh thu Premium</h2>
+        </div>
+        <div class="col-auto ms-auto d-flex gap-2">
+            <button onclick="exportExcel();" class="btn btn-success text-white">
+                <i class="ti ti-file-spreadsheet me-1"></i> Xuất Excel
+            </button>
+            <button onclick="window.print();" class="btn btn-outline-secondary">
+                <i class="ti ti-printer me-1"></i> In báo cáo
+            </button>
+        </div>
+    </div>
+</div>
 
-<div class="row row-cards">
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">User Growth</h3>
-            </div>
+<!-- Thống kê tổng quan -->
+<div class="row row-deck row-cards mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-primary-lt">
             <div class="card-body">
-                <canvas id="userGrowthChart"></canvas>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-primary">Tổng doanh thu (USD)</div>
+                    <span class="avatar bg-primary text-white"><i class="ti ti-currency-dollar"></i></span>
+                </div>
+                <div class="h1 mb-1 text-primary">$@(((decimal)ViewBag.TotalRevenue).ToString("N2"))</div>
+                <div class="text-muted text-truncate">Cộng dồn từ giao dịch thành công</div>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Mentor Bookings</h3>
-            </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-success-lt">
             <div class="card-body">
-                <canvas id="bookingChart"></canvas>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-success">Số lượt nâng cấp</div>
+                    <span class="avatar bg-success text-white"><i class="ti ti-shopping-cart"></i></span>
+                </div>
+                <div class="h1 mb-1 text-success">@ViewBag.TotalTransactions</div>
+                <div class="text-muted text-truncate">Thanh toán Premium thành công</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-info-lt">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-info">Thành viên Premium</div>
+                    <span class="avatar bg-info text-white"><i class="ti ti-user-check"></i></span>
+                </div>
+                <div class="h1 mb-1 text-info">@premiumCount</div>
+                <div class="text-muted text-truncate">Trên tổng số @totalCount người dùng</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card bg-warning-lt">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-warning">Tỷ lệ chuyển đổi (CVR)</div>
+                    <span class="avatar bg-warning text-white"><i class="ti ti-percentage"></i></span>
+                </div>
+                <div class="h1 mb-1 text-warning">@conversionRate.ToString("0.0")%</div>
+                <div class="text-muted text-truncate">Tỷ lệ nâng cấp VIP thành công</div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Chi tiết trạng thái giao dịch -->
+<div class="row row-deck row-cards mb-4">
+    <div class="col-sm-6 col-lg-4">
+        <div class="card bg-success-lt">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-success">Thanh toán thành công</div>
+                    <span class="avatar bg-success text-white"><i class="ti ti-check"></i></span>
+                </div>
+                <div class="h1 mb-1 text-success">@ViewBag.CompletedCount</div>
+                <div class="text-muted text-truncate">Giao dịch đã hoàn tất thành công</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <div class="card bg-danger-lt">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-danger">Giao dịch đã hủy</div>
+                    <span class="avatar bg-danger text-white"><i class="ti ti-x"></i></span>
+                </div>
+                <div class="h1 mb-1 text-danger">@ViewBag.CancelledCount</div>
+                <div class="text-muted text-truncate">Giao dịch do người dùng hủy bỏ</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <div class="card bg-warning-lt">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="subheader text-warning">Đang chờ thanh toán</div>
+                    <span class="avatar bg-warning text-white"><i class="ti ti-clock"></i></span>
+                </div>
+                <div class="h1 mb-1 text-warning">@ViewBag.PendingCount</div>
+                <div class="text-muted text-truncate">Giao dịch đang chờ hoặc chưa hoàn tất</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bộ lọc tìm kiếm -->
+<div class="card mb-4 d-print-none">
+    <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-filter me-2"></i>Bộ lọc tìm kiếm giao dịch</h3>
+    </div>
+    <div class="card-body">
+        <form method="get" asp-controller="Admin" asp-action="Reports" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Tìm kiếm người dùng</label>
+                <div class="input-icon">
+                    <span class="input-icon-addon">
+                        <i class="ti ti-search"></i>
+                    </span>
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập tên hoặc email..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Từ ngày</label>
+                <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Đến ngày</label>
+                <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="ti ti-search me-1"></i> Lọc
+                </button>
+                <a asp-controller="Admin" asp-action="Reports" class="btn btn-outline-secondary w-100">
+                    Xóa lọc
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Biểu đồ phân tích -->
+<div class="row row-cards mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="ti ti-trending-up me-2"></i>Xu hướng doanh thu (6 tháng gần nhất)</h3>
+            </div>
+            <div class="card-body">
+                <div style="height: 320px;">
+                    <canvas id="revenueTrendChart" style="width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="ti ti-users me-2"></i>Cơ cấu người dùng</h3>
+            </div>
+            <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                <div style="width: 230px; height: 230px; margin-bottom: 20px;">
+                    <canvas id="userBreakdownChart"></canvas>
+                </div>
+                <div class="d-flex gap-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary" style="width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
+                        <span>Premium (@premiumCount)</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary" style="width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
+                        <span>Free (@freeCount)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chi tiết giao dịch -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title"><i class="ti ti-list me-2"></i>Lịch sử nâng cấp Premium (Dữ liệu động)</h3>
+        <span class="badge bg-blue-lt">@Model.Count giao dịch</span>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Khách hàng</th>
+                    <th>Mã đơn hàng PayPal</th>
+                    <th>Số tiền</th>
+                    <th>Thời gian</th>
+                    <th class="text-center">Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    int index = 1;
+                    foreach (var payment in Model)
+                    {
+                        <tr>
+                            <td>@index</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="avatar avatar-sm bg-blue-lt me-2">@payment.User?.FullName?[0].ToString().ToUpper()</span>
+                                    <div>
+                                        <div class="font-weight-medium">@payment.User?.FullName</div>
+                                        <div class="text-muted small">@payment.User?.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="font-monospace text-muted">@payment.PaypalOrderId</span>
+                            </td>
+                            <td class="font-weight-medium text-success">
+                                $@payment.Amount.ToString("0.00") @payment.Currency
+                            </td>
+                            <td>
+                                @payment.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td class="text-center">
+                                @if (payment.PaymentStatus == "Completed")
+                                {
+                                    <span class="badge bg-success-lt"><i class="ti ti-check me-1"></i>Thành công</span>
+                                }
+                                else if (payment.PaymentStatus == "Pending")
+                                {
+                                    <span class="badge bg-warning-lt"><i class="ti ti-clock me-1"></i>Đang xử lý</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-lt"><i class="ti ti-x me-1"></i>Thất bại</span>
+                                }
+                            </td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="ti ti-database-off" style="font-size: 28px; display: block; margin-bottom: 8px;"></i>
+                            Không có dữ liệu giao dịch nào khớp với bộ lọc.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-    new Chart(document.getElementById("userGrowthChart"), {
-        type: "line",
-        data: {
-            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-            datasets: [{
-                label: "Users",
-                data: [120, 180, 260, 420, 760, 1240]
-            }]
-        }
-    });
+        document.addEventListener("DOMContentLoaded", function () {
+            // Line Chart: Doanh thu 6 tháng gần nhất
+            const ctxTrend = document.getElementById('revenueTrendChart').getContext('2d');
+            const monthlyLabels = @Html.Raw(Json.Serialize(ViewBag.MonthlyLabels ?? new List<string>()));
+            const monthlyValues = @Html.Raw(Json.Serialize(ViewBag.MonthlyValues ?? new List<decimal>()));
+            
+            new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: monthlyLabels,
+                    datasets: [{
+                        label: 'Doanh thu ($)',
+                        data: monthlyValues,
+                        borderColor: '#206bc4',
+                        backgroundColor: 'rgba(32, 107, 196, 0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#206bc4',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Doanh thu: $${context.raw.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [2, 4],
+                                color: 'rgba(100, 116, 139, 0.12)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                },
+                                font: {
+                                    family: 'Inter, sans-serif'
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: 'Inter, sans-serif'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
 
-    new Chart(document.getElementById("bookingChart"), {
-        type: "bar",
-        data: {
-            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-            datasets: [{
-                label: "Bookings",
-                data: [12, 28, 40, 64, 88, 120]
-            }]
+            // Doughnut Chart: Cơ cấu tài khoản
+            const ctxBreakdown = document.getElementById('userBreakdownChart').getContext('2d');
+            const premiumCount = @premiumCount;
+            const freeCount = @freeCount;
+
+            new Chart(ctxBreakdown, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Premium', 'Free'],
+                    datasets: [{
+                        data: [premiumCount, freeCount],
+                        backgroundColor: ['#206bc4', '#64748b'],
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        });
+
+        function exportExcel() {
+            const searchVal = document.querySelector('input[name="search"]').value;
+            const startDateVal = document.querySelector('input[name="startDate"]').value;
+            const endDateVal = document.querySelector('input[name="endDate"]').value;
+            
+            let url = `/Admin/ExportToExcel?search=${encodeURIComponent(searchVal)}&startDate=${encodeURIComponent(startDateVal)}&endDate=${encodeURIComponent(endDateVal)}`;
+            window.location.href = url;
         }
-    });
-</script>
+    </script>
 }

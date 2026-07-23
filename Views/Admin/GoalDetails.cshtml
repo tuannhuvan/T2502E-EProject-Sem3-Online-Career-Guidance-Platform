@@ -1,0 +1,58 @@
+@model Career_Guidance_Platform.Models.Goal
+
+@{
+    ViewData["Title"] = "Chi tiết Goal";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-body">
+    <div class="container-xl">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Chi tiết Goal</h3>
+            </div>
+
+            <div class="card-body">
+                <p><strong>User:</strong> @Model.Student?.FullName - @Model.Student?.Email</p>
+                <p><strong>Goal:</strong> @Model.Title</p>
+                <p><strong>Loại:</strong> @(Model.GoalType == "LongTerm" ? "Dài hạn" : "Ngắn hạn")</p>
+                <p><strong>Career Path:</strong> @(Model.CareerPath?.Title ?? "-")</p>
+                <p><strong>Progress:</strong> @Model.Progress%</p>
+                <p><strong>Deadline:</strong> @(Model.TargetDate?.ToString("dd/MM/yyyy") ?? "-")</p>
+
+                <hr />
+
+                <h4>Milestones</h4>
+
+                @if (Model.GoalMilestones == null || !Model.GoalMilestones.Any())
+                {
+                    <p class="text-muted">Chưa có milestone.</p>
+                }
+                else
+                {
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Milestone</th>
+                            <th>Skill</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var m in Model.GoalMilestones)
+                        {
+                            <tr>
+                                <td>@m.Title</td>
+                                <td>@(m.Skill?.Name ?? "-")</td>
+                                <td>@m.Status</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+
+                <a asp-action="Goals" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </div>
+    </div>
+</div>

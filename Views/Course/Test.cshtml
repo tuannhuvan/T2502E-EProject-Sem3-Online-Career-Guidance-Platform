@@ -1,0 +1,126 @@
+@model Career_Guidance_Platform.Models.CareerPathCourse
+@{
+    ViewData["Title"] = "Bài kiểm tra: " + Model.Title;
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9; padding: 80px 24px 60px;">
+    <span class="page-badge">📝 Bài kiểm tra kiến thức</span>
+    <h1>@Model.Title</h1>
+    <p>Hãy hoàn thành 3 câu hỏi trắc nghiệm dưới đây để chứng minh bạn đã nắm vững kiến thức môn học.</p>
+</section>
+
+<section class="content-section" style="max-width: 800px; padding: 40px 20px;">
+    <form asp-controller="Course" asp-action="SubmitTest" method="post" id="courseTestForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="courseId" value="@Model.Id" />
+        <input type="hidden" id="finalScore" name="score" value="0" />
+
+        <div class="info-card" style="padding: 36px; margin-bottom: 30px; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.03);">
+            <h3 style="margin-top: 0; color: #0f172a; margin-bottom: 24px; font-size: 17px; font-weight: 800; line-height: 1.5;">Câu hỏi 1: Lợi ích chính của việc sử dụng công cụ/ngôn ngữ này là gì?</h3>
+            <div class="answer-list detailed" style="margin-top: 0;">
+                <label class="answer-item">
+                    <input type="radio" name="q1" value="correct" required />
+                    <div>
+                        <strong>Tối ưu hóa hiệu năng, tăng khả năng mở rộng</strong>
+                        <p>Giúp quản lý mã nguồn dễ dàng, bảo trì tốt hơn cho các dự án quy mô lớn.</p>
+                    </div>
+                </label>
+                <label class="answer-item">
+                    <input type="radio" name="q1" value="wrong1" />
+                    <div>
+                        <strong>Chỉ cải thiện tính thẩm mỹ</strong>
+                        <p>Làm cho giao diện đẹp mắt hơn mà không đem lại cải thiện nào về mặt hiệu năng.</p>
+                    </div>
+                </label>
+                <label class="answer-item">
+                    <input type="radio" name="q1" value="wrong2" />
+                    <div>
+                        <strong>Không có lợi ích thực tiễn</strong>
+                        <p>Sử dụng chủ yếu vì trào lưu công nghệ hiện tại.</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="info-card" style="padding: 36px; margin-bottom: 30px; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.03);">
+            <h3 style="margin-top: 0; color: #0f172a; margin-bottom: 24px; font-size: 17px; font-weight: 800; line-height: 1.5;">Câu hỏi 2: Đâu là một phương pháp/mô hình tối ưu khi phát triển sản phẩm chuyên nghiệp?</h3>
+            <div class="answer-list detailed" style="margin-top: 0;">
+                <label class="answer-item">
+                    <input type="radio" name="q2" value="wrong1" required />
+                    <div>
+                        <strong>Lập trình tự do không quy chuẩn</strong>
+                        <p>Viết mã nguồn hoặc thiết kế ngẫu hứng mà không cần lập kế hoạch hay cấu trúc rõ ràng.</p>
+                    </div>
+                </label>
+                <label class="answer-item">
+                    <input type="radio" name="q2" value="correct" />
+                    <div>
+                        <strong>Tuân thủ quy chuẩn và kiểm thử</strong>
+                        <p>Viết Clean Code, tái sử dụng các thành phần (Components) và thực hiện kiểm thử đầy đủ.</p>
+                    </div>
+                </label>
+                <label class="answer-item">
+                    <input type="radio" name="q2" value="wrong2" />
+                    <div>
+                        <strong>Bỏ qua quy trình an toàn thông tin</strong>
+                        <p>Bỏ qua phần bảo mật và kiểm thử để tập trung đẩy nhanh tiến độ bàn giao sản phẩm.</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="info-card" style="padding: 36px; margin-bottom: 40px; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.03);">
+            <h3 style="margin-top: 0; color: #0f172a; margin-bottom: 24px; font-size: 17px; font-weight: 800; line-height: 1.5;">Câu hỏi 3: Để làm chủ lộ trình nghề nghiệp này, bạn nên tập trung vào điều gì tiếp theo?</h3>
+            <div class="answer-list detailed" style="margin-top: 0;">
+                <label class="answer-item">
+                    <input type="radio" name="q3" value="wrong1" required />
+                    <div>
+                        <strong>Chỉ học tập lý thuyết thuần túy</strong>
+                        <p>Đọc sách vở, tài liệu mà không cần tham gia thực hành bất kỳ dự án thực tế nào.</p>
+                    </div>
+                </label>
+                <label class="answer-item">
+                    <input type="radio" name="q3" value="wrong2" />
+                    <div>
+                        <strong>Chờ đợi cơ hội tự đến</strong>
+                        <p>Không chủ động nâng cao năng lực mà đợi doanh nghiệp liên kết tuyển dụng.</p>
+                    </div>
+                </label>
+                <label class="answer-item">
+                    <input type="radio" name="q3" value="correct" />
+                    <div>
+                        <strong>Học tập kết hợp thực hành và cố vấn</strong>
+                        <p>Làm dự án thực tế, học hỏi từ Mentor giàu kinh nghiệm và tham gia cộng đồng chuyên môn.</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 24px;">
+            <a asp-controller="Course" asp-action="Detail" asp-route-id="@Model.Id" class="btn secondary-btn" style="padding: 12px 28px; border-radius: 10px;">⬅ Quay lại bài học</a>
+            <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 36px; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);">Nộp bài & Hoàn thành</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <script>
+        document.getElementById("courseTestForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            // Calculate score (each correct answer is 33.3 points)
+            let score = 0;
+            const q1 = document.querySelector('input[name="q1"]:checked')?.value;
+            const q2 = document.querySelector('input[name="q2"]:checked')?.value;
+            const q3 = document.querySelector('input[name="q3"]:checked')?.value;
+
+            if (q1 === "correct") score += 34;
+            if (q2 === "correct") score += 33;
+            if (q3 === "correct") score += 33;
+
+            document.getElementById("finalScore").value = score;
+            
+            this.submit();
+        });
+    </script>
+}

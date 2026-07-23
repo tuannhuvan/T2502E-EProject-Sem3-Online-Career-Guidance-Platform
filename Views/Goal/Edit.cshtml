@@ -1,0 +1,302 @@
+@model Career_Guidance_Platform.Models.Goal
+
+@{
+    ViewData["Title"] = "Sửa Goal";
+}
+
+<style>
+    #skills-list {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 16px !important;
+    }
+    @@media (max-width: 992px) {
+        #skills-list {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+    @@media (max-width: 768px) {
+        #skills-list {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    .skill-card-item {
+        border: 2px solid #dee2e6 !important;
+        border-radius: 12px !important;
+        background-color: #ffffff;
+        padding: 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        transition: all 0.25s ease !important;
+        cursor: pointer;
+        height: 100% !important;
+        position: relative;
+    }
+    .skill-card-item:hover {
+        border-color: #a3cfbb !important;
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.05) !important;
+    }
+    .skill-card-item.selected-card {
+        border-color: #198754 !important;
+        background-color: #f4fbf7 !important;
+    }
+    
+    .custom-checkbox {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2.2px solid #198754;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background-color: #fff;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+        margin-right: 12px !important;
+    }
+    .skill-card-item.selected-card .custom-checkbox {
+        background-color: #198754;
+        border-color: #198754;
+    }
+    .custom-checkbox .checkmark-icon {
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 900;
+        display: none;
+    }
+    .skill-card-item.selected-card .custom-checkbox .checkmark-icon {
+        display: block !important;
+    }
+
+    .btn-select-all {
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        color: #212529;
+        border-radius: 8px;
+        padding: 0.55rem 1.3rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-select-all:hover {
+        background-color: #f8f9fa;
+        border-color: #ced4da;
+    }
+    .btn-deselect-all {
+        background-color: #fff;
+        border: 1px solid #fecdd3;
+        color: #dc3545;
+        border-radius: 8px;
+        padding: 0.55rem 1.3rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-deselect-all:hover {
+        background-color: #fff5f5;
+        border-color: #fca5a5;
+    }
+</style>
+
+<section class="content-section">
+    <h1>Sửa mục tiêu nghề nghiệp</h1>
+
+    <form asp-action="Edit" method="post" class="info-card">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="form-group">
+            <label asp-for="Title">Tên mục tiêu</label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="CareerPathId">Career Path</label>
+            <select id="CareerPathId" asp-for="CareerPathId" asp-items="ViewBag.CareerPaths" class="form-control">
+                <option value="">-- Không chọn --</option>
+            </select>
+        </div>
+
+        <div id="skills-section" class="form-group" style="display: none; margin-bottom: 2rem;">
+            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                <label class="font-weight-bold mb-0" style="font-size: 1.15rem; color: #212529;">
+                    🎯 Danh sách kỹ năng cần đạt
+                </label>
+                <div class="d-flex gap-2">
+                    <button type="button" id="btn-select-all" class="btn-select-all">Chọn tất cả</button>
+                    <button type="button" id="btn-deselect-all" class="btn-deselect-all">Bỏ chọn hết</button>
+                </div>
+            </div>
+            
+            <div id="skills-list" style="max-height: 420px; overflow-y: auto; padding: 4px;">
+                <!-- Grid cards will be populated here -->
+            </div>
+
+            <div id="skills-counter" class="mt-3" style="font-size: 0.95rem; color: #495057;">
+                💡 Đã chọn <span id="checked-count" class="font-weight-bold text-success">0</span> / <span id="total-count">0</span> kỹ năng.
+            </div>
+        </div>
+
+        <div class="form-group" style="display: none;">
+            <label asp-for="Progress">Tiến độ (%)</label>
+            <input id="Progress" asp-for="Progress" type="number" min="0" max="100" class="form-control" readonly />
+            <span asp-validation-for="Progress" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="TargetDate">Deadline</label>
+            <input asp-for="TargetDate" type="date" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Cập nhật</button>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const initiallySelectedSkillIds = @Html.Raw(Json.Serialize(Model.GoalMilestones.Select(m => m.SkillId).ToList()));
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const pathSelect = document.getElementById("CareerPathId");
+            const skillsSection = document.getElementById("skills-section");
+            const skillsList = document.getElementById("skills-list");
+            const progressInput = document.getElementById("Progress");
+            const btnSelectAll = document.getElementById("btn-select-all");
+            const btnDeselectAll = document.getElementById("btn-deselect-all");
+            const checkedCountSpan = document.getElementById("checked-count");
+            const totalCountSpan = document.getElementById("total-count");
+
+            function calculateProgress() {
+                const checkboxes = skillsList.querySelectorAll(".skill-checkbox");
+                const checkedBoxes = skillsList.querySelectorAll(".skill-checkbox:checked");
+                
+                const total = checkboxes.length;
+                const checkedCount = checkedBoxes.length;
+
+                totalCountSpan.textContent = total;
+                checkedCountSpan.textContent = checkedCount;
+
+                if (checkedCount === 0) {
+                    progressInput.value = 0;
+                    return;
+                }
+
+                let completed = 0;
+                checkedBoxes.forEach(cb => {
+                    const status = cb.getAttribute("data-status");
+                    if (status === "Completed" || status === "Acquired") {
+                        completed++;
+                    }
+                });
+
+                const percent = Math.round((completed / checkedCount) * 100);
+                progressInput.value = percent;
+            }
+
+            btnSelectAll.addEventListener("click", function() {
+                skillsList.querySelectorAll(".skill-checkbox").forEach(cb => {
+                    cb.checked = true;
+                    cb.dispatchEvent(new Event("change"));
+                });
+            });
+
+            btnDeselectAll.addEventListener("click", function() {
+                skillsList.querySelectorAll(".skill-checkbox").forEach(cb => {
+                    cb.checked = false;
+                    cb.dispatchEvent(new Event("change"));
+                });
+            });
+
+            function loadSkills(pathId) {
+                if (!pathId) {
+                    skillsSection.style.display = "none";
+                    skillsList.innerHTML = "";
+                    progressInput.value = 0;
+                    return;
+                }
+
+                fetch(`/Goal/GetSkillsByCareerPath?careerPathId=${pathId}`)
+                    .then(res => res.json())
+                    .then(skills => {
+                        skillsList.innerHTML = "";
+                        if (skills.length === 0) {
+                            skillsList.innerHTML = "<div style='grid-column: 1 / -1;' class='text-muted small p-3 text-center'>Không có kỹ năng nào được gán cho Career Path này.</div>";
+                            skillsSection.style.display = "block";
+                            progressInput.value = 0;
+                            return;
+                        }
+
+                        skills.forEach(s => {
+                            const card = document.createElement("div");
+                            card.className = "skill-card-item";
+
+                            const isChecked = initiallySelectedSkillIds.includes(s.id);
+
+                            card.innerHTML = `
+                                <input class="skill-checkbox" type="checkbox" name="selectedSkills" value="${s.id}" id="skill-${s.id}" data-status="${s.status}" ${isChecked ? 'checked' : ''} style="display: none !important;">
+                                <div class="custom-checkbox">
+                                    <span class="checkmark-icon">✓</span>
+                                </div>
+                                <div class="skill-info" style="flex-grow: 1;">
+                                    <div class="font-weight-bold text-dark" style="font-size: 1rem; font-weight: 600; display: flex; align-items: center; margin-bottom: 4px;">
+                                        <span style="color: #ff9800; margin-right: 6px; font-size: 1.1rem;">⚡</span>${s.name}
+                                    </div>
+                                    <div class="text-muted small" style="font-size: 0.82rem; line-height: 1.35; color: #6c757d;">${s.description || 'Không có mô tả cho kỹ năng này.'}</div>
+                                </div>
+                            `;
+
+                            // Make clicking the whole card toggle the checkbox
+                            card.addEventListener("click", function(e) {
+                                const cb = card.querySelector(".skill-checkbox");
+                                cb.checked = !cb.checked;
+                                cb.dispatchEvent(new Event("change"));
+                            });
+
+                            // Visual feedback when checking/unchecking
+                            const checkbox = card.querySelector(".skill-checkbox");
+                            function updateCardStyle() {
+                                if (checkbox.checked) {
+                                    card.classList.add("selected-card");
+                                } else {
+                                    card.classList.remove("selected-card");
+                                }
+                            }
+                            checkbox.addEventListener("change", updateCardStyle);
+                            updateCardStyle(); // Init style
+
+                            skillsList.appendChild(card);
+                        });
+
+                        skillsSection.style.display = "block";
+
+                        // Add event listener to new checkboxes
+                        skillsList.querySelectorAll(".skill-checkbox").forEach(cb => {
+                            cb.addEventListener("change", calculateProgress);
+                        });
+
+                        calculateProgress();
+                    })
+                    .catch(err => {
+                        console.error("Lỗi khi tải kỹ năng:", err);
+                        skillsList.innerHTML = "<div style='grid-column: 1 / -1;' class='text-danger small p-3 text-center'>Lỗi tải danh sách kỹ năng.</div>";
+                        skillsSection.style.display = "block";
+                    });
+            }
+
+            pathSelect.addEventListener("change", function() {
+                loadSkills(this.value);
+            });
+
+            // Initial load for Edit
+            if (pathSelect.value) {
+                loadSkills(pathSelect.value);
+            }
+        });
+    </script>
+}
