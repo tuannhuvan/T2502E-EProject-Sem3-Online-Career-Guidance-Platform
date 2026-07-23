@@ -1,0 +1,73 @@
+@model IEnumerable<Career_Guidance_Platform.Models.CareerEvent>
+@{
+    ViewData["Title"] = "Sự kiện nghề nghiệp - CareerPath";
+    var counts = ViewBag.RegistrationCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top right, #cffafe 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding-bottom: 20px;">
+    <span class="page-badge">🗓️ Workshops & Events</span>
+    <h1>Sự Kiện & Hội Thảo Nghề Nghiệp</h1>
+    <p>Tham gia các sự kiện, buổi chia sẻ chuyên sâu từ chuyên gia để định hướng nghề nghiệp và phát triển bản thân.</p>
+</section>
+
+<section class="content-section" style="max-width: 1100px; padding-top: 10px; padding-bottom: 60px;">
+    @if (!Model.Any())
+    {
+        <div class="info-card" style="text-align: center; padding: 50px;">
+            <span style="font-size: 44px;">🗓️</span>
+            <h4 style="margin-top: 10px; font-size: 16px; color: #1e293b;">Chưa có sự kiện nào được tổ chức</h4>
+            <p style="color: #64748b; font-size: 13.5px; margin-bottom: 0;">Vui lòng quay lại sau để cập nhật các sự kiện mới nhất!</p>
+        </div>
+    }
+    else
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px;">
+            @foreach (var ev in Model)
+            {
+                var regCount = counts.ContainsKey(ev.Id) ? counts[ev.Id] : 0;
+                var isFull = regCount >= ev.MaxParticipants;
+                var isEnded = ev.EventDate < DateTime.Now;
+
+                <div class="info-card" style="border-left: 5px solid @(isEnded ? "#cbd5e1" : "#06b6d4"); padding: 24px; transition: 0.25s; display: flex; flex-direction: column; justify-content: space-between; min-height: 320px;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            @if (isEnded)
+                            {
+                                <span style="font-size: 11px; font-weight: 700; color: #475569; background: #e2e8f0; padding: 4px 10px; border-radius: 999px;">Đã kết thúc</span>
+                            }
+                            else if (isFull)
+                            {
+                                <span style="font-size: 11px; font-weight: 700; color: #b91c1c; background: #fee2e2; padding: 4px 10px; border-radius: 999px;">Hết chỗ</span>
+                            }
+                            else
+                            {
+                                <span style="font-size: 11px; font-weight: 700; color: #0891b2; background: #cffafe; padding: 4px 10px; border-radius: 999px;">Sắp diễn ra</span>
+                            }
+                            <span style="font-size: 12px; color: #64748b; font-weight: 600;">⚡ @regCount / @ev.MaxParticipants chỗ</span>
+                        </div>
+
+                        <h3 style="font-size: 18px; color: #020617; margin: 16px 0 8px; line-height: 1.4; font-weight: 800;">@ev.Title</h3>
+                        <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0 0 16px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; max-height: 60px;">@ev.Description</p>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: #64748b; margin-bottom: 20px; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span>📅</span>
+                                <span>Thời gian: <strong>@ev.EventDate.ToString("dd/MM/yyyy HH:mm")</strong></span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span>📍</span>
+                                <span>Địa điểm: <strong>@ev.Location</strong></span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span>🎙️</span>
+                                <span>Diễn giả: <strong>@ev.Speaker</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="/CareerEvent/Details/@ev.Id" class="btn primary-btn" style="width: 100%; text-align: center; border-radius: 12px; font-weight: 700; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 13.5px; text-decoration: none; background: @(isEnded ? "#94a3b8" : ""); border: none;">Xem chi tiết & Đăng ký</a>
+                </div>
+            }
+        </div>
+    }
+</section>

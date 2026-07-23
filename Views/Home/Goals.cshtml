@@ -1,0 +1,75 @@
+@model IEnumerable<Career_Guidance_Platform.Models.Goal>
+
+@{
+    ViewData["Title"] = "Mục tiêu của tôi";
+}
+
+@if (ViewBag.Status == "NotLoggedIn")
+{
+    <section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9; text-align: center; padding: 80px 24px 50px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h1 style="font-size: 36px; font-weight: 800; color: #0f172a; margin-bottom: 16px;">Theo dõi & Quản lý mục tiêu</h1>
+        <p style="font-size: 16px; color: #64748b; max-width: 600px; margin: 0 auto; line-height: 1.6;">Đặt ra các mục tiêu ngắn hạn và dài hạn để chinh phục lộ trình nghề nghiệp của bạn.</p>
+    </section>
+
+    <section class="content-section" style="max-width: 1200px; padding: 60px 24px; display: flex; justify-content: center; margin: 0 auto;">
+        <div style="text-align: center; padding: 60px 40px; background: #ffffff; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); max-width: 560px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 24px;">
+                <!-- Shackle (black/dark) -->
+                <path d="M6 10V7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7V10" stroke="#0F172A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Body (yellow/gold) -->
+                <rect x="4" y="10" width="16" height="12" rx="3" fill="#EAB308" stroke="#0F172A" stroke-width="2.5" stroke-linejoin="round"/>
+                <!-- Keyhole -->
+                <circle cx="12" cy="15" r="1.5" fill="#0F172A"/>
+                <path d="M12 16.5V18.5" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <h2 style="font-size: 24px; color: #0f172a; margin-bottom: 16px; font-weight: 800;">Bạn chưa đăng nhập</h2>
+            <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin-bottom: 30px; max-width: 480px;">
+                Vui lòng đăng nhập hoặc đăng ký tài khoản để theo dõi mục tiêu cá nhân, kỹ năng cần hoàn thành và lộ trình học tập của bạn.
+            </p>
+            <div style="display: flex; gap: 15px; justify-content: center; width: 100%;">
+                <a class="btn primary-btn" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Home/Goals" style="padding: 12px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; background: #3b82f6; color: #ffffff; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);">Đăng nhập</a>
+                <a class="btn secondary-btn" asp-controller="Account" asp-action="Register" asp-route-returnUrl="/Home/Goals" style="padding: 12px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; background: #ffffff; color: #0f172a; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">Đăng ký ngay</a>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <section class="page-hero">
+        <span class="page-badge">🎯 Mục tiêu của tôi</span>
+        <h1>Theo dõi & Quản lý mục tiêu</h1>
+        <p>Đặt ra các mục tiêu ngắn hạn và dài hạn để chinh phục lộ trình nghề nghiệp của bạn.</p>
+    </section>
+
+    <section class="content-section">
+        @if (ViewBag.Status == "NoGoals")
+        {
+            <div class="info-card text-center">
+                <h2>Bạn chưa có mục tiêu nào</h2>
+                <p>Hãy bắt đầu bằng cách đặt ra một mục tiêu mới.</p>
+                <a asp-controller="Home" asp-action="CareerPath" class="btn primary-btn">Khám phá lộ trình nghề nghiệp</a>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var item in Model)
+                {
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">@item.Title</h5>
+                                <p class="card-text">
+                                    <strong>Loại:</strong> @(item.GoalType == "LongTerm" ? "Dài hạn" : "Ngắn hạn")<br />
+                                    <strong>Tiến độ:</strong> @item.Progress%<br />
+                                    <strong>Hạn chót:</strong> @(item.TargetDate?.ToString("dd/MM/yyyy") ?? "Chưa đặt")
+                                </p>
+                                <a asp-controller="Goal" asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary">Xem chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+}

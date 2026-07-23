@@ -35,13 +35,27 @@ public class User : IdentityUser<int>
     [Column("test_attempts_count")]
     public int TestAttemptsCount { get; set; } = 0;
 
+    [Column("avatar_url")]
+    public string? AvatarUrl { get; set; }
+
+    [Column("headline")]
+    public string? Headline { get; set; }
+
+    [Column("school")]
+    public string? School { get; set; }
+
+    [Column("major")]
+    public string? Major { get; set; }
+
+    [Column("experience")]
+    public string? Experience { get; set; }
+
     public ICollection<TestResult> TestResults { get; set; } = new List<TestResult>();
     public ICollection<Goal> Goals { get; set; } = new List<Goal>();
     public MentorProfile? MentorProfile { get; set; }
     public ICollection<UserSkill> UserSkills { get; set; } = new List<UserSkill>();
     public ICollection<SavedJob> SavedJobs { get; set; } = new List<SavedJob>();
     public ICollection<JobApplication> JobApplications { get; set; } = new List<JobApplication>();
-    public ICollection<EmployerReview> EmployerReviews { get; set; } = new List<EmployerReview>();
     public ICollection<EventRegistration> EventRegistrations { get; set; } = new List<EventRegistration>();
     public ICollection<CommunityPost> CommunityPosts { get; set; } = new List<CommunityPost>();
     public ICollection<CommunityComment> CommunityComments { get; set; } = new List<CommunityComment>();

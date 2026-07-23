@@ -1335,6 +1335,39 @@ namespace Career_Guidance_Platform.Data
                     await context.SaveChangesAsync();
                 }
             }
+
+            // Seed CV Templates
+            if (!context.ResumeTemplates.Any())
+            {
+                context.ResumeTemplates.AddRange(new[]
+                {
+                    new ResumeTemplate
+                    {
+                        Name = "Modern Indigo (Hiện đại)",
+                        TemplateCode = "modern",
+                        IsPremium = false,
+                        IsActive = true,
+                        CreatedAt = DateTime.Now
+                    },
+                    new ResumeTemplate
+                    {
+                        Name = "Minimalist Classic (Tối giản)",
+                        TemplateCode = "minimalist",
+                        IsPremium = false,
+                        IsActive = true,
+                        CreatedAt = DateTime.Now
+                    },
+                    new ResumeTemplate
+                    {
+                        Name = "Professional Sidebar (Chuyên nghiệp)",
+                        TemplateCode = "professional",
+                        IsPremium = true,
+                        IsActive = true,
+                        CreatedAt = DateTime.Now
+                    }
+                });
+                await context.SaveChangesAsync();
+            }
         }
     }
 }

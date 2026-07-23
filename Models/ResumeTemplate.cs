@@ -29,6 +29,9 @@ namespace Career_Guidance_Platform.Models
         [Column("is_active")]
         public bool IsActive { get; set; } = true;
 
+        [Column("is_premium")]
+        public bool IsPremium { get; set; } = false;
+
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 

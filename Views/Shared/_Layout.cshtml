@@ -207,6 +207,8 @@
                     <div class="dropdown-divider"></div>
                     <a asp-controller="Manage" asp-action="Index">👤 Thông tin cá nhân</a>
                     <a asp-controller="Goal" asp-action="Index">🎯 Mục tiêu học tập</a>
+                    <a asp-controller="PeerConnection" asp-action="Index">👥 Mạng lưới bạn bè</a>
+                    <a asp-controller="Chat" asp-action="Index">💬 Tin nhắn trực tuyến</a>
                     @if (User.IsInRole("Admin"))
                     {
                         <a asp-controller="Admin" asp-action="Dashboard" class="admin-link">🛡️ Admin Panel</a>
@@ -250,6 +252,7 @@
             <h4>Về chúng tôi</h4>
             <a asp-controller="Home" asp-action="About">Giới thiệu & Đội ngũ</a>
             <a asp-controller="Home" asp-action="News">Tin tức</a>
+            <a asp-controller="CareerEvent" asp-action="Index">Sự kiện & Hội thảo</a>
             <a asp-controller="Home" asp-action="Contact">Liên hệ</a>
         </div>
 
@@ -263,11 +266,11 @@
         </div>
 
         <div class="footer-col">
-            <h4>Hỗ trợ</h4>
+            <h4>Tài nguyên & Hỗ trợ</h4>
+            <a asp-controller="Resume" asp-action="Templates">Mẫu CV (Career Tools)</a>
             <a asp-controller="Home" asp-action="FAQ">Trung tâm trợ giúp</a>
             <a asp-controller="Home" asp-action="Terms">Điều khoản sử dụng</a>
             <a asp-controller="Home" asp-action="Policy">Chính sách bảo mật</a>
-            <a asp-controller="Home" asp-action="FAQ">FAQ</a>
         </div>
     </div>
 

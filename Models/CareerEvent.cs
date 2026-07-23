@@ -36,5 +36,8 @@ namespace Career_Guidance_Platform.Models
         [Column("registration_url")]
         [StringLength(255)]
         public string RegistrationUrl { get; set; } = string.Empty;
+
+        [Column("max_participants")]
+        public int MaxParticipants { get; set; } = 100;
     }
 }
