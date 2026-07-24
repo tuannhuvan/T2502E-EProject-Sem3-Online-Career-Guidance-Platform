@@ -338,6 +338,11 @@ public class HomeController : Controller
     [HttpPost]
     public async Task<IActionResult> LikePost(int id, bool isUnlike = false)
     {
+        if (User.Identity == null || !User.Identity.IsAuthenticated)
+        {
+            return Json(new { success = false, message = "Bạn cần đăng nhập để thích bài viết." });
+        }
+
         var post = await _context.CommunityPosts.FindAsync(id);
         if (post == null)
         {

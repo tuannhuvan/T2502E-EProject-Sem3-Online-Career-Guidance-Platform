@@ -105,6 +105,12 @@
     });
 
     function likePost(postId, element) {
+        const isAuthenticated = @(User.Identity?.IsAuthenticated == true ? "true" : "false");
+        if (!isAuthenticated) {
+            showToast('Bạn cần đăng nhập để thích bài viết.', 'warning');
+            return;
+        }
+
         const likedPosts = JSON.parse(localStorage.getItem('likedPosts') || '[]');
         const isAlreadyLiked = likedPosts.includes(postId);
         
@@ -147,7 +153,7 @@
                 }
                 localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
             } else {
-                showToast('Không thể thực hiện hành động.', 'error');
+                showToast(data.message || 'Không thể thực hiện hành động.', 'error');
             }
         })
         .catch(error => {

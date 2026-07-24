@@ -1115,7 +1115,7 @@ public class AdminController : Controller
     {
         var careerPaths = await _context.CareerPaths
             .Include(c => c.Category)
-            .OrderBy(c => c.Id)
+            .OrderByDescending(c => c.Id)
             .ToListAsync();
 
         // Pass statistics to display on the index view (e.g. stage count, skill count)
