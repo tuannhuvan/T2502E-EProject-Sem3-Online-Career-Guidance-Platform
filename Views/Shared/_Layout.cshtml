@@ -232,7 +232,108 @@
             <a class="register-btn" asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">Đăng ký</a>
         }
     </div>
+    
+    <!-- Hamburger Menu Toggle Button -->
+    <button id="openDrawerBtn" class="mobile-nav-toggle" aria-label="Open menu">
+        <i class="bi bi-list"></i>
+    </button>
 </header>
+
+<!-- Mobile Navigation Drawer -->
+<div id="mobileMenuDrawer" class="mobile-menu-drawer">
+    <div class="drawer-header">
+        <a class="logo" asp-controller="Home" asp-action="Index">
+            <span class="logo-icon">🎓</span>
+            <span>CareerPath</span>
+        </a>
+        <button id="closeDrawerBtn" class="close-drawer-btn" aria-label="Close menu">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    
+    <div class="drawer-content">
+        <nav class="drawer-nav">
+            <a class='@(currentController == "Home" && currentAction == "Index" ? "active" : "")' asp-controller="Home" asp-action="Index">Trang chủ</a>
+            <a class='@(currentController == "Home" && currentAction == "CareerTest" ? "active" : "")' asp-controller="Home" asp-action="CareerTest">Đánh giá nghề nghiệp</a>
+            <a class='@(currentController == "Home" && currentAction == "CareerPath" ? "active" : "")' asp-controller="Home" asp-action="CareerPath">Gợi ý & Lộ trình</a>
+            <a class='@(currentController == "Mentorship" ? "active" : "")' asp-controller="Mentorship" asp-action="Index">Cố vấn</a>
+            <a class='@(currentController == "Goal" ? "active" : "")' asp-controller="Goal" asp-action="Index">Mục tiêu của tôi</a>
+            <a class='@(currentController == "Home" && currentAction == "Jobs" ? "active" : "")' asp-controller="Home" asp-action="Jobs">Việc làm</a>
+            <a class='@(currentController == "Home" && currentAction == "Community" ? "active" : "")' asp-controller="Home" asp-action="Community">Cộng đồng</a>
+        </nav>
+        
+        <div class="drawer-divider"></div>
+        
+        <div class="drawer-actions">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <div class="drawer-user-info">
+                    <div class="profile-avatar">
+                        <span>@UserManager.GetUserName(User)?[0].ToString().ToUpper()</span>
+                    </div>
+                    <div class="user-details">
+                        <span class="profile-username">@UserManager.GetUserName(User)</span>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <span class="user-role">Quản trị viên</span>
+                        }
+                        else if (User.IsInRole("Mentor"))
+                        {
+                            <span class="user-role">Cố vấn</span>
+                        }
+                        else
+                        {
+                            <span class="user-role">Học viên</span>
+                        }
+                    </div>
+                </div>
+                
+                <nav class="drawer-user-nav">
+                    <a asp-controller="Manage" asp-action="Index">👤 Thông tin cá nhân</a>
+                    <a asp-controller="Goal" asp-action="Index">🎯 Mục tiêu học tập</a>
+                    <a asp-controller="PeerConnection" asp-action="Index">👥 Mạng lưới bạn bè</a>
+                    <a asp-controller="Chat" asp-action="Index">💬 Tin nhắn trực tuyến</a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Admin" asp-action="Dashboard" class="admin-link">🛡️ Admin Panel</a>
+                    }
+                    @if (User.IsInRole("Mentor"))
+                    {
+                        <a asp-controller="Mentorship" asp-action="Dashboard">💼 Mentor Dashboard</a>
+                    }
+                </nav>
+                
+                <form asp-controller="Account" asp-action="Logout" method="post" style="margin-top: 15px; margin-bottom: 0;">
+                    <button type="submit" class="drawer-logout-btn">
+                        <span>🚪 Đăng xuất</span>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="drawer-auth-buttons">
+                    <a class="login-link-mobile" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">Đăng nhập</a>
+                    <a class="register-btn-mobile" asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString">Đăng ký</a>
+                </div>
+            }
+            
+            <div class="drawer-divider"></div>
+            
+            <div class="drawer-lang-selector">
+                <span class="lang-label">Ngôn ngữ / Language:</span>
+                <div class="language-selector-mobile">
+                    <a href="javascript:void(0)" onclick="changeSystemLanguage('vi')" id="lang-vi-mobile" title="Tiếng Việt">
+                        <span>🇻🇳 Tiếng Việt</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="changeSystemLanguage('en')" id="lang-en-mobile" title="English">
+                        <span>🇬🇧 English</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="mobileMenuOverlay" class="mobile-menu-overlay"></div>
 
 <main>
     @RenderBody()
@@ -397,6 +498,43 @@
                 flagEn.style.opacity = '0.4';
                 flagEn.classList.remove('active-lang');
             }
+        }
+
+        // Highlight active flag in Mobile Drawer
+        let flagViMobile = document.getElementById('lang-vi-mobile');
+        let flagEnMobile = document.getElementById('lang-en-mobile');
+        if (flagViMobile && flagEnMobile) {
+            if (currentLang === 'en') {
+                flagViMobile.classList.remove('active-lang');
+                flagEnMobile.classList.add('active-lang');
+            } else {
+                flagViMobile.classList.add('active-lang');
+                flagEnMobile.classList.remove('active-lang');
+            }
+        }
+
+        // Mobile Menu Drawer interactions
+        const openBtn = document.getElementById('openDrawerBtn');
+        const closeBtn = document.getElementById('closeDrawerBtn');
+        const drawer = document.getElementById('mobileMenuDrawer');
+        const overlay = document.getElementById('mobileMenuOverlay');
+
+        if (openBtn && closeBtn && drawer && overlay) {
+            function openDrawer() {
+                drawer.classList.add('open');
+                overlay.classList.add('open');
+                document.body.style.overflow = 'hidden'; // Disable scroll behind
+            }
+
+            function closeDrawer() {
+                drawer.classList.remove('open');
+                overlay.classList.remove('open');
+                document.body.style.overflow = ''; // Restore scroll
+            }
+
+            openBtn.addEventListener('click', openDrawer);
+            closeBtn.addEventListener('click', closeDrawer);
+            overlay.addEventListener('click', closeDrawer);
         }
     });
 </script>
