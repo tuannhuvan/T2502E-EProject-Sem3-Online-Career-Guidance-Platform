@@ -1,0 +1,77 @@
+@model IEnumerable<Career_Guidance_Platform.Models.CareerEvent>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Sự kiện Nghề nghiệp";
+    var counts = ViewBag.RegistrationCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Quản trị</div>
+            <h2 class="page-title">Sự kiện Nghề nghiệp</h2>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+            <div class="btn-list">
+                <a asp-action="CreateEvent" class="btn btn-primary d-none d-sm-inline-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    Tạo sự kiện mới
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards">
+    <div class="col-12">
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table card-table table-vcenter text-nowrap datatable">
+                    <thead>
+                        <tr>
+                            <th class="w-1">ID</th>
+                            <th>Tên sự kiện</th>
+                            <th>Diễn giả</th>
+                            <th>Thời gian diễn ra</th>
+                            <th>Địa điểm</th>
+                            <th>Số đăng ký</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ev in Model)
+                        {
+                            var regCount = counts.ContainsKey(ev.Id) ? counts[ev.Id] : 0;
+                            <tr>
+                                <td>@ev.Id</td>
+                                <td class="font-weight-medium">@ev.Title</td>
+                                <td>@ev.Speaker</td>
+                                <td>@ev.EventDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@ev.Location</td>
+                                <td>
+                                    <span class="badge bg-blue text-blue-fg">@regCount / @ev.MaxParticipants</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-list justify-content-end">
+                                        <a asp-action="EventRegistrants" asp-route-id="@ev.Id" class="btn btn-sm btn-outline-info">Người tham gia</a>
+                                        <a asp-action="EditEvent" asp-route-id="@ev.Id" class="btn btn-sm btn-outline-primary">Sửa</a>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(@ev.Id)">Xóa</button>
+                                        <form id="delete-form-@ev.Id" asp-action="DeleteEvent" asp-route-id="@ev.Id" method="post" style="display:none;"></form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(id) {
+        if (confirm("Bạn có chắc chắn muốn xóa sự kiện này không? Việc xóa sự kiện sẽ xóa toàn bộ danh sách đăng ký tham gia.")) {
+            document.getElementById("delete-form-" + id).submit();
+        }
+    }
+</script>

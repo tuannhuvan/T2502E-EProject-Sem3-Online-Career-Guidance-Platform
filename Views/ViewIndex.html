@@ -1,0 +1,44 @@
+@model IEnumerable<QuestionDto>
+
+    <a asp-action="Create"
+       class="btn btn-success mb-3">
+        Thêm câu hỏi
+    </a>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nội dung</th>
+            <th>Bài Test</th>
+            <th>Loại</th>
+            <th></th>
+        </tr>
+        </thead>
+
+        <tbody>
+        @foreach(var item in Model)
+        {
+        <tr>
+            <td>@item.Id</td>
+            <td>@item.Content</td>
+            <td>@item.TestName</td>
+            <td>@item.QuestionTypeName</td>
+
+            <td>
+                <a asp-action="Edit"
+                   asp-route-id="@item.Id"
+                   class="btn btn-warning">
+                    Sửa
+                </a>
+
+                <a asp-action="Delete"
+                   asp-route-id="@item.Id"
+                   class="btn btn-danger">
+                    Xóa
+                </a>
+            </td>
+        </tr>
+        }
+        </tbody>
+    </table>

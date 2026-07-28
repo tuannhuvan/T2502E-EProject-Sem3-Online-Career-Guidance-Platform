@@ -3,6 +3,7 @@
     ViewData["Title"] = "Bảng tin Việc làm cá nhân hóa";
     var resumes = ViewBag.Resumes as List<Career_Guidance_Platform.Models.Resume> ?? new List<Career_Guidance_Platform.Models.Resume>();
     var appliedJobIds = ViewBag.AppliedJobIds as List<int> ?? new List<int>();
+    var savedJobIds = ViewBag.SavedJobIds as List<int> ?? new List<int>();
     var recPathId = ViewBag.RecommendedPathId as int?;
 }
 
@@ -257,16 +258,23 @@
                         </p>
                     </div>
 
-                    <div class="job-footer">
+                    <div class="job-footer" style="display: flex; gap: 10px; align-items: center;">
+                        @{
+                            var isSaved = savedJobIds.Contains(job.Id);
+                        }
+                        <button type="button" class="btn-save-job" onclick="toggleSaveJob(this, @job.Id)" style="border: 1px solid @(isSaved ? "#ef4444" : "#cbd5e1"); background: transparent; padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.2s; color: @(isSaved ? "#ef4444" : "#64748b"); font-weight: 600; height: 44px; font-size: 13.5px; display: flex; align-items: center; justify-content: center;">
+                            @(isSaved ? "❤️ Đã lưu" : "🤍 Lưu tin")
+                        </button>
+
                         @if (isApplied)
                         {
-                            <button class="applied-btn" disabled>
+                            <button class="applied-btn" disabled style="height: 44px; margin: 0;">
                                 ✓ Đã ứng tuyển
                             </button>
                         }
                         else
                         {
-                            <button type="button" class="apply-btn" onclick="openApplyModal(@job.Id, '@job.Title', '@job.CompanyName')">
+                            <button type="button" class="apply-btn" onclick="openApplyModal(@job.Id, '@job.Title', '@job.CompanyName')" style="height: 44px; margin: 0;">
                                 Ứng tuyển ngay
                             </button>
                         }
@@ -516,6 +524,34 @@
 
             paginationContainer.appendChild(createBtn("Sau ›", currentPage + 1, false, currentPage === totalPages));
         }
+
+        window.toggleSaveJob = function(btn, jobId) {
+            fetch("/Home/ToggleSaveJob?jobPostingId=" + jobId, {
+                method: "POST"
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.isSaved) {
+                        btn.innerHTML = "❤️ Đã lưu";
+                        btn.style.borderColor = "#ef4444";
+                        btn.style.color = "#ef4444";
+                        showToast("Đã lưu việc làm thành công!", "success");
+                    } else {
+                        btn.innerHTML = "🤍 Lưu tin";
+                        btn.style.borderColor = "#cbd5e1";
+                        btn.style.color = "#64748b";
+                        showToast("Đã bỏ lưu việc làm.", "info");
+                    }
+                } else {
+                    showToast("Vui lòng đăng nhập để lưu công việc.", "warning");
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi lưu việc làm:", err);
+                showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+            });
+        };
 
         // Initial load
         updateUI();

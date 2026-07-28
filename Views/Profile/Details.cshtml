@@ -1,0 +1,403 @@
+@model Career_Guidance_Platform.Models.User
+@{
+    ViewData["Title"] = Model.FullName + " - Trang cá nhân";
+    bool isSelf = ViewBag.IsSelf ?? false;
+    string connStatus = ViewBag.ConnectionStatus ?? "None";
+    var completedCourses = ViewBag.CompletedCourses as List<string> ?? new List<string>();
+    var latestResume = ViewBag.LatestResume as Career_Guidance_Platform.Models.Resume;
+    string recommendedPath = ViewBag.RecommendedPath as string;
+}
+
+<!-- Profile Header Banner with curated color palette -->
+<div style="background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); height: 180px; border-radius: 20px; position: relative; margin-top: 20px; box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.2);">
+</div>
+
+<div class="content-section" style="max-width: 1100px; margin-top: -80px; position: relative; z-index: 5; padding-bottom: 50px;">
+    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 30px; align-items: start;">
+        
+        <!-- Main Profile Info -->
+        <div class="info-card" style="padding: 30px; border-radius: 24px; position: relative; background: #ffffff;">
+            <!-- Avatar & Primary Name Area -->
+            <div style="display: flex; gap: 24px; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 24px; margin-bottom: 24px;">
+                <div style="position: relative;">
+                    <img id="profileAvatarImg" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "/images/default-avatar.png" : Model.AvatarUrl)" alt="@Model.FullName" style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #f8fafc;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=@Model.FullName'" />
+                </div>
+                <div style="flex-grow: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h2 style="margin: 0 0 6px; font-size: 26px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 10px;">
+                                @Model.FullName
+                                @if (!isSelf)
+                                {
+                                    <span id="profile-presence-dot" style="width: 14px; height: 14px; border-radius: 50%; display: inline-block; background: #cbd5e1; border: 2.5px solid #ffffff; transition: 0.3s; box-shadow: 0 0 0 1px rgba(0,0,0,0.05);" title="Ngoại tuyến"></span>
+                                }
+                            </h2>
+                            <p id="profileHeadlineText" style="margin: 0; color: #4f46e5; font-size: 15px; font-weight: 600;">@(string.IsNullOrEmpty(Model.Headline) ? "Thành viên CareerPath" : Model.Headline)</p>
+                        </div>
+                        
+                        <!-- Connection or Edit Button -->
+                        <div>
+                            @if (isSelf)
+                            {
+                                <button type="button" class="btn secondary-btn" onclick="toggleEditProfile()" style="height: 38px; font-size: 13.5px;">⚙️ Chỉnh sửa hồ sơ</button>
+                            }
+                            else
+                            {
+                                <div id="connectionActionArea">
+                                    @if (connStatus == "None")
+                                    {
+                                        <button type="button" class="btn primary-btn" onclick="sendConnectionRequest(@Model.Id)" style="height: 38px; font-size: 13.5px;">🔗 Kết nối bạn bè</button>
+                                    }
+                                    else if (connStatus == "PendingSent")
+                                    {
+                                        <button type="button" class="btn secondary-btn" style="height: 38px; font-size: 13.5px; opacity: 0.8; cursor: not-allowed;" disabled>⏳ Đã gửi yêu cầu</button>
+                                    }
+                                    else if (connStatus == "PendingReceived")
+                                    {
+                                        <div style="display: flex; gap: 8px;">
+                                            <button type="button" class="btn primary-btn" onclick="acceptConnectionRequest(@Model.Id)" style="height: 38px; font-size: 13px; background: #10b981; border-color: #10b981;">✓ Đồng ý</button>
+                                            <button type="button" class="btn secondary-btn" onclick="declineConnectionRequest(@Model.Id)" style="height: 38px; font-size: 13px; border-color: #f43f5e; color: #f43f5e;">Từ chối</button>
+                                        </div>
+                                    }
+                                    else if (connStatus == "Accepted")
+                                    {
+                                        <div style="display: flex; gap: 8px;">
+                                            <a href="/Chat?peerId=@Model.Id" class="btn primary-btn" style="height: 38px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center;">💬 Nhắn tin</a>
+                                            <button type="button" class="btn secondary-btn" onclick="disconnectPeer(@Model.Id)" style="height: 38px; font-size: 13px; border-color: #cbd5e1; color: #ef4444;">Hủy kết nối</button>
+                                        </div>
+                                    }
+                                    else if (connStatus == "Blocked")
+                                    {
+                                        <button type="button" class="btn secondary-btn" style="height: 38px; font-size: 13.5px; opacity: 0.5; cursor: not-allowed;" disabled>🚫 Đang chặn</button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile View & Edit Panel -->
+            <div id="profileViewPanel">
+                <!-- Academic details -->
+                <div style="margin-bottom: 24px;">
+                    <h3 style="font-size: 15px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Học vấn & Trường lớp</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 12px; color: #64748b; font-weight: 600;">Trường học</span>
+                            <div id="profileSchoolVal" style="font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 4px;">@(string.IsNullOrEmpty(Model.School) ? "Chưa cập nhật" : Model.School)</div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 12px; color: #64748b; font-weight: 600;">Chuyên ngành học</span>
+                            <div id="profileMajorVal" style="font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 4px;">@(string.IsNullOrEmpty(Model.Major) ? "Chưa cập nhật" : Model.Major)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Work Experience / Bio -->
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Kinh nghiệm làm việc & Bản thân</h3>
+                    <div id="profileExperienceVal" style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 14px; color: #334155; line-height: 1.6; white-space: pre-line;">@(string.IsNullOrEmpty(Model.Experience) ? "Người dùng chưa chia sẻ thông tin kinh nghiệm làm việc." : Model.Experience)</div>
+                </div>
+            </div>
+
+            <!-- Profile Edit Panel (Hidden initially) -->
+            @if (isSelf)
+            {
+                <div id="profileEditPanel" style="display: none;">
+                    <h3 style="font-size: 16px; font-weight: 800; color: #1e293b; margin-top: 0; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9;">Cập nhật hồ sơ cá nhân</h3>
+                    
+                    <form id="profileEditForm" onsubmit="saveProfileEdits(event)" style="display: flex; flex-direction: column; gap: 15px;">
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Đường dẫn Avatar URL</label>
+                            <input type="text" id="editAvatarUrl" class="form-control" value="@Model.AvatarUrl" placeholder="Ví dụ: https://link-anh-cua-ban.png" style="width: 100%; border-radius: 8px; font-size: 13px; padding: 10px;" />
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Tiêu đề ngắn (Headline)</label>
+                            <input type="text" id="editHeadline" class="form-control" value="@Model.Headline" placeholder="Ví dụ: Lập trình viên Full Stack .NET" style="width: 100%; border-radius: 8px; font-size: 13px; padding: 10px;" />
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Trường học</label>
+                                <input type="text" id="editSchool" class="form-control" value="@Model.School" placeholder="Đại học Bách Khoa..." style="width: 100%; border-radius: 8px; font-size: 13px; padding: 10px;" />
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Chuyên ngành</label>
+                                <input type="text" id="editMajor" class="form-control" value="@Model.Major" placeholder="Kỹ thuật phần mềm..." style="width: 100%; border-radius: 8px; font-size: 13px; padding: 10px;" />
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Kinh nghiệm làm việc & Bản thân</label>
+                            <textarea id="editExperience" class="form-control" rows="5" placeholder="Chia sẻ chi tiết về kinh nghiệm làm việc và những dự án của bạn..." style="width: 100%; border-radius: 8px; font-size: 13px; padding: 10px; resize: vertical;">@Model.Experience</textarea>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                            <button type="button" class="btn secondary-btn" onclick="toggleEditProfile()" style="height: 38px; font-size: 13px;">Hủy bỏ</button>
+                            <button type="submit" class="btn primary-btn" style="height: 38px; font-size: 13px;">Lưu thông tin</button>
+                        </div>
+                    </form>
+                </div>
+            }
+
+        </div>
+
+        <!-- Sidebar Accomplishments -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- Recommended Path Badge -->
+            @if (!string.IsNullOrEmpty(recommendedPath))
+            {
+                <div class="info-card" style="padding: 24px; border-radius: 20px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe; color: #1e40af;">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; margin-bottom: 8px;">
+                        <span>🧭 Định hướng phù hợp</span>
+                    </div>
+                    <h4 style="margin: 0; font-size: 18px; font-weight: 800;">@recommendedPath</h4>
+                </div>
+            }
+
+            <!-- Completed courses list -->
+            <div class="info-card" style="padding: 24px; border-radius: 20px; background: #ffffff;">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 15px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Khóa học đã hoàn thành (@completedCourses.Count)</h3>
+                
+                @if (completedCourses.Count == 0)
+                {
+                    <p style="color: #64748b; font-style: italic; font-size: 13px; margin: 0;">Chưa hoàn thành khóa học nào.</p>
+                }
+                else
+                {
+                    <ul style="padding-left: 20px; margin: 0; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; color: #334155; line-height: 1.4;">
+                        @foreach (var course in completedCourses)
+                        {
+                            <li><strong>@course</strong></li>
+                        }
+                    </ul>
+                }
+            </div>
+
+            <!-- CV Download panel -->
+            @if (latestResume != null)
+            {
+                <div class="info-card" style="padding: 24px; border-radius: 20px; background: #ffffff; text-align: center;">
+                    <span style="font-size: 32px; display: block; margin-bottom: 8px;">📄</span>
+                    <h4 style="margin: 0 0 6px; font-size: 15px; font-weight: 700; color: #1e293b;">Hồ sơ năng lực đính kèm</h4>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 15px;">Mẫu CV: @(latestResume.Title)</p>
+                    <a asp-controller="Home" asp-action="ResumeBuilder" asp-route-id="@latestResume.Id" class="btn secondary-btn" style="width: 100%; justify-content: center; height: 36px; font-size: 12.5px; text-decoration: none;">Xem chi tiết CV</a>
+                </div>
+            }
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Toggle edit profile views
+    function toggleEditProfile() {
+        const viewPanel = document.getElementById("profileViewPanel");
+        const editPanel = document.getElementById("profileEditPanel");
+        
+        if (editPanel.style.display === "none") {
+            viewPanel.style.display = "none";
+            editPanel.style.display = "block";
+        } else {
+            viewPanel.style.display = "block";
+            editPanel.style.display = "none";
+        }
+    }
+
+    // Save profile details via AJAX
+    function saveProfileEdits(e) {
+        e.preventDefault();
+        
+        const avatarUrl = document.getElementById("editAvatarUrl").value;
+        const headline = document.getElementById("editHeadline").value;
+        const school = document.getElementById("editSchool").value;
+        const major = document.getElementById("editMajor").value;
+        const experience = document.getElementById("editExperience").value;
+
+        fetch("/Profile/UpdateProfile", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                avatarUrl: avatarUrl,
+                headline: headline,
+                school: school,
+                major: major,
+                experience: experience
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI elements in page
+                document.getElementById("profileAvatarImg").src = avatarUrl || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + encodeURIComponent("@Model.FullName");
+                document.getElementById("profileHeadlineText").innerText = headline || "Thành viên CareerPath";
+                document.getElementById("profileSchoolVal").innerText = school || "Chưa cập nhật";
+                document.getElementById("profileMajorVal").innerText = major || "Chưa cập nhật";
+                document.getElementById("profileExperienceVal").innerText = experience || "Người dùng chưa chia sẻ thông tin kinh nghiệm làm việc.";
+                
+                showToast("Hồ sơ đã được lưu thành công!", "success");
+                toggleEditProfile();
+            } else {
+                showToast("Lỗi lưu hồ sơ: " + data.message, "error");
+            }
+        })
+        .catch(err => {
+            console.error("Lỗi cập nhật hồ sơ:", err);
+            showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+        });
+    }
+
+    // Peer connection actions
+    function sendConnectionRequest(targetId) {
+        fetch("/PeerConnection/SendRequest?receiverId=" + targetId, {
+            method: "POST"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, "success");
+                updateConnectionUI("PendingSent");
+            } else {
+                showToast(data.message, "warning");
+            }
+        })
+        .catch(err => {
+            console.error("Lỗi kết nối:", err);
+            showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+        });
+    }
+
+    function acceptConnectionRequest(targetId) {
+        fetch("/PeerConnection/AcceptRequest?requesterId=" + targetId, {
+            method: "POST"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, "success");
+                updateConnectionUI("Accepted");
+            } else {
+                showToast(data.message, "error");
+            }
+        })
+        .catch(err => {
+            console.error("Lỗi đồng ý kết nối:", err);
+            showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+        });
+    }
+
+    function declineConnectionRequest(targetId) {
+        fetch("/PeerConnection/DeclineRequest?requesterId=" + targetId, {
+            method: "POST"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, "info");
+                updateConnectionUI("None");
+            } else {
+                showToast(data.message, "error");
+            }
+        })
+        .catch(err => {
+            console.error("Lỗi từ chối kết nối:", err);
+            showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+        });
+    }
+
+    function disconnectPeer(targetId) {
+        if (!confirm("Bạn có chắc chắn muốn hủy kết nối bạn bè với người dùng này?")) return;
+        fetch("/PeerConnection/Disconnect?targetId=" + targetId, {
+            method: "POST"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, "info");
+                updateConnectionUI("None");
+            } else {
+                showToast(data.message, "error");
+            }
+        })
+        .catch(err => {
+            console.error("Lỗi hủy kết nối:", err);
+            showToast("Có lỗi xảy ra, vui lòng thử lại.", "error");
+        });
+    }
+
+    function updateConnectionUI(status) {
+        const area = document.getElementById("connectionActionArea");
+        if (!area) return;
+
+        const peerId = "@Model.Id";
+
+        if (status === "None") {
+            area.innerHTML = `<button type="button" class="btn primary-btn" onclick="sendConnectionRequest(${peerId})" style="height: 38px; font-size: 13.5px;">🔗 Kết nối bạn bè</button>`;
+        } else if (status === "PendingSent") {
+            area.innerHTML = `<button type="button" class="btn secondary-btn" style="height: 38px; font-size: 13.5px; opacity: 0.8; cursor: not-allowed;" disabled>⏳ Đã gửi yêu cầu</button>`;
+        } else if (status === "Accepted") {
+            area.innerHTML = `
+                <div style="display: flex; gap: 8px;">
+                    <a href="/Chat?peerId=${peerId}" class="btn primary-btn" style="height: 38px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center;">💬 Nhắn tin</a>
+                    <button type="button" class="btn secondary-btn" onclick="disconnectPeer(${peerId})" style="height: 38px; font-size: 13px; border-color: #cbd5e1; color: #ef4444;">Hủy kết nối</button>
+                </div>
+            `;
+        }
+    }
+
+    // SignalR Real-time Presence
+    @if (!isSelf)
+    {
+        <text>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Load SignalR
+            const script = document.createElement("script");
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js";
+            script.onload = function() {
+                const presenceConn = new signalR.HubConnectionBuilder()
+                    .withUrl("/hubs/presenceNotification")
+                    .withAutomaticReconnect()
+                    .build();
+
+                presenceConn.on("UserWentOnline", function(userId) {
+                    if (userId.toString() === "@Model.Id") {
+                        updatePresenceDot(true);
+                    }
+                });
+
+                presenceConn.on("UserWentOffline", function(userId) {
+                    if (userId.toString() === "@Model.Id") {
+                        updatePresenceDot(false);
+                    }
+                });
+
+                presenceConn.on("OnlineFriendsList", function(onlineUserIds) {
+                    const targetId = parseInt("@Model.Id");
+                    if (onlineUserIds.includes(targetId)) {
+                        updatePresenceDot(true);
+                    }
+                });
+
+                presenceConn.start()
+                    .then(() => console.log("Details page presence connection active."))
+                    .catch(err => console.error(err));
+            };
+            document.head.appendChild(script);
+        });
+
+        function updatePresenceDot(isOnline) {
+            const dot = document.getElementById("profile-presence-dot");
+            if (dot) {
+                if (isOnline) {
+                    dot.style.background = "#10b981";
+                    dot.title = "Trực tuyến";
+                } else {
+                    dot.style.background = "#cbd5e1";
+                    dot.title = "Ngoại tuyến";
+                }
+            }
+        }
+        </text>
+    }
+</script>

@@ -1,0 +1,35 @@
+@model CreateQuestionDto
+
+<form asp-action="Create">
+
+    <div class="mb-3">
+        <label>Bài Test</label>
+
+        <select asp-for="TestId"
+                asp-items="ViewBag.Tests"
+                class="form-control">
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label>Loại câu hỏi</label>
+
+        <select asp-for="QuestionTypeId"
+                asp-items="ViewBag.QuestionTypes"
+                class="form-control">
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label>Nội dung</label>
+
+        <textarea asp-for="Content"
+                  class="form-control">
+        </textarea>
+    </div>
+
+    <button class="btn btn-success">
+        Lưu
+    </button>
+
+</form>

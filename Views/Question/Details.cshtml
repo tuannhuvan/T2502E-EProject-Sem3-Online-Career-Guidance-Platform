@@ -1,0 +1,92 @@
+@model Career_Guidance_Platform.Dtos.Question.QuestionFullDto
+
+@{
+    ViewData["Title"] = "Question Details";
+}
+
+<div class="container">
+
+    <h2 class="mb-4">Question Details</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Question Information</strong>
+        </div>
+
+        <div class="card-body">
+
+            <p>
+                <strong>Question:</strong>
+                @Model.Content
+            </p>
+
+            <p>
+                <strong>Career Test:</strong>
+                @Model.CareerTestTitle
+            </p>
+
+            <p>
+                <strong>Question Type:</strong>
+                @Model.QuestionTypeTitle
+            </p>
+
+        </div>
+    </div>
+
+    <h3>Answer Options</h3>
+
+    @foreach (var opt in Model.Options)
+    {
+        <div class="card mb-3">
+
+            <div class="card-header">
+                <strong>@opt.Content</strong>
+            </div>
+
+            <div class="card-body">
+
+                @if (opt.CareerPaths.Any())
+                {
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>Career Path</th>
+                            <th>Weight</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        @foreach (var cp in opt.CareerPaths)
+                        {
+                            <tr>
+                                <td>@cp.CareerPathTitle</td>
+                                <td>@cp.Weight</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <span class="text-muted">
+                        No career path mapping
+                    </span>
+                }
+
+            </div>
+
+        </div>
+    }
+
+    <a asp-action="Edit"
+       asp-route-id="@Model.Id"
+       class="btn btn-warning">
+        Edit
+    </a>
+
+    <a asp-action="Index"
+       class="btn btn-secondary">
+        Back
+    </a>
+
+</div>

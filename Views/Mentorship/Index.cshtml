@@ -7,9 +7,25 @@
     <span class="page-badge" style="background: #eef2ff; color: #4f46e5; border: 1px solid #e0e7ff; padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 800; text-transform: uppercase;">🎓 Mentorship Platform</span>
     <h1 style="font-size: 40px; font-weight: 900; color: #0f172a; margin-top: 16px; margin-bottom: 12px; letter-spacing: -0.5px;">Kết nối Cố vấn chuyên môn</h1>
     <p style="color: #64748b; font-size: 17px; max-width: 650px; margin: 0 auto; line-height: 1.6;">Học hỏi từ các chuyên gia đầu ngành thông qua tư vấn 1-1, định hình lại con đường sự nghiệp và định hướng kỹ năng thực chiến.</p>
+    <div style="margin-top: 20px;">
+        <a href="/Mentor/Apply" class="btn primary-btn" style="text-decoration: none; padding: 10px 22px; font-size: 14px; font-weight: 700; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">✨ Đăng ký làm Mentor</a>
+    </div>
 </section>
 
 <section class="content-section" style="max-width: 1200px; margin: 0 auto; padding: 40px 24px;">
+    
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success" style="background: #ecfdf5; border: 1px solid #d1fae5; color: #065f46; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 14px;">
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-info" style="background: #eff6ff; border: 1px solid #dbeafe; color: #1e40af; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 14px;">
+            @TempData["Info"]
+        </div>
+    }
     
     <!-- Search and Filter Bar -->
     <div class="info-card" style="padding: 24px; border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.02); margin-bottom: 40px;">

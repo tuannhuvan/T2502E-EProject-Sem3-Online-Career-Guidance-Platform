@@ -46,3 +46,55 @@ button.accept-policy {
   white-space: nowrap;
   line-height: 60px;
 }
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+/* Avatar tròn */
+.avatar img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #4f46e5;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.avatar img:hover {
+  transform: scale(1.05);
+}
+
+/* Dropdown logout */
+.user-dropdown {
+  display: flex;
+  align-items: center;
+}
+
+/* Nút logout đẹp hơn */
+.logout-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Responsive nhẹ */
+@media (max-width: 768px) {
+  .logout-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}

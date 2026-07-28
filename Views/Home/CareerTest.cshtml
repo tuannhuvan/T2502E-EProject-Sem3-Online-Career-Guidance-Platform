@@ -1,3 +1,52 @@
+﻿@model Career_Guidance_Platform.Dtos.Question.QuestionTestDto
+
+@{
+ViewData["Title"] = "Đánh giá nghề nghiệp";
+
+int currentQuestion = ViewBag.CurrentQuestion;
+int totalQuestions = ViewBag.TotalQuestions;
+
+int progress = totalQuestions > 0
+? (currentQuestion * 100 / totalQuestions)
+: 0;
+
+int? selectedOption = (int?)ViewBag.SelectedOption;
+int resultId = ViewBag.ResultId ?? 0;   // FIX NULL SAFE
+}
+
+@if (currentQuestion == 1)
+{
+<section class="career-test-hero">
+    <span class="page-badge">🧭 Career Assessment</span>
+
+    <h1>Khám phá nghề nghiệp phù hợp với bạn</h1>
+
+    <p>
+        Trả lời các câu hỏi dưới đây để hệ thống đánh giá
+        và gợi ý nghề nghiệp phù hợp với bạn.
+    </p>
+
+    <div class="test-overview">
+        <div>
+            <h3>@totalQuestions</h3>
+            <p>Câu hỏi</p>
+        </div>
+
+        <div>
+            <h3>@currentQuestion</h3>
+            <p>Hiện tại</p>
+        </div>
+
+        <div>
+            <h3>@progress%</h3>
+            <p>Hoàn thành</p>
+        </div>
+
+        <div>
+            <h3>Online</h3>
+            <p>Career Test</p>
+        </div>
+    </div>
 @model Career_Guidance_Platform.Models.ViewModels.TakeTestViewModel
 @using System.Text.Json
 
@@ -10,7 +59,115 @@
     <h1>Định hướng nghề nghiệp phù hợp</h1>
     <p>Hãy trả lời các câu hỏi trắc nghiệm dưới đây một cách khách quan để hệ thống tính điểm và đề xuất lộ trình phát triển phù hợp nhất.</p>
 </section>
+}
 
+<section id="testSection" class="content-section">
+    <div class="career-test-main-full">
+
+        <div class="top-progress-card">
+            <div class="progress-header">
+                <span>Câu hỏi @currentQuestion/@totalQuestions</span>
+                <span>Hoàn thành @progress%</span>
+            </div>
+
+            <div class="progress-track">
+                <span id="progressBar" style="width:@progress%"></span>
+            </div>
+        </div>
+
+        <div class="question-card">
+
+            <div class="question-header">
+                <strong>Nhóm: @Model.QuestionTypeTitle</strong>
+            </div>
+
+            <h2>@Model.Content</h2>
+
+            <p class="question-desc">
+                Hãy chọn phương án mô tả đúng nhất với bạn.
+            </p>
+
+            <!-- FORM -->
+            <form asp-controller="Questions"
+                  asp-action="SaveAnswer"
+                  method="post">
+
+                <!-- FIX: MUST HAVE -->
+                <input type="hidden" name="QuestionId" value="@Model.Id" />
+                <input type="hidden" name="CurrentQuestion" value="@currentQuestion" />
+                <input type="hidden" name="ResultId" value="@resultId" />
+
+                <div class="answer-list detailed">
+
+                    @foreach (var option in Model.Options)
+                    {
+                    <label class="answer-item d-block mb-2">
+
+                        <input type="radio"
+                               name="OptionId"
+                               value="@option.Id"
+                               @(selectedOption == option.Id ? "checked" : "") />
+
+                        <span>@option.Content</span>
+
+                    </label>
+                    }
+
+                </div>
+
+                <div class="test-actions">
+
+                    @if (currentQuestion > 1)
+                    {
+                    <a asp-action="Index"
+                       asp-route-questionNumber="@(currentQuestion - 1)"
+                       class="primary-btn">
+                        Quay lại
+                    </a>
+                    }
+
+                    @if (currentQuestion < totalQuestions)
+                    {
+                    <button type="submit" class="primary-btn">
+                        Tiếp tục
+                    </button>
+                    }
+                    else
+                    {
+                    <!-- FIX: ensure POST -->
+                    <button type="submit"
+                            formaction="@Url.Action("Finish","Questions")"
+                            formmethod="post"
+                            class="primary-btn">
+                        Hoàn thành bài test
+                    </button>
+                    }
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        if (window.location.search.includes("questionNumber=")) {
+            const testSection = document.getElementById("testSection");
+
+            if (testSection) {
+                testSection.scrollIntoView({
+                    behavior: "auto",
+                    block: "start"
+                });
+            }
+        }
+
+    });
+</script>
 <section class="content-section" style="max-width: 800px; padding: 50px 20px;">
     <div class="career-test-main-full">
         <!-- Progress Bar -->

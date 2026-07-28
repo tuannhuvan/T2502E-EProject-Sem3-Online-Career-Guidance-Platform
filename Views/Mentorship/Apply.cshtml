@@ -1,0 +1,68 @@
+@{
+    ViewData["Title"] = "Đăng ký trở thành Cố vấn - CareerPath";
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top right, #e0f2fe 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding-bottom: 20px;">
+    <span class="page-badge">🎓 Join our Mentors Community</span>
+    <h1>Đăng Ký Làm Cố Vấn (Mentor)</h1>
+    <p>Chia sẻ kiến thức, hướng dẫn học viên đi sau và xây dựng mạng lưới nghề nghiệp bền vững cùng cộng đồng CareerPath.</p>
+</section>
+
+<section class="content-section" style="max-width: 760px; padding-top: 10px; padding-bottom: 60px;">
+    <div class="info-card" style="padding: 35px; border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.04);">
+        <h3 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px;">Thông tin Hồ sơ Cố vấn</h3>
+        <p style="color: #64748b; font-size: 13.5px; margin-bottom: 25px; line-height: 1.5;">Vui lòng cung cấp chi tiết về kinh nghiệm và chuyên môn của bạn để ban quản trị kiểm duyệt hồ sơ đăng ký.</p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger" style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; padding: 15px; color: #991b1b; font-size: 13.5px; margin-bottom: 25px;">
+                <div asp-validation-summary="All" class="text-danger"></div>
+            </div>
+        }
+
+        <form asp-controller="Mentorship" asp-action="Apply" method="post" style="display: flex; flex-direction: column; gap: 20px;">
+            @Html.AntiForgeryToken()
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; font-size: 13.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Chức danh công việc <span style="color: #ef4444;">*</span></label>
+                    <input type="text" name="jobTitle" required placeholder="Ví dụ: Senior Software Engineer, HR Manager" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13.5px; outline: none; transition: 0.2s;" />
+                </div>
+                <div>
+                    <label style="display: block; font-size: 13.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Công ty làm việc <span style="color: #ef4444;">*</span></label>
+                    <input type="text" name="company" required placeholder="Ví dụ: FPT Software, VNG Corporation" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13.5px; outline: none; transition: 0.2s;" />
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Lĩnh vực / Chuyên môn chính <span style="color: #ef4444;">*</span></label>
+                <input type="text" name="specialization" required placeholder="Ví dụ: Lập trình Web ASP.NET Core, Quản trị Nhân sự" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13.5px; outline: none; transition: 0.2s;" />
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Kỹ năng chuyên môn (Expertise) <span style="color: #ef4444;">*</span></label>
+                <input type="text" name="expertise" required placeholder="Ví dụ: C#, SQL Server, Docker, System Design (Ngăn cách bằng dấu phẩy)" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13.5px; outline: none; transition: 0.2s;" />
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Đường dẫn LinkedIn (Tùy chọn)</label>
+                <input type="url" name="linkedInUrl" placeholder="Ví dụ: https://linkedin.com/in/username" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13.5px; outline: none; transition: 0.2s;" />
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Giới thiệu bản thân (Biography) <span style="color: #ef4444;">*</span></label>
+                <textarea name="biography" required rows="3" placeholder="Viết một đoạn ngắn giới thiệu về bản thân, nhiệt huyết và mong muốn đồng hành cùng các học viên..." style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13.5px; outline: none; transition: 0.2s; resize: vertical; min-height: 80px;"></textarea>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 13.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Kinh nghiệm làm việc chi tiết <span style="color: #ef4444;">*</span></label>
+                <textarea name="experienceDescription" required rows="5" placeholder="Mô tả cụ thể về quá trình công tác, các vị trí đã qua, dự án nổi bật, hoặc các thành tựu nghề nghiệp..." style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 13.5px; outline: none; transition: 0.2s; resize: vertical; min-height: 120px;"></textarea>
+            </div>
+
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 25px; margin-top: 10px; display: flex; justify-content: flex-end; gap: 12px;">
+                <a href="/Mentorship" class="btn secondary-btn" style="height: 42px; display: flex; align-items: center; justify-content: center; font-size: 13.5px; text-decoration: none; padding: 0 20px; border-radius: 12px;">Hủy bỏ</a>
+                <button type="submit" class="btn primary-btn" style="height: 42px; font-size: 13.5px; padding: 0 24px; border-radius: 12px; font-weight: 700;">Gửi đăng ký</button>
+            </div>
+        </form>
+    </div>
+</section>

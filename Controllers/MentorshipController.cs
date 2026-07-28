@@ -36,17 +36,9 @@ namespace Career_Guidance_Platform.Controllers
         }
 
         // 1. MENTEE VIEW: Danh sách Mentor hỗ trợ tìm kiếm & xếp hạng thông minh
+        [AllowAnonymous]
         public async Task<IActionResult> Index(string? search, string? skill, string? careerPath)
         {
-            if (!await IsPremiumUserAsync())
-            {
-                if (User.Identity?.IsAuthenticated != true)
-                {
-                    return Challenge();
-                }
-                TempData["PremiumLimitMessage"] = "Tính năng kết nối Cố vấn (Mentorship) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
-                return RedirectToAction("UpgradePremium", "Home");
-            }
 
             // Lấy tất cả các Mentor trong database
             var query = _context.MentorProfiles
@@ -164,17 +156,9 @@ namespace Career_Guidance_Platform.Controllers
         }
 
         // 2. MENTEE VIEW: Chi tiết thông tin Cố vấn & Các đánh giá
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int id)
         {
-            if (!await IsPremiumUserAsync())
-            {
-                if (User.Identity?.IsAuthenticated != true)
-                {
-                    return Challenge();
-                }
-                TempData["PremiumLimitMessage"] = "Tính năng kết nối Cố vấn (Mentorship) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
-                return RedirectToAction("UpgradePremium", "Home");
-            }
 
             var mentor = await _context.MentorProfiles
                 .Include(m => m.User)
@@ -289,6 +273,22 @@ namespace Career_Guidance_Platform.Controllers
             {
                 TempData["MessageWarning"] = "Bạn cần gửi yêu cầu kết nối và được Cố vấn phê duyệt trước khi đặt lịch hẹn tư vấn!";
                 return RedirectToAction(nameof(Details), new { id = mentorId });
+            }
+
+            // Free user limit: check scheduled/completed meetings booked in the current month
+            var isPremium = await IsPremiumUserAsync();
+            if (!isPremium)
+            {
+                var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                var endOfMonth = startOfMonth.AddMonths(1);
+                var meetingsCount = await _context.MentorshipMeetings
+                    .CountAsync(mm => mm.MenteeId == userId && mm.ScheduledTime >= startOfMonth && mm.ScheduledTime < endOfMonth);
+
+                if (meetingsCount >= 2)
+                {
+                    TempData["MessageWarning"] = "Tài khoản thường (Free) chỉ được đặt lịch tối đa 2 buổi/tháng. Vui lòng nâng cấp Premium để không giới hạn đặt lịch cố vấn!";
+                    return RedirectToAction(nameof(Details), new { id = mentorId });
+                }
             }
 
             var parsedTime = DateTime.Parse($"{meetingDate} {meetingTime}");
@@ -561,6 +561,78 @@ namespace Career_Guidance_Platform.Controllers
 
             TempData["GroupSuccess"] = $"Đăng ký tham gia buổi tư vấn nhóm '{session.Title}' thành công!";
             return RedirectToAction(nameof(GroupSessions));
+        }
+
+        // GET: /Mentorship/Apply (or /Mentor/Apply)
+        [HttpGet("/Mentor/Apply")]
+        [HttpGet("/Mentorship/Apply")]
+        public async Task<IActionResult> Apply()
+        {
+            var userIdValue = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdValue))
+                return Challenge();
+
+            var userId = int.Parse(userIdValue);
+            var existingProfile = await _context.MentorProfiles.FindAsync(userId);
+            if (existingProfile != null)
+            {
+                if (existingProfile.IsVerified)
+                {
+                    TempData["Info"] = "Bạn đã là Cố vấn chính thức trên hệ thống.";
+                    return RedirectToAction("Index");
+                }
+                TempData["Info"] = "Hồ sơ đăng ký cố vấn của bạn đang chờ phê duyệt từ quản trị viên.";
+                return RedirectToAction("Index");
+            }
+
+            return View("~/Views/Mentorship/Apply.cshtml");
+        }
+
+        // POST: /Mentorship/Apply (or /Mentor/Apply)
+        [HttpPost("/Mentor/Apply")]
+        [HttpPost("/Mentorship/Apply")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Apply(string jobTitle, string company, string specialization, string biography, string? linkedInUrl, string experienceDescription, string expertise)
+        {
+            var userIdValue = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdValue))
+                return Challenge();
+
+            var userId = int.Parse(userIdValue);
+            var existingProfile = await _context.MentorProfiles.FindAsync(userId);
+            if (existingProfile != null)
+            {
+                TempData["Info"] = "Hồ sơ của bạn đã được gửi trước đó.";
+                return RedirectToAction("Index");
+            }
+
+            if (string.IsNullOrWhiteSpace(jobTitle) || string.IsNullOrWhiteSpace(company) || string.IsNullOrWhiteSpace(specialization) || string.IsNullOrWhiteSpace(biography) || string.IsNullOrWhiteSpace(experienceDescription) || string.IsNullOrWhiteSpace(expertise))
+            {
+                ModelState.AddModelError("", "Vui lòng điền đầy đủ các thông tin bắt buộc.");
+                return View("~/Views/Mentorship/Apply.cshtml");
+            }
+
+            var profile = new MentorProfile
+            {
+                UserId = userId,
+                JobTitle = jobTitle,
+                Company = company,
+                Specialization = specialization,
+                Biography = biography,
+                LinkedInUrl = linkedInUrl,
+                ExperienceDescription = experienceDescription,
+                Expertise = expertise,
+                IsActive = true,
+                IsVerified = false,
+                HourlyRate = 0,
+                Rating = 5.00m
+            };
+
+            _context.MentorProfiles.Add(profile);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đăng ký cố vấn thành công! Hồ sơ của bạn đã được gửi và đang chờ ban quản trị kiểm duyệt.";
+            return RedirectToAction("Index");
         }
     }
 

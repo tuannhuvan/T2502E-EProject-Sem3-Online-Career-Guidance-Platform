@@ -1,0 +1,73 @@
+@model Career_Guidance_Platform.Models.ResumeTemplate
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Chỉnh Sửa Mẫu CV";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Chỉnh Sửa Mẫu CV: @Model.Name</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="card">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label required">Tên mẫu CV</label>
+                    <input type="text" asp-for="Name" class="form-control" placeholder="Nhập tên mẫu CV" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label required">Mã code mẫu thiết kế</label>
+                    <select asp-for="TemplateCode" class="form-select" required>
+                        <option value="modern">modern (Hiện đại)</option>
+                        <option value="minimalist">minimalist (Tối giản)</option>
+                        <option value="professional">professional (Chuyên nghiệp)</option>
+                    </select>
+                    <span asp-validation-for="TemplateCode" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Hình ảnh xem trước hiện tại</label>
+                    @if (!string.IsNullOrEmpty(Model.ThumbnailUrl))
+                    {
+                        <div class="mb-2">
+                            <img src="@Model.ThumbnailUrl" alt="Thumbnail" style="max-width: 150px; border-radius: 8px; border: 1px solid #e2e8f0;" />
+                        </div>
+                    }
+                    <label class="form-label">Tải lên hình ảnh xem trước mới (Nếu thay đổi)</label>
+                    <input type="file" name="thumbnailFile" class="form-control" accept="image/*" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Loại gói áp dụng</label>
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="IsPremium" />
+                        <span class="form-check-label">Mẫu CV Premium VIP (Yêu cầu tài khoản trả phí)</span>
+                    </label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Trạng thái kích hoạt</label>
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="IsActive" />
+                        <span class="form-check-label">Hiển thị ra ngoài giao diện cho người học</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card-footer text-end">
+                <a asp-action="Index" class="btn btn-link">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+</div>

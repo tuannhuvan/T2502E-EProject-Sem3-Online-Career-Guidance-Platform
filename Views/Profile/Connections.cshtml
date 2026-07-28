@@ -1,0 +1,366 @@
+@model IEnumerable<Career_Guidance_Platform.Models.User>
+@{
+    ViewData["Title"] = "Mạng lưới kết nối - CareerPath";
+    var pendingReceived = ViewBag.PendingReceived as List<Career_Guidance_Platform.Models.PeerConnection> ?? new List<Career_Guidance_Platform.Models.PeerConnection>();
+    var pendingSent = ViewBag.PendingSent as List<Career_Guidance_Platform.Models.PeerConnection> ?? new List<Career_Guidance_Platform.Models.PeerConnection>();
+    int currentUserId = ViewBag.CurrentUserId;
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top right, #e0f2fe 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding-bottom: 20px;">
+    <span class="page-badge">👥 Connection Network</span>
+    <h1>Mạng Lưới Kết Nối</h1>
+    <p>Quản lý các kết nối bạn bè và đồng nghiệp để học hỏi kinh nghiệm lẫn nhau và phát triển nghề nghiệp.</p>
+</section>
+
+<section class="content-section" style="max-width: 1000px; padding-top: 10px; padding-bottom: 60px;">
+    
+    <!-- Tab Controls -->
+    <div style="display: flex; gap: 15px; border-bottom: 2px solid #e2e8f0; margin-bottom: 30px; padding-bottom: 8px;">
+        <button type="button" class="conn-tab-btn active" data-target="panel-friends" style="background: transparent; border: none; font-weight: 700; font-size: 15px; color: #64748b; padding: 8px 16px; cursor: pointer; transition: 0.2s;">
+            👥 Bạn bè (<span id="count-friends">@Model.Count()</span>)
+        </button>
+        <button type="button" class="conn-tab-btn" data-target="panel-received" style="background: transparent; border: none; font-weight: 700; font-size: 15px; color: #64748b; padding: 8px 16px; cursor: pointer; transition: 0.2s;">
+            📥 Yêu cầu kết nối (<span id="count-received">@pendingReceived.Count</span>)
+        </button>
+        <button type="button" class="conn-tab-btn" data-target="panel-sent" style="background: transparent; border: none; font-weight: 700; font-size: 15px; color: #64748b; padding: 8px 16px; cursor: pointer; transition: 0.2s;">
+            📤 Lời mời đã gửi (<span id="count-sent">@pendingSent.Count</span>)
+        </button>
+    </div>
+
+    <!-- Panel 1: Friends -->
+    <div id="panel-friends" class="conn-tab-panel active">
+        <div id="friends-empty" style="display: @(Model.Any() ? "none" : "block"); text-align: center; padding: 50px;" class="info-card">
+            <span style="font-size: 40px;">👥</span>
+            <h4 style="margin-top: 10px; font-size: 16px; color: #1e293b;">Chưa có bạn bè kết nối</h4>
+            <p style="color: #64748b; font-size: 13.5px; margin-bottom: 0;">Khám phá các hồ sơ cá nhân khác từ bảng tin bình luận để gửi lời kết nối!</p>
+        </div>
+        
+        <div id="friends-grid" style="display: @(Model.Any() ? "grid" : "none"); grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            @foreach (var user in Model)
+            {
+                <div class="info-card friend-card" id="peer-card-@user.Id" style="display: flex; gap: 15px; align-items: center; padding: 20px; border-radius: 16px; position: relative;">
+                    <div style="position: relative;">
+                        <img src="@(string.IsNullOrEmpty(user.AvatarUrl) ? "/images/default-avatar.png" : user.AvatarUrl)" alt="@user.FullName" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=@user.FullName'" />
+                        <!-- Online status dot indicator -->
+                        <span class="presence-dot" id="presence-@user.Id" style="position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; background: #cbd5e1; border: 2.5px solid #ffffff; border-radius: 50%; transition: 0.3s;" title="Ngoại tuyến"></span>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <a href="/Profile/Details/@user.Id" style="font-weight: 700; color: #0f172a; text-decoration: none; font-size: 15px;" onmouseover="this.style.color='#4f46e5'" onmouseout="this.style.color='#0f172a'">@user.FullName</a>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 600;">@(string.IsNullOrEmpty(user.Headline) ? "Thành viên" : user.Headline)</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <a href="/Chat?peerId=@user.Id" class="btn btn-sm primary-btn" style="height: 32px; font-size: 11.5px; text-decoration: none; justify-content: center; width: 65px;">💬 Chat</a>
+                        <button type="button" class="btn btn-sm secondary-btn" onclick="disconnectPeer(@user.Id)" style="height: 32px; font-size: 11.5px; justify-content: center; border-color: #cbd5e1; color: #ef4444; width: 65px;">Hủy</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Panel 2: Received Requests -->
+    <div id="panel-received" class="conn-tab-panel" style="display: none;">
+        <div id="received-empty" style="display: @(pendingReceived.Count == 0 ? "block" : "none"); text-align: center; padding: 50px;" class="info-card">
+            <span style="font-size: 40px;">📥</span>
+            <h4 style="margin-top: 10px; font-size: 16px; color: #1e293b;">Không có lời mời kết nối nào</h4>
+            <p style="color: #64748b; font-size: 13.5px; margin-bottom: 0;">Bất kỳ yêu cầu kết nối nào gửi đến bạn đều sẽ xuất hiện ở đây.</p>
+        </div>
+        
+        <div id="received-grid" style="display: @(pendingReceived.Count > 0 ? "grid" : "none"); grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            @foreach (var request in pendingReceived)
+            {
+                var user = request.Requester;
+                if (user == null) continue;
+                <div class="info-card received-card" id="peer-card-@user.Id" style="display: flex; gap: 15px; align-items: center; padding: 20px; border-radius: 16px;">
+                    <img src="@(string.IsNullOrEmpty(user.AvatarUrl) ? "/images/default-avatar.png" : user.AvatarUrl)" alt="@user.FullName" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=@user.FullName'" />
+                    <div style="flex-grow: 1;">
+                        <a href="/Profile/Details/@user.Id" style="font-weight: 700; color: #0f172a; text-decoration: none; font-size: 15px;" onmouseover="this.style.color='#4f46e5'" onmouseout="this.style.color='#0f172a'">@user.FullName</a>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 600;">@user.Headline</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <button type="button" class="btn btn-sm primary-btn" onclick="acceptRequest(@user.Id)" style="height: 32px; font-size: 11.5px; background: #10b981; border-color: #10b981; width: 75px;">Đồng ý</button>
+                        <button type="button" class="btn btn-sm secondary-btn" onclick="declineRequest(@user.Id)" style="height: 32px; font-size: 11.5px; border-color: #f43f5e; color: #f43f5e; width: 75px;">Từ chối</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Panel 3: Sent Requests -->
+    <div id="panel-sent" class="conn-tab-panel" style="display: none;">
+        <div id="sent-empty" style="display: @(pendingSent.Count == 0 ? "block" : "none"); text-align: center; padding: 50px;" class="info-card">
+            <span style="font-size: 40px;">📤</span>
+            <h4 style="margin-top: 10px; font-size: 16px; color: #1e293b;">Bạn chưa gửi yêu cầu kết nối nào</h4>
+            <p style="color: #64748b; font-size: 13.5px; margin-bottom: 0;">Gửi yêu cầu kết nối từ các hồ sơ công khai của học viên khác.</p>
+        </div>
+        
+        <div id="sent-grid" style="display: @(pendingSent.Count > 0 ? "grid" : "none"); grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            @foreach (var request in pendingSent)
+            {
+                var user = request.Receiver;
+                if (user == null) continue;
+                <div class="info-card sent-card" id="peer-card-@user.Id" style="display: flex; gap: 15px; align-items: center; padding: 20px; border-radius: 16px;">
+                    <img src="@(string.IsNullOrEmpty(user.AvatarUrl) ? "/images/default-avatar.png" : user.AvatarUrl)" alt="@user.FullName" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=@user.FullName'" />
+                    <div style="flex-grow: 1;">
+                        <a href="/Profile/Details/@user.Id" style="font-weight: 700; color: #0f172a; text-decoration: none; font-size: 15px;" onmouseover="this.style.color='#4f46e5'" onmouseout="this.style.color='#0f172a'">@user.FullName</a>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 600;">@user.Headline</div>
+                    </div>
+                    <div>
+                        <span style="background: #f1f5f9; color: #64748b; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 8px;">Đang chờ...</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+</section>
+
+<!-- Include SignalR Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+<style>
+    .conn-tab-btn.active {
+        color: #4f46e5 !important;
+        border-bottom: 3px solid #4f46e5 !important;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const btns = document.querySelectorAll(".conn-tab-btn");
+        const panels = document.querySelectorAll(".conn-tab-panel");
+
+        btns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const target = btn.getAttribute("data-target");
+
+                btns.forEach(b => b.classList.remove("active"));
+                panels.forEach(p => p.style.display = "none");
+
+                btn.classList.add("active");
+                document.getElementById(target).style.display = "block";
+            });
+        });
+
+        // Initialize SignalR Presence & Notification Connection
+        const presenceConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/presenceNotification")
+            .withAutomaticReconnect()
+            .build();
+
+        presenceConnection.on("UserWentOnline", function(userId) {
+            updatePresenceIndicator(userId, true);
+        });
+
+        presenceConnection.on("UserWentOffline", function(userId) {
+            updatePresenceIndicator(userId, false);
+        });
+
+        presenceConnection.on("OnlineFriendsList", function(onlineUserIds) {
+            // Mark online friends as green
+            onlineUserIds.forEach(id => {
+                updatePresenceIndicator(id, true);
+            });
+        });
+
+        // Dynamically add a connection request to B's grid in real-time
+        presenceConnection.on("ReceiveConnectionRequest", function(requester) {
+            addNewConnectionRequestCard(requester);
+            playNotificationSound();
+        });
+
+        // Dynamically move connection from request list to friend list in real-time when accepted
+        presenceConnection.on("ConnectionAccepted", function(friend) {
+            addNewFriendCard(friend);
+        });
+
+        // Dynamically remove card when unfriend or declined in real-time
+        presenceConnection.on("ConnectionRemoved", function(peerId) {
+            removePeerCard(peerId);
+        });
+
+        presenceConnection.start()
+            .then(() => console.log("Real-time presence tracking active."))
+            .catch(err => console.error("Presence connection failed:", err));
+    });
+
+    function updatePresenceIndicator(userId, isOnline) {
+        const dot = document.getElementById("presence-" + userId);
+        if (dot) {
+            if (isOnline) {
+                dot.style.background = "#10b981";
+                dot.title = "Trực tuyến";
+            } else {
+                dot.style.background = "#cbd5e1";
+                dot.title = "Ngoại tuyến";
+            }
+        }
+    }
+
+    function playNotificationSound() {
+        try {
+            const context = new AudioContext();
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+            osc.connect(gain);
+            gain.connect(context.destination);
+            
+            gain.gain.setValueAtTime(0.3, context.currentTime);
+            osc.frequency.setValueAtTime(800, context.currentTime);
+            osc.type = "sine";
+            osc.start();
+            osc.stop(context.currentTime + 0.15);
+        } catch (e) {
+            console.log("Audio notification sound blocked or not supported.");
+        }
+    }
+
+    function addNewConnectionRequestCard(req) {
+        const grid = document.getElementById("received-grid");
+        const empty = document.getElementById("received-empty");
+
+        // Remove existing card if duplicate
+        const oldCard = document.getElementById("peer-card-" + req.requesterId);
+        if (oldCard) oldCard.remove();
+
+        const card = document.createElement("div");
+        card.className = "info-card received-card";
+        card.id = "peer-card-" + req.requesterId;
+        card.style.display = "flex";
+        card.style.gap = "15px";
+        card.style.alignItems = "center";
+        card.style.padding = "20px";
+        card.style.borderRadius = "16px";
+
+        card.innerHTML = `
+            <img src="${req.avatarUrl || '/images/default-avatar.png'}" alt="${req.requesterName}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=${req.requesterName}'" />
+            <div style="flex-grow: 1;">
+                <a href="/Profile/Details/${req.requesterId}" style="font-weight: 700; color: #0f172a; text-decoration: none; font-size: 15px;">${req.requesterName}</a>
+                <div style="font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 600;">${req.headline || 'Thành viên'}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <button type="button" class="btn btn-sm primary-btn" onclick="acceptRequest(${req.requesterId})" style="height: 32px; font-size: 11.5px; background: #10b981; border-color: #10b981; width: 75px;">Đồng ý</button>
+                <button type="button" class="btn btn-sm secondary-btn" onclick="declineRequest(${req.requesterId})" style="height: 32px; font-size: 11.5px; border-color: #f43f5e; color: #f43f5e; width: 75px;">Từ chối</button>
+            </div>
+        `;
+
+        grid.appendChild(card);
+        grid.style.display = "grid";
+        empty.style.display = "none";
+        
+        updateTabCounts();
+    }
+
+    function addNewFriendCard(friend) {
+        // Remove from received or sent panel
+        const pendingCard = document.getElementById("peer-card-" + friend.friendId);
+        if (pendingCard) pendingCard.remove();
+
+        const grid = document.getElementById("friends-grid");
+        const empty = document.getElementById("friends-empty");
+
+        const card = document.createElement("div");
+        card.className = "info-card friend-card";
+        card.id = "peer-card-" + friend.friendId;
+        card.style.display = "flex";
+        card.style.gap = "15px";
+        card.style.alignItems = "center";
+        card.style.padding = "20px";
+        card.style.borderRadius = "16px";
+        card.style.position = "relative";
+
+        card.innerHTML = `
+            <div style="position: relative;">
+                <img src="${friend.avatarUrl || '/images/default-avatar.png'}" alt="${friend.friendName}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=${friend.friendName}'" />
+                <span class="presence-dot" id="presence-${friend.friendId}" style="position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; background: ${friend.isOnline ? '#10b981' : '#cbd5e1'}; border: 2.5px solid #ffffff; border-radius: 50%; transition: 0.3s;" title="${friend.isOnline ? 'Trực tuyến' : 'Ngoại tuyến'}"></span>
+            </div>
+            <div style="flex-grow: 1;">
+                <a href="/Profile/Details/${friend.friendId}" style="font-weight: 700; color: #0f172a; text-decoration: none; font-size: 15px;">${friend.friendName}</a>
+                <div style="font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 600;">${friend.headline || 'Thành viên'}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <a href="/Chat?peerId=${friend.friendId}" class="btn btn-sm primary-btn" style="height: 32px; font-size: 11.5px; text-decoration: none; justify-content: center; width: 65px;">💬 Chat</a>
+                <button type="button" class="btn btn-sm secondary-btn" onclick="disconnectPeer(${friend.friendId})" style="height: 32px; font-size: 11.5px; justify-content: center; border-color: #cbd5e1; color: #ef4444; width: 65px;">Hủy</button>
+            </div>
+        `;
+
+        grid.appendChild(card);
+        grid.style.display = "grid";
+        empty.style.display = "none";
+
+        updateTabCounts();
+    }
+
+    function removePeerCard(peerId) {
+        const card = document.getElementById("peer-card-" + peerId);
+        if (card) {
+            card.remove();
+        }
+        updateTabCounts();
+    }
+
+    function updateTabCounts() {
+        const friendsCount = document.querySelectorAll("#friends-grid .friend-card").length;
+        const receivedCount = document.querySelectorAll("#received-grid .received-card").length;
+        const sentCount = document.querySelectorAll("#sent-grid .sent-card").length;
+
+        document.getElementById("count-friends").innerText = friendsCount;
+        document.getElementById("count-received").innerText = receivedCount;
+        document.getElementById("count-sent").innerText = sentCount;
+
+        // Toggle empty labels
+        document.getElementById("friends-empty").style.display = friendsCount === 0 ? "block" : "none";
+        document.getElementById("friends-grid").style.display = friendsCount === 0 ? "none" : "grid";
+
+        document.getElementById("received-empty").style.display = receivedCount === 0 ? "block" : "none";
+        document.getElementById("received-grid").style.display = receivedCount === 0 ? "none" : "grid";
+
+        document.getElementById("sent-empty").style.display = sentCount === 0 ? "block" : "none";
+        document.getElementById("sent-grid").style.display = sentCount === 0 ? "none" : "grid";
+    }
+
+    function acceptRequest(targetId) {
+        fetch("/PeerConnection/AcceptRequest?requesterId=" + targetId, {
+            method: "POST"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, "success");
+                // Card is updated dynamically via SignalR broadcast, no reload needed!
+            } else {
+                showToast(data.message, "error");
+            }
+        });
+    }
+
+    function declineRequest(targetId) {
+        fetch("/PeerConnection/DeclineRequest?requesterId=" + targetId, {
+            method: "POST"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, "info");
+                // Card is updated dynamically via SignalR broadcast, no reload needed!
+            } else {
+                showToast(data.message, "error");
+            }
+        });
+    }
+
+    function disconnectPeer(targetId) {
+        if (!confirm("Bạn có chắc chắn muốn hủy kết nối bạn bè?")) return;
+        fetch("/PeerConnection/Disconnect?targetId=" + targetId, {
+            method: "POST"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, "info");
+                // Card is updated dynamically via SignalR broadcast, no reload needed!
+            } else {
+                showToast(data.message, "error");
+            }
+        });
+    }
+</script>

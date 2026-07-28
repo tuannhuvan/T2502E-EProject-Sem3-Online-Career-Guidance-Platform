@@ -28,8 +28,14 @@ public class GoalController : Controller
     }
 
     // GET: /Goal
+    [AllowAnonymous]
     public async Task<IActionResult> Index()
     {
+        if (!User.Identity.IsAuthenticated)
+        {
+            return RedirectToAction("Goals", "Home");
+        }
+
         var userId = GetCurrentUserId();
 
         var personalGoals = await _context.Goals
@@ -83,16 +89,16 @@ public class GoalController : Controller
     {
         var userId = GetCurrentUserId();
 
-        // Premium limitation: Free users can only create 1 goal
+        // Premium limitation: Free users can only create 3 goals
         var totalGoalsCount = await _context.Goals
             .CountAsync(g => g.StudentId == userId && g.Status != 3);
 
-        if (totalGoalsCount >= 1)
+        if (totalGoalsCount >= 3)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null || !user.IsPremium)
             {
-                TempData["PremiumLimitMessage"] = "Tính năng tạo nhiều hơn 1 mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+                TempData["PremiumLimitMessage"] = "Tính năng tạo nhiều hơn 3 mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
                 return RedirectToAction("UpgradePremium", "Home");
             }
         }
@@ -117,16 +123,16 @@ public class GoalController : Controller
     {
         var userId = GetCurrentUserId();
 
-        // Premium limitation: Free users can only create 1 goal
+        // Premium limitation: Free users can only create 3 goals
         var totalGoalsCount = await _context.Goals
             .CountAsync(g => g.StudentId == userId && g.Status != 3);
 
-        if (totalGoalsCount >= 1)
+        if (totalGoalsCount >= 3)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null || !user.IsPremium)
             {
-                TempData["PremiumLimitMessage"] = "Tính năng tạo nhiều hơn 1 mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
+                TempData["PremiumLimitMessage"] = "Tính năng tạo nhiều hơn 3 mục tiêu (Goal) yêu cầu tài khoản Premium VIP. Vui lòng nâng cấp để tiếp tục.";
                 return RedirectToAction("UpgradePremium", "Home");
             }
         }
@@ -701,6 +707,18 @@ public class GoalController : Controller
         await _context.SaveChangesAsync();
 
         return RedirectToAction("ResumeBuilder", "Home", new { id = resume.Id });
+    }
+
+    [HttpGet("/Goals/Overview")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Overview()
+    {
+        var userIdValue = _userManager.GetUserId(User);
+        if (!string.IsNullOrEmpty(userIdValue))
+        {
+            return RedirectToAction(nameof(Index));
+        }
+        return View("~/Views/Goal/Overview.cshtml");
     }
 
     private async Task LoadCareerPaths()

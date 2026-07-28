@@ -1,0 +1,34 @@
+@model List<Career_Guidance_Platform.Dtos.Career.TopCareerDto>
+
+@{
+    ViewData["Title"] = "Kết quả hướng nghiệp";
+}
+
+<h2 class="mb-4">Top 3 nghề nghiệp phù hợp</h2>
+
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th>Thứ hạng</th>
+        <th>Nghề nghiệp</th>
+        <th>Điểm</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    @{
+        int rank = 1;
+    }
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@rank</td>
+            <td>@item.Title</td>
+            <td>@item.Score</td>
+        </tr>
+
+        rank++;
+    }
+    </tbody>
+</table>

@@ -1,0 +1,244 @@
+@model IEnumerable<Career_Guidance_Platform.Models.MentorshipMessage>
+@{
+    ViewData["Title"] = "Trò chuyện trực tuyến - CareerPath";
+    var partners = ViewBag.ChatPartners as IEnumerable<dynamic> ?? new List<dynamic>();
+    var activePartner = ViewBag.ActivePartner as Career_Guidance_Platform.Models.User;
+    int currentUserId = ViewBag.CurrentUserId;
+}
+
+<section class="page-hero" style="background: radial-gradient(circle at top right, #e0f2fe 0%, transparent 45%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding-bottom: 10px;">
+    <span class="page-badge">💬 Messenger</span>
+    <h1>Hộp Thư Trực Tuyến</h1>
+    <p>Trò chuyện trực tuyến thời gian thực với bạn bè đã kết nối và các cố vấn hướng nghiệp của bạn.</p>
+</section>
+
+<section class="content-section" style="max-width: 1100px; padding-top: 10px;">
+    @if (TempData["ChatError"] != null)
+    {
+        <div style="background: #fff5f5; border: 1px solid #fee2e2; border-left: 5px solid #ef4444; color: #b91c1c; padding: 16px 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; font-size: 14px;">
+            ⚠️ @TempData["ChatError"]
+        </div>
+    }
+
+    <!-- Two-column Chat Workspace -->
+    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; height: 600px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);">
+        
+        <!-- Sidebar: Partners List -->
+        <div style="border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; background: #f8fafc;">
+            <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; background: #ffffff;">
+                <h3 style="margin: 0 0 10px; font-size: 16px; font-weight: 800; color: #0f172a;">Cuộc hội thoại</h3>
+                <input type="text" placeholder="Tìm kiếm bạn bè..." style="width: 100%; padding: 8px 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 13.5px;" onkeyup="filterPartners(this)" />
+            </div>
+
+            <!-- Scrollable Contacts list -->
+            <div id="partnersList" style="flex-grow: 1; overflow-y: auto; padding: 10px 0;">
+                @if (!partners.Any())
+                {
+                    <div style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                        <span style="font-size: 32px; display: block; margin-bottom: 8px;">👥</span>
+                        <p style="font-size: 12.5px; font-style: italic; margin: 0; line-height: 1.4;">Chưa có hội thoại khả dụng. Kết nối thêm bạn bè hoặc đăng ký cố vấn để bắt đầu chat!</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var p in partners)
+                    {
+                        var isActive = activePartner != null && activePartner.Id == p.Id;
+                        <a href="/Chat?peerId=@p.Id" style="display: flex; gap: 12px; align-items: center; padding: 12px 20px; text-decoration: none; color: inherit; transition: 0.2s; background: @(isActive ? "#e0e7ff" : "transparent"); border-left: 4px solid @(isActive ? "#4f46e5" : "transparent");" class="partner-item" data-name="@p.FullName">
+                            <div style="position: relative;">
+                                <img src="@(string.IsNullOrEmpty(p.AvatarUrl) ? "/images/default-avatar.png" : p.AvatarUrl)" alt="@p.FullName" style="width: 46px; height: 46px; border-radius: 50%; object-fit: cover; background: #ffffff;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=@p.FullName'" />
+                                <span id="chat-presence-@p.Id" style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: #cbd5e1; border: 2px solid #ffffff; border-radius: 50%; transition: 0.3s;" title="Ngoại tuyến"></span>
+                            </div>
+                            <div style="flex-grow: 1; overflow: hidden;">
+                                <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">@p.FullName</h4>
+                                <p style="margin: 3px 0 0; font-size: 11.5px; color: #64748b; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">@(string.IsNullOrEmpty(p.Headline) ? "Thành viên CareerPath" : p.Headline)</p>
+                            </div>
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- Chat Viewport -->
+        <div style="display: flex; flex-direction: column; background: #ffffff;">
+            @if (activePartner == null)
+            {
+                <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; padding: 40px; text-align: center;">
+                    <span style="font-size: 64px; margin-bottom: 15px;">💬</span>
+                    <h3 style="margin: 0 0 6px; font-size: 18px; color: #1e293b; font-weight: 800;">Bắt đầu trò chuyện</h3>
+                    <p style="margin: 0; font-size: 13.5px; max-width: 320px; line-height: 1.5;">Chọn một người bạn hoặc cố vấn từ cột bên trái để bắt đầu trao đổi trực tuyến.</p>
+                </div>
+            }
+            else
+            {
+                <!-- Chat Partner Header -->
+                <div style="padding: 15px 25px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px; background: #ffffff; z-index: 10;">
+                    <img src="@(string.IsNullOrEmpty(activePartner.AvatarUrl) ? "/images/default-avatar.png" : activePartner.AvatarUrl)" alt="@activePartner.FullName" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=@activePartner.FullName'" />
+                    <div>
+                        <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: #0f172a;">@activePartner.FullName</h4>
+                        <p id="chat-presence-status" style="margin: 2px 0 0; font-size: 12px; color: #64748b; font-weight: 600;">⚡ Ngoại tuyến</p>
+                    </div>
+                </div>
+
+                <!-- Messages area -->
+                <div id="messagesArea" style="flex-grow: 1; overflow-y: auto; padding: 25px; background: #f8fafc; display: flex; flex-direction: column; gap: 15px;">
+                    @foreach (var msg in Model)
+                    {
+                        var isMe = msg.SenderId == currentUserId;
+                        <div style="display: flex; justify-content: @(isMe ? "flex-end" : "flex-start");">
+                            <div style="max-width: 65%;">
+                                <div style="background: @(isMe ? "#4f46e5" : "#ffffff"); color: @(isMe ? "#ffffff" : "#1e293b"); padding: 12px 18px; border-radius: @(isMe ? "20px 20px 4px 20px" : "20px 20px 20px 4px"); font-size: 14px; line-height: 1.5; box-shadow: 0 2px 6px rgba(0,0,0,0.03); border: @(isMe ? "none" : "1px solid #e2e8f0"); white-space: pre-wrap; word-break: break-word;">@msg.Content</div>
+                                <span style="display: block; font-size: 10px; color: #94a3b8; margin-top: 5px; text-align: @(isMe ? "right" : "left");">@msg.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Message composer input -->
+                <div style="padding: 15px 25px; border-top: 1px solid #e2e8f0; background: #ffffff;">
+                    <form id="chatForm" onsubmit="sendChatMessage(event)" style="display: flex; gap: 12px; align-items: center;">
+                        <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." autocomplete="off" style="flex-grow: 1; padding: 12px 16px; border-radius: 14px; border: 1px solid #cbd5e1; font-size: 14px;" required />
+                        <button type="submit" class="btn primary-btn" style="height: 44px; padding: 0 20px; font-size: 13.5px; font-weight: 700; border-radius: 14px;">Gửi đi 🚀</button>
+                    </form>
+                </div>
+            }
+        </div>
+
+    </div>
+</section>
+
+<!-- Include SignalR Client Library from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+<script>
+    const activePartnerId = "@(activePartner != null ? activePartner.Id.ToString() : "")";
+    const currentUserId = "@currentUserId";
+
+    // Filter contacts in sidebar
+    function filterPartners(input) {
+        const query = input.value.toLowerCase();
+        document.querySelectorAll(".partner-item").forEach(item => {
+            const name = item.getAttribute("data-name").toLowerCase();
+            if (name.includes(query)) {
+                item.style.display = "flex";
+            } else {
+                item.style.display = "none";
+            }
+        });
+    }
+
+    let connection = null;
+
+    if (activePartnerId) {
+        // Scroll messages area to the very bottom
+        const messagesArea = document.getElementById("messagesArea");
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+
+        // Initialize SignalR Hub Connection
+        connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .withAutomaticReconnect()
+            .build();
+
+        // Register incoming message event handler
+        connection.on("ReceiveMessage", function (senderId, message, timeStr, msgId) {
+            appendMessageBubble(senderId, message, timeStr);
+        });
+
+        // Start SignalR Connection
+        connection.start()
+            .then(() => console.log("SignalR Connection Established successfully!"))
+            .catch(err => {
+                console.error("SignalR Connection Failure:", err);
+                showToast("Mất kết nối thời gian thực, đang kết nối lại...", "warning");
+            });
+
+        // Initialize SignalR Presence Connection
+        const presenceConn = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/presenceNotification")
+            .withAutomaticReconnect()
+            .build();
+
+        presenceConn.on("UserWentOnline", function(userId) {
+            updateChatPresence(userId, true);
+        });
+
+        presenceConn.on("UserWentOffline", function(userId) {
+            updateChatPresence(userId, false);
+        });
+
+        presenceConn.on("OnlineFriendsList", function(onlineUserIds) {
+            onlineUserIds.forEach(id => {
+                updateChatPresence(id, true);
+            });
+        });
+
+        presenceConn.start()
+            .then(() => console.log("Chat presence tracker initialized."))
+            .catch(err => console.error("Presence tracker start failure:", err));
+    }
+
+    function updateChatPresence(userId, isOnline) {
+        const dot = document.getElementById("chat-presence-" + userId);
+        if (dot) {
+            dot.style.background = isOnline ? "#10b981" : "#cbd5e1";
+            dot.title = isOnline ? "Trực tuyến" : "Ngoại tuyến";
+        }
+        if (activePartnerId && activePartnerId === userId.toString()) {
+            const headerStatus = document.getElementById("chat-presence-status");
+            if (headerStatus) {
+                headerStatus.innerText = isOnline ? "⚡ Trực tuyến" : "⚡ Ngoại tuyến";
+                headerStatus.style.color = isOnline ? "#10b981" : "#64748b";
+            }
+        }
+    }
+
+    function appendMessageBubble(senderId, message, timeStr) {
+        const isMe = senderId === currentUserId;
+        
+        // Only append bubble if the message belongs to current user or active chat partner
+        if (senderId === activePartnerId || isMe) {
+            const div = document.createElement("div");
+            div.style.display = "flex";
+            div.style.justifyContent = isMe ? "flex-end" : "flex-start";
+
+            div.innerHTML = `
+                <div style="max-width: 65%;">
+                    <div style="background: ${isMe ? '#4f46e5' : '#ffffff'}; color: ${isMe ? '#ffffff' : '#1e293b'}; padding: 12px 18px; border-radius: ${isMe ? '20px 20px 4px 20px' : '20px 20px 20px 4px'}; font-size: 14px; line-height: 1.5; box-shadow: 0 2px 6px rgba(0,0,0,0.03); border: ${isMe ? 'none' : '1px solid #e2e8f0'}; white-space: pre-wrap; word-break: break-word;">${escapeHtml(message)}</div>
+                    <span style="display: block; font-size: 10px; color: #94a3b8; margin-top: 5px; text-align: ${isMe ? 'right' : 'left'};">${timeStr}</span>
+                </div>
+            `;
+
+            messagesArea.appendChild(div);
+            
+            // Scroll to bottom dynamically
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+    }
+
+    function sendChatMessage(e) {
+        e.preventDefault();
+        const input = document.getElementById("chatInput");
+        const message = input.value.trim();
+
+        if (message && connection && activePartnerId) {
+            connection.invoke("SendMessage", activePartnerId, message)
+                .then(() => {
+                    input.value = "";
+                })
+                .catch(err => {
+                    console.error("Lỗi gửi tin nhắn qua SignalR:", err);
+                    showToast("Lỗi gửi tin nhắn. Vui lòng gửi lại.", "error");
+                });
+        }
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+</script>

@@ -1,0 +1,68 @@
+@model IEnumerable<Career_Guidance_Platform.Models.EventRegistration>
+@{
+    Layout = "_AdminLayout";
+    var careerEvent = ViewBag.Event as CareerEvent;
+    ViewData["Title"] = "Người đăng ký tham gia sự kiện";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Sự kiện: @(careerEvent?.Title)</div>
+            <h2 class="page-title">Danh sách đăng ký tham gia</h2>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+            <div class="btn-list">
+                <a asp-action="ExportEventRegistrants" asp-route-id="@(careerEvent?.Id)" class="btn btn-success d-none d-sm-inline-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><line x1="12" y1="11" x2="12" y2="17" /><polyline points="9 14 12 17 15 14" /></svg>
+                    Xuất danh sách Excel
+                </a>
+                <a asp-action="Events" class="btn btn-secondary">
+                    Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cards">
+    <div class="col-12">
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table card-table table-vcenter text-nowrap datatable">
+                    <thead>
+                        <tr>
+                            <th class="w-1">STT</th>
+                            <th>Học viên</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Ngày đăng ký</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int stt = 1;
+                        }
+                        @foreach (var reg in Model)
+                        {
+                            <tr>
+                                <td>@stt</td>
+                                <td class="font-weight-medium">@reg.User?.FullName</td>
+                                <td>@reg.User?.Email</td>
+                                <td>@reg.User?.PhoneNumber</td>
+                                <td>@reg.RegisteredAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                            stt++;
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Chưa có ai đăng ký tham gia sự kiện này.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

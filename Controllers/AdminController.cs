@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Career_Guidance_Platform.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Career_Guidance_Platform.Controllers;
 
@@ -24,15 +25,18 @@ public class AdminController : Controller
     private readonly AppDbContext _context;
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<IdentityRole<int>> _roleManager;
+    private readonly Microsoft.AspNetCore.SignalR.IHubContext<Career_Guidance_Platform.Hubs.PresenceAndNotificationHub> _hubContext;
 
     public AdminController(
         AppDbContext context,
         UserManager<User> userManager,
-        RoleManager<IdentityRole<int>> roleManager)
+        RoleManager<IdentityRole<int>> roleManager,
+        Microsoft.AspNetCore.SignalR.IHubContext<Career_Guidance_Platform.Hubs.PresenceAndNotificationHub> hubContext)
     {
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
+        _hubContext = hubContext;
     }
 
     public IActionResult Index()
@@ -210,6 +214,16 @@ public class AdminController : Controller
         return View(mentors);
     }
 
+    [HttpGet("/Admin/Mentors/PendingApprovals")]
+    public async Task<IActionResult> PendingApprovals()
+    {
+        var mentors = await _context.MentorProfiles
+            .Include(m => m.User)
+            .Where(m => !m.IsVerified)
+            .ToListAsync();
+        return View("~/Views/Admin/Mentors.cshtml", mentors);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApproveMentor(int id)
@@ -221,7 +235,37 @@ public class AdminController : Controller
         }
 
         profile.IsVerified = true;
+
+        // Change user role: Student -> Mentor
+        var user = await _userManager.FindByIdAsync(profile.UserId.ToString());
+        if (user != null)
+        {
+            if (await _userManager.IsInRoleAsync(user, "Student"))
+            {
+                await _userManager.RemoveFromRoleAsync(user, "Student");
+            }
+            if (!await _userManager.IsInRoleAsync(user, "Mentor"))
+            {
+                await _userManager.AddToRoleAsync(user, "Mentor");
+            }
+        }
+
+        // Add database notification
+        var notification = new Notification
+        {
+            UserId = profile.UserId,
+            Message = "Hồ sơ cố vấn (Mentor) của bạn đã được ban quản trị phê duyệt thành công!",
+            CreatedAt = DateTime.Now,
+            IsRead = false
+        };
+        _context.Notifications.Add(notification);
+
         await _context.SaveChangesAsync();
+
+        // Broadcast notification count & toast to user in real-time
+        var notificationCount = await _context.Notifications.CountAsync(n => n.UserId == profile.UserId && !n.IsRead);
+        await _hubContext.Clients.User(profile.UserId.ToString()).SendAsync("ReceiveNotification", "Hồ sơ cố vấn của bạn đã được phê duyệt!", notificationCount);
+
         TempData["Success"] = "Đã phê duyệt hồ sơ cố vấn thành công!";
         return RedirectToAction(nameof(Mentors));
     }
@@ -237,7 +281,37 @@ public class AdminController : Controller
         }
 
         profile.IsVerified = false;
+
+        // Change user role back: Mentor -> Student
+        var user = await _userManager.FindByIdAsync(profile.UserId.ToString());
+        if (user != null)
+        {
+            if (await _userManager.IsInRoleAsync(user, "Mentor"))
+            {
+                await _userManager.RemoveFromRoleAsync(user, "Mentor");
+            }
+            if (!await _userManager.IsInRoleAsync(user, "Student"))
+            {
+                await _userManager.AddToRoleAsync(user, "Student");
+            }
+        }
+
+        // Add database notification
+        var notification = new Notification
+        {
+            UserId = profile.UserId,
+            Message = "Đăng ký cố vấn của bạn đã bị từ chối hoặc hủy duyệt bởi ban quản trị.",
+            CreatedAt = DateTime.Now,
+            IsRead = false
+        };
+        _context.Notifications.Add(notification);
+
         await _context.SaveChangesAsync();
+
+        // Broadcast notification count & toast to user in real-time
+        var notificationCount = await _context.Notifications.CountAsync(n => n.UserId == profile.UserId && !n.IsRead);
+        await _hubContext.Clients.User(profile.UserId.ToString()).SendAsync("ReceiveNotification", "Đăng ký cố vấn của bạn đã bị từ chối hoặc hủy duyệt.", notificationCount);
+
         TempData["Success"] = "Đã thu hồi phê duyệt hồ sơ cố vấn!";
         return RedirectToAction(nameof(Mentors));
     }
@@ -2185,4 +2259,184 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
             notifications = recentApplications
         });
     }
+
+    // ==========================================
+    // CAREER EVENTS CRUD & REGISTRATION EXPORTS
+    // ==========================================
+
+    [HttpGet]
+    public async Task<IActionResult> Events()
+    {
+        var events = await _context.CareerEvents
+            .OrderByDescending(e => e.EventDate)
+            .ToListAsync();
+
+        var registrationCounts = new Dictionary<int, int>();
+        foreach (var ev in events)
+        {
+            var count = await _context.EventRegistrations.CountAsync(er => er.EventId == ev.Id);
+            registrationCounts[ev.Id] = count;
+        }
+
+        ViewBag.RegistrationCounts = registrationCounts;
+        return View("~/Views/Admin/Events/Index.cshtml", events);
+    }
+
+    [HttpGet]
+    public IActionResult CreateEvent()
+    {
+        return View("~/Views/Admin/Events/Create.cshtml");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateEvent(CareerEvent careerEvent)
+    {
+        if (ModelState.IsValid)
+        {
+            _context.CareerEvents.Add(careerEvent);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Events));
+        }
+        return View("~/Views/Admin/Events/Create.cshtml", careerEvent);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditEvent(int id)
+    {
+        var careerEvent = await _context.CareerEvents.FindAsync(id);
+        if (careerEvent == null)
+        {
+            return NotFound();
+        }
+        return View("~/Views/Admin/Events/Edit.cshtml", careerEvent);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditEvent(int id, CareerEvent careerEvent)
+    {
+        if (id != careerEvent.Id)
+        {
+            return NotFound();
+        }
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                var dbEvent = await _context.CareerEvents.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+                if (dbEvent == null) return NotFound();
+
+                _context.Update(careerEvent);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.CareerEvents.Any(e => e.Id == careerEvent.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return RedirectToAction(nameof(Events));
+        }
+        return View("~/Views/Admin/Events/Edit.cshtml", careerEvent);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteEvent(int id)
+    {
+        var careerEvent = await _context.CareerEvents.FindAsync(id);
+        if (careerEvent != null)
+        {
+            _context.CareerEvents.Remove(careerEvent);
+            await _context.SaveChangesAsync();
+        }
+        return RedirectToAction(nameof(Events));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EventRegistrants(int id)
+    {
+        var careerEvent = await _context.CareerEvents.FindAsync(id);
+        if (careerEvent == null)
+        {
+            return NotFound();
+        }
+
+        var registrants = await _context.EventRegistrations
+            .Include(er => er.User)
+            .Where(er => er.EventId == id)
+            .OrderByDescending(er => er.RegisteredAt)
+            .ToListAsync();
+
+        ViewBag.Event = careerEvent;
+        return View("~/Views/Admin/Events/Registrants.cshtml", registrants);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportEventRegistrants(int id)
+    {
+        var careerEvent = await _context.CareerEvents.FindAsync(id);
+        if (careerEvent == null)
+        {
+            return NotFound();
+        }
+
+        var registrants = await _context.EventRegistrations
+            .Include(er => er.User)
+            .Where(er => er.EventId == id)
+            .OrderByDescending(er => er.RegisteredAt)
+            .ToListAsync();
+
+        ExcelPackage.License.SetNonCommercialPersonal("CareerGuidanceApp");
+
+        using (var package = new ExcelPackage())
+        {
+            var worksheet = package.Workbook.Worksheets.Add("Registrants");
+
+            // Header
+            worksheet.Cells[1, 1].Value = "STT";
+            worksheet.Cells[1, 2].Value = "Họ và Tên";
+            worksheet.Cells[1, 3].Value = "Email";
+            worksheet.Cells[1, 4].Value = "Số điện thoại";
+            worksheet.Cells[1, 5].Value = "Ngày đăng ký";
+
+            // Style header
+            for (int i = 1; i <= 5; i++)
+            {
+                worksheet.Cells[1, i].Style.Font.Bold = true;
+                worksheet.Cells[1, i].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                worksheet.Cells[1, i].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                worksheet.Cells[1, i].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+            }
+
+            int row = 2;
+            foreach (var r in registrants)
+            {
+                worksheet.Cells[row, 1].Value = row - 1;
+                worksheet.Cells[row, 2].Value = r.User?.FullName ?? "N/A";
+                worksheet.Cells[row, 3].Value = r.User?.Email ?? "N/A";
+                worksheet.Cells[row, 4].Value = r.User?.PhoneNumber ?? "N/A";
+                worksheet.Cells[row, 5].Value = r.RegisteredAt.ToString("dd/MM/yyyy HH:mm");
+
+                for (int i = 1; i <= 5; i++)
+                {
+                    worksheet.Cells[row, i].Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                }
+                row++;
+            }
+
+            worksheet.Cells.AutoFitColumns();
+
+            var fileContents = package.GetAsByteArray();
+            var fileName = $"Sự kiện-{careerEvent.Id}-NguoiDangKy.xlsx";
+            return File(fileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+    }
+
 }

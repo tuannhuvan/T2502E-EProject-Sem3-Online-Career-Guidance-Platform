@@ -1,0 +1,79 @@
+@model Career_Guidance_Platform.Dtos.Question.QuestionFullCreateDto
+
+<h2>Create Question</h2>
+
+<form asp-action="Create" method="post">
+
+    <div class="mb-3">
+        <label class="form-label">Career Test</label>
+
+        <select asp-for="CareerTestId "
+                asp-items="ViewBag.Tests"
+                class="form-select">
+
+            <option value="">-- Chọn bài test --</option>
+
+        </select>
+    </div>
+    <div class="mb-3">
+        <label>Question Type</label>
+
+        <select asp-for="QuestionTypeId"
+                asp-items="ViewBag.QuestionTypes"
+                class="form-select">
+
+            <option value="">-- Chọn loại câu hỏi --</option>
+
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Content"></label>
+        <input asp-for="Content" class="form-control" />
+    </div>
+
+    <hr />
+
+    <h4>Option 1</h4>
+
+    <input name="Options[0].Content"
+           class="form-control mb-2"
+           placeholder="Nội dung đáp án" />
+
+    <select name="Options[0].CareerPaths[0].CareerPathId"
+            asp-items="ViewBag.CareerPaths"
+            class="form-select mb-2">
+
+        <option value="">-- Chọn Career Path --</option>
+
+    </select>
+
+    <input name="Options[0].CareerPaths[0].Weight"
+           class="form-control mb-3"
+           placeholder="Weight" />
+
+    <hr />
+
+    <h4>Option 2</h4>
+
+    <input name="Options[1].Content"
+           class="form-control mb-2"
+           placeholder="Nội dung đáp án" />
+
+    <select name="Options[1].CareerPaths[0].CareerPathId"
+            asp-items="ViewBag.CareerPaths"
+            class="form-select mb-2">
+
+        <option value="">-- Chọn Career Path --</option>
+
+    </select>
+
+    <input name="Options[1].CareerPaths[0].Weight"
+           class="form-control mb-3"
+           placeholder="Weight" />
+
+    <button type="submit" class="btn btn-success">
+        Create
+    </button>
+
+</form>

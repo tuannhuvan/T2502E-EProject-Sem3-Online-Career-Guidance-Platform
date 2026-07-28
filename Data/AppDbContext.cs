@@ -1,3 +1,49 @@
+using Career_Guidance_Platform.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace Career_Guidance_Platform.Data;
+
+public class AppDbContext : IdentityDbContext<User>
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
+    // Career Tests
+    public DbSet<Question> Questions { get; set; }
+    public DbSet<QuestionOption> QuestionOptions { get; set; }
+    public DbSet<OptionCareerPath> OptionCareerPaths { get; set; }
+    public DbSet<CareerPath> CareerPaths { get; set; }
+    public DbSet<QuestionType> QuestionTypes { get; set; }
+    public DbSet<CareerTest> CareerTests { get; set; }
+    
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<AssessmentResult> AssessmentResults { get; set; }
+
+    public DbSet<UserAnswer> UserAnswers { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Question - Option (1-N)
+        modelBuilder.Entity<Question>()
+            .HasMany(q => q.QuestionOptions)
+            .WithOne(o => o.Question)
+            .HasForeignKey(o => o.QuestionId);
+
+        // Option - CareerPath (N-N via table)
+        modelBuilder.Entity<OptionCareerPath>()
+            .HasOne(x => x.QuestionOption)
+            .WithMany(o => o.OptionCareerPaths)
+            .HasForeignKey(x => x.OptionId);
+
+        modelBuilder.Entity<OptionCareerPath>()
+            .HasOne(x => x.CareerPath)
+            .WithMany(c => c.OptionCareerPaths)
+            .HasForeignKey(x => x.CareerPathId);
+    }
+}  
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -47,7 +93,6 @@ namespace Career_Guidance_Platform.Data
         public DbSet<JobPosting> JobPostings { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
         public DbSet<ApplicationReminder> ApplicationReminders { get; set; }
-        public DbSet<EmployerReview> EmployerReviews { get; set; }
         public DbSet<Goal> Goals { get; set; }
         public DbSet<GoalMilestone> GoalMilestones { get; set; }
         public DbSet<CareerStage> CareerStages { get; set; }
@@ -57,6 +102,7 @@ namespace Career_Guidance_Platform.Data
         public DbSet<CommunityComment> CommunityComments { get; set; }
         public DbSet<PeerConnection> PeerConnections { get; set; }
         public DbSet<TestResultScore> TestResultScores { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -201,12 +247,7 @@ namespace Career_Guidance_Platform.Data
                 .HasForeignKey(ja => ja.ResumeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // EmployerReview navigation configuration
-            modelBuilder.Entity<EmployerReview>()
-                .HasOne(er => er.User)
-                .WithMany(u => u.EmployerReviews)
-                .HasForeignKey(er => er.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+
 
             // CommunityPost author foreign key
             modelBuilder.Entity<CommunityPost>()
@@ -259,6 +300,13 @@ namespace Career_Guidance_Platform.Data
                 .HasOne(gm => gm.Goal)
                 .WithMany(g => g.GoalMilestones)
                 .HasForeignKey(gm => gm.GoalId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Notification cascade delete
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

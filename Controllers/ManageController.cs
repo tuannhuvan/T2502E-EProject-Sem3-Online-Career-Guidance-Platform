@@ -54,12 +54,20 @@ namespace Career_Guidance_Platform.Controllers
                 .OrderByDescending(ja => ja.AppliedAt)
                 .ToListAsync();
 
+            var savedJobs = await _context.SavedJobs
+                .Include(sj => sj.JobPosting)
+                    .ThenInclude(jp => jp.CareerPath)
+                .Where(sj => sj.UserId == user.Id)
+                .OrderByDescending(sj => sj.SavedAt)
+                .ToListAsync();
+
             var viewModel = new ProfileViewModel
             {
                 User = user,
                 TestResults = testResults,
                 Resumes = resumes,
-                JobApplications = jobApplications
+                JobApplications = jobApplications,
+                SavedJobs = savedJobs
             };
 
             return View(viewModel);
@@ -89,6 +97,7 @@ namespace Career_Guidance_Platform.Controllers
                 }
                 resume.Title = model.Title;
                 resume.ContentJson = model.ContentJson;
+                resume.TemplateId = model.TemplateId;
                 resume.UpdatedAt = System.DateTime.Now;
             }
             else
@@ -98,6 +107,7 @@ namespace Career_Guidance_Platform.Controllers
                     UserId = user.Id,
                     Title = model.Title,
                     ContentJson = model.ContentJson,
+                    TemplateId = model.TemplateId,
                     CreatedAt = System.DateTime.Now
                 };
                 _context.Resumes.Add(resume);

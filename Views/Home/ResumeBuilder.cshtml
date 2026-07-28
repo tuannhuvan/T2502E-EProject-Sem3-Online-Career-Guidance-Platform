@@ -2,9 +2,18 @@
 @using Microsoft.AspNetCore.Identity
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
+@inject Career_Guidance_Platform.Data.AppDbContext DbContext
 
 @{
     ViewData["Title"] = "Công cụ tạo CV Tương tác";
+    var activeTemplates = DbContext.ResumeTemplates.Where(t => t.IsActive).ToList();
+    string defaultTemplateCode = ViewBag.DefaultTemplateCode ?? Model?.Template?.TemplateCode ?? "modern";
+    int? defaultTemplateId = ViewBag.TemplateId ?? Model?.TemplateId;
+    if (defaultTemplateId == null && activeTemplates.Any(t => t.TemplateCode == defaultTemplateCode))
+    {
+        defaultTemplateId = activeTemplates.First(t => t.TemplateCode == defaultTemplateCode).Id;
+    }
+    bool userIsPremium = ViewBag.UserIsPremium ?? false;
 }
 
 <section class="page-hero">
@@ -19,9 +28,12 @@
         <div class="template-selector">
             <label for="templateSelect">Mẫu thiết kế:</label>
             <select id="templateSelect" class="form-select">
-                <option value="modern" selected>Modern Indigo (Hiện đại)</option>
-                <option value="minimalist">Minimalist Classic (Tối giản)</option>
-                <option value="professional">Professional Sidebar (Chuyên nghiệp)</option>
+                @foreach (var temp in activeTemplates)
+                {
+                    <option value="@temp.TemplateCode" data-template-id="@temp.Id" data-is-premium="@temp.IsPremium.ToString().ToLower()" selected="@(temp.TemplateCode == defaultTemplateCode ? "selected" : null)">
+                        @temp.Name @(temp.IsPremium ? "💎" : "")
+                    </option>
+                }
             </select>
         </div>
         <div class="action-buttons">
@@ -137,7 +149,7 @@
 
         <!-- Right Pane: Live CV Preview -->
         <div class="resume-preview-container">
-            <div id="cvPreview" class="cv-preview modern">
+            <div id="cvPreview" class="cv-preview @defaultTemplateCode">
                 <!-- Javascript will render the templates here dynamically -->
             </div>
         </div>
@@ -174,6 +186,8 @@
         // CV Data State
         let cvId = @(Model != null ? Model.Id : 0);
         let cvTitle = "@Html.Raw(Model != null ? Model.Title.Replace("\"", "\\\"") : "CV mới")";
+        let selectedTemplateId = @(defaultTemplateId != null ? defaultTemplateId.ToString() : "null");
+        let currentTemplateCode = "@defaultTemplateCode";
 
         let cvData = {
             fullName: "",
@@ -475,7 +489,19 @@
 
         // Change template select handler
         templateSelect.addEventListener("change", (e) => {
+            const selectedOpt = templateSelect.options[templateSelect.selectedIndex];
+            const isPremium = selectedOpt.getAttribute("data-is-premium") === "true";
+            const userIsPremium = @(userIsPremium.ToString().ToLower());
+
+            if (isPremium && !userIsPremium) {
+                showToast("Đây là mẫu CV Premium VIP. Vui lòng nâng cấp tài khoản để sử dụng!", "warning");
+                templateSelect.value = currentTemplateCode;
+                return;
+            }
+
             const template = e.target.value;
+            currentTemplateCode = template;
+            selectedTemplateId = parseInt(selectedOpt.getAttribute("data-template-id"));
             cvPreview.className = "cv-preview " + template;
             renderCV();
         });
@@ -978,7 +1004,8 @@
                     body: JSON.stringify({
                         id: cvId,
                         title: cvTitle,
-                        contentJson: JSON.stringify(cvData)
+                        contentJson: JSON.stringify(cvData),
+                        templateId: selectedTemplateId
                     })
                 })
                 .then(res => res.json())

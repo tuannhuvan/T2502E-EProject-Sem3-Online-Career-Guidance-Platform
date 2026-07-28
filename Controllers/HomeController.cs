@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Career_Guidance_Platform.Models;
+using Career_Guidance_Platform.Service.Interfaces;
 using Career_Guidance_Platform.Data;
 using Career_Guidance_Platform.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,17 @@ using System.Text;
 using System.Text.Json;
 using System;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 
 namespace Career_Guidance_Platform.Controllers;
 
 public class HomeController : Controller
-{
+{ private readonly IQuestionUserService _questionUserService;
+
+    public HomeController(IQuestionUserService questionUserService)
+    {
+        _questionUserService = questionUserService;
+    }
     private readonly ILogger<HomeController> _logger;
     private readonly AppDbContext _context;
     private readonly UserManager<User> _userManager;
@@ -35,6 +42,29 @@ public class HomeController : Controller
 
     public IActionResult Index() => View();
 
+    public async Task<IActionResult> CareerTest(int questionNumber = 1)
+    {
+        var totalQuestions = await _questionUserService.GetCountAsync();
+        
+        if (questionNumber < 1)
+        {
+            questionNumber = 1;
+        }
+
+        if (questionNumber > totalQuestions)
+        {
+            questionNumber = totalQuestions;
+        }
+        var question = await _questionUserService.GetQuestionByOrderAsync(questionNumber);
+
+        if (question == null)
+            return NotFound();
+
+        ViewBag.CurrentQuestion = questionNumber;
+        ViewBag.TotalQuestions = totalQuestions;
+
+        return View(question);
+    }
     [TypeFilter(typeof(PremiumAccessFilter))]
     public async Task<IActionResult> CareerTest()
     {
@@ -119,6 +149,29 @@ public class HomeController : Controller
         return View(paths);
     }
     
+    public async Task<IActionResult> Goals()
+    {
+        var userIdValue = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userIdValue))
+        {
+            ViewBag.Status = "NotLoggedIn";
+            return View(new List<Goal>());
+        }
+
+        var userId = int.Parse(userIdValue);
+        var goals = await _context.Goals
+            .Where(g => g.StudentId == userId)
+            .ToListAsync();
+
+        if (!goals.Any())
+        {
+            ViewBag.Status = "NoGoals";
+            return View(new List<Goal>());
+        }
+
+        return View(goals);
+    }
+
     public async Task<IActionResult> About()
     {
         var members = await _context.TeamMembers.ToListAsync();
@@ -165,6 +218,11 @@ public class HomeController : Controller
                 .Select(ja => ja.JobPostingId)
                 .ToListAsync();
 
+            ViewBag.SavedJobIds = await _context.SavedJobs
+                .Where(sj => sj.UserId == userId)
+                .Select(sj => sj.JobPostingId)
+                .ToListAsync();
+
             var latestResult = await _context.TestResults
                 .Where(tr => tr.UserId == userId && tr.RecommendedCareerPathId.HasValue)
                 .OrderByDescending(tr => tr.CreatedAt)
@@ -176,10 +234,46 @@ public class HomeController : Controller
         {
             ViewBag.Resumes = new List<Resume>();
             ViewBag.AppliedJobIds = new List<int>();
+            ViewBag.SavedJobIds = new List<int>();
             ViewBag.RecommendedPathId = null;
         }
 
         return View(jobs);
+    }
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> ToggleSaveJob(int jobPostingId)
+    {
+        var userIdValue = _userManager.GetUserId(User);
+        if (string.IsNullOrEmpty(userIdValue))
+        {
+            return Json(new { success = false, message = "Vui lòng đăng nhập." });
+        }
+        var userId = int.Parse(userIdValue);
+
+        var savedJob = await _context.SavedJobs
+            .FirstOrDefaultAsync(sj => sj.UserId == userId && sj.JobPostingId == jobPostingId);
+
+        bool isSaved;
+        if (savedJob != null)
+        {
+            _context.SavedJobs.Remove(savedJob);
+            isSaved = false;
+        }
+        else
+        {
+            _context.SavedJobs.Add(new SavedJob
+            {
+                UserId = userId,
+                JobPostingId = jobPostingId,
+                SavedAt = DateTime.Now
+            });
+            isSaved = true;
+        }
+
+        await _context.SaveChangesAsync();
+        return Json(new { success = true, isSaved = isSaved });
     }
 
     [HttpPost]
@@ -432,14 +526,20 @@ public class HomeController : Controller
         return View(resources);
     }
 
-    public async Task<IActionResult> ResumeBuilder(int? id)
+    public async Task<IActionResult> ResumeBuilder(int? id, int? templateId)
     {
         var userIdValue = _userManager.GetUserId(User);
+        bool userIsPremium = false;
         
         if (!string.IsNullOrEmpty(userIdValue))
         {
             var userId = int.Parse(userIdValue);
             var user = await _userManager.FindByIdAsync(userIdValue);
+            
+            if (user != null)
+            {
+                userIsPremium = user.IsPremium;
+            }
             
             ViewBag.FullName = user?.FullName;
             ViewBag.Email = user?.Email;
@@ -458,11 +558,35 @@ public class HomeController : Controller
                 .Select(ucp => ucp.Course!.Title)
                 .ToListAsync();
 
+            // Handle default template parameter from /Resume/Templates
+            if (templateId.HasValue)
+            {
+                var template = await _context.ResumeTemplates.FindAsync(templateId.Value);
+                if (template != null)
+                {
+                    if (template.IsPremium && !userIsPremium)
+                    {
+                        TempData["PremiumLimitMessage"] = $"Mẫu '{template.Name}' là mẫu Premium VIP. Vui lòng nâng cấp tài khoản để sử dụng!";
+                        return RedirectToAction("UpgradePremium");
+                    }
+                    ViewBag.DefaultTemplateCode = template.TemplateCode;
+                    ViewBag.TemplateId = template.Id;
+                }
+            }
+
             if (id.HasValue)
             {
-                var resume = await _context.Resumes.FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+                var resume = await _context.Resumes
+                    .Include(r => r.Template)
+                    .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+                
                 if (resume != null)
                 {
+                    if (resume.Template != null)
+                    {
+                        ViewBag.DefaultTemplateCode = resume.Template.TemplateCode;
+                        ViewBag.TemplateId = resume.TemplateId;
+                    }
                     return View(resume);
                 }
             }
@@ -475,6 +599,7 @@ public class HomeController : Controller
             ViewBag.CompletedCourses = new List<string>();
         }
 
+        ViewBag.UserIsPremium = userIsPremium;
         return View(null);
     }
 

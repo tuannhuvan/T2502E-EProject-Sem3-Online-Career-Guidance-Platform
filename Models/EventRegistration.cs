@@ -16,6 +16,9 @@ namespace Career_Guidance_Platform.Models
         [Column("registered_at")]
         public DateTime RegisteredAt { get; set; } = DateTime.Now;
 
+        [Column("is_vip")]
+        public bool IsVip { get; set; } = false;
+
         [ForeignKey("EventId")]
         public CareerEvent? CareerEvent { get; set; }
 
