@@ -290,8 +290,9 @@
                     `;
                 }
                 
-                // Dropdown of skills not currently selected for this stage
-                const availableSkillsForStage = allSkills.filter(s => !stage.skills.some(ss => ss.skillId == s.id));
+                // Dropdown of skills not currently selected for this stage AND only showing general skills selected in step 2
+                const selectedGeneralSkillIds = pathSkills.map(ps => ps.skillId);
+                const availableSkillsForStage = allSkills.filter(s => selectedGeneralSkillIds.includes(s.id) && !stage.skills.some(ss => ss.skillId == s.id));
                 let addSkillSelectHtml = '';
                 if (availableSkillsForStage.length > 0) {
                     addSkillSelectHtml = `
@@ -435,6 +436,10 @@
             } else {
                 importanceSelect.style.display = 'none';
                 pathSkills = pathSkills.filter(s => s.skillId != skillId);
+                // Auto-remove this skill from all stages if unselected from general list
+                stages.forEach(stage => {
+                    stage.skills = stage.skills.filter(ss => ss.skillId != skillId);
+                });
             }
         }
 

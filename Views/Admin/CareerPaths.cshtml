@@ -44,7 +44,7 @@
         <table class="table table-vcenter card-table">
             <thead>
             <tr>
-                <th>ID</th>
+                <th>STT</th>
                 <th>Career Path</th>
                 <th>Category</th>
                 <th>Status</th>
@@ -52,6 +52,7 @@
             </tr>
             </thead>
             <tbody>
+            @{ int index = 1; }
             @foreach (var item in Model)
             {
                     <tr class="path-row"
@@ -59,7 +60,7 @@
                         data-content="@item.Content?.ToLower()"
                         data-category="@item.Category?.Name?.ToLower()"
                         data-status="@(item.Status == 1 ? "active" : "inactive")">
-                    <td>@item.Id</td>
+                    <td>@(index++)</td>
                     <td>
                         <strong style="font-size: 15px; color: #1e293b;">@item.Title</strong>
                         <div class="text-muted small my-1">
