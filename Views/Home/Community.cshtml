@@ -61,8 +61,16 @@
                     <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">@post.Content</p>
                     
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e2e8f0; padding-top: 16px; font-size: 13px;">
-                        <div style="display: flex; align-items: center; gap: 12px; color: #64748b;">
-                            <span>👤 Đăng bởi: <strong>@post.AuthorName</strong></span>
+                        <div style="display: flex; align-items: center; gap: 8px; color: #64748b;">
+                            @if (post.Author != null && !string.IsNullOrEmpty(post.Author.AvatarUrl))
+                            {
+                                <img src="@post.Author.AvatarUrl" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <span class="avatar-letter" style="width: 24px; height: 24px; border-radius: 50%; background-color: #f1f5f9; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #475569; border: 1px solid #e2e8f0;">@post.AuthorName[0].ToString().ToUpper()</span>
+                            }
+                            <span>Đăng bởi: <strong>@post.AuthorName</strong></span>
                         </div>
                         <div style="display: flex; gap: 20px; color: #64748b;">
                             <span data-post-id="@post.Id" class="like-btn" style="display: flex; align-items: center; gap: 4px; cursor: pointer;" onclick="likePost(@post.Id, this)">👍 <span class="like-count">@post.LikesCount</span></span>
@@ -112,12 +120,7 @@
                     }
                 </ul>
             </div>
-            
-            <div class="info-card" style="background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%); color: #ffffff; border: none;">
-                <h3 style="color: #ffffff; font-size: 18px; margin-bottom: 10px;">🌟 Trở thành Mentor cộng đồng</h3>
-                <p style="font-size: 13px; line-height: 1.6; color: #e0e7ff; margin-bottom: 20px;">Bạn muốn chia sẻ kinh nghiệm sự nghiệp và dẫn dắt các thế hệ đàn em?</p>
-                <a asp-controller="Home" asp-action="Mentors" class="btn" style="width: 100%; height: 42px; border-radius: 10px; background: #ffffff; color: #4f46e5; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; text-align: center; line-height: 42px;">Đăng ký Mentor ngay</a>
-            </div>
+
         </div>
     </div>
 </section>

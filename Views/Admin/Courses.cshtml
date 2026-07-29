@@ -48,7 +48,7 @@
             <table class="table table-vcenter card-table">
                 <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>STT</th>
                     <th>Career Path</th>
                     <th>Course</th>
                     <th>Số ngày</th>
@@ -58,93 +58,100 @@
                 </tr>
                 </thead>
                 <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr class="course-row"
-                        data-title="@item.Title?.ToLower()"
-                        data-description="@item.Description?.ToLower()"
-                        data-path-id="@item.CareerPathId">
-                        <td>@item.Id</td>
-                        <td>@item.CareerPath?.Title</td>
-                        <td>
-                            <strong>@item.Title</strong>
-                            <div class="text-muted small">@item.Description</div>
-                        </td>
-                        <td>@item.EstimatedDays ngày</td>
-                        <td>@item.SortOrder</td>
-                        <td>
-                            @if (item.Status == 1)
-                            {
-                                <span class="badge bg-success">Active</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Inactive</span>
-                            }
-                        </td>
-                        <td class="text-end">
-                            <a asp-controller="Admin"
-                               asp-action="EditCourse"
-                               asp-route-id="@item.Id"
-                               class="btn btn-sm btn-warning">
-                                Edit
-                            </a>
-
-                            <form asp-controller="Admin"
-                                  asp-action="DeleteCourse"
-                                  asp-route-id="@item.Id"
-                                  method="post"
-                                  style="display:inline;"
-                                  onsubmit="return confirm('Bạn có chắc muốn xóa course này?');">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-danger">
-                                    Delete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
+                @{
+                    int index = 1;
                 }
-                </tbody>
-            </table>
-        </div>
-        <div class="card-footer d-flex align-items-center justify-content-between">
-            <span id="entryText">
-                Showing 1 to 10 of @(Model?.Count() ?? 0) entries
-            </span>
-            <ul class="pagination m-0 ms-auto" id="pagination-ul">
-            </ul>
-        </div>
-    </div>
-</div>
+                 @foreach (var item in Model)
+                 {
+                     <tr class="course-row"
+                         data-id="@item.Id"
+                         data-title="@item.Title?.ToLower()"
+                         data-description="@item.Description?.ToLower()"
+                         data-path-id="@item.CareerPathId">
+                         <td>@index</td>
+                         <td>@item.CareerPath?.Title</td>
+                         <td>
+                             <strong>@item.Title</strong>
+                             <div class="text-muted small">@item.Description</div>
+                         </td>
+                         <td>@item.EstimatedDays ngày</td>
+                         <td>@item.SortOrder</td>
+                         <td>
+                             @if (item.Status == 1)
+                             {
+                                 <span class="badge bg-success">Active</span>
+                             }
+                             else
+                             {
+                                 <span class="badge bg-secondary">Inactive</span>
+                             }
+                         </td>
+                         <td class="text-end">
+                             <a asp-controller="Admin"
+                                asp-action="EditCourse"
+                                asp-route-id="@item.Id"
+                                class="btn btn-sm btn-warning">
+                                 Edit
+                             </a>
 
-@section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const searchInput = document.getElementById('course-search');
-            const pathSelect = document.getElementById('path-select');
-            const rows = document.querySelectorAll('.course-row');
+                             <form asp-controller="Admin"
+                                   asp-action="DeleteCourse"
+                                   asp-route-id="@item.Id"
+                                   method="post"
+                                   style="display:inline;"
+                                   onsubmit="return confirm('Bạn có chắc muốn xóa course này?');">
+                                 @Html.AntiForgeryToken()
+                                 <button type="submit" class="btn btn-sm btn-danger">
+                                     Delete
+                                 </button>
+                             </form>
+                         </td>
+                     </tr>
+                     index++;
+                 }
+                 </tbody>
+             </table>
+         </div>
+         <div class="card-footer d-flex align-items-center justify-content-between">
+             <span id="entryText">
+                 Showing 1 to 10 of @(Model?.Count() ?? 0) entries
+             </span>
+             <ul class="pagination m-0 ms-auto" id="pagination-ul">
+             </ul>
+         </div>
+     </div>
+ </div>
 
-            let currentPage = 1;
-            const pageSize = 5;
+ @section Scripts {
+     <script>
+         document.addEventListener("DOMContentLoaded", function() {
+             const searchInput = document.getElementById('course-search');
+             const pathSelect = document.getElementById('path-select');
+             const rows = document.querySelectorAll('.course-row');
 
-            function filterAndPaginateCourses(resetPage = false) {
-                if (resetPage === true) {
-                    currentPage = 1;
-                }
+             let currentPage = 1;
+             const pageSize = 5;
 
-                const query = searchInput.value.toLowerCase().trim();
-                const pathId = pathSelect.value;
+             function filterAndPaginateCourses(resetPage = false) {
+                 if (resetPage === true) {
+                     currentPage = 1;
+                 }
 
-                const matchedRows = [];
+                 const query = searchInput.value.toLowerCase().trim();
+                 const pathId = pathSelect.value;
 
-                rows.forEach(row => {
-                    const title = row.getAttribute('data-title') || '';
-                    const description = row.getAttribute('data-description') || '';
-                    const rowPathId = row.getAttribute('data-path-id') || '';
+                 const matchedRows = [];
 
-                    const matchesSearch = !query || 
-                        title.includes(query) || 
-                        description.includes(query);
+                 rows.forEach(row => {
+                     const courseId = row.getAttribute('data-id') || '';
+                     const title = row.getAttribute('data-title') || '';
+                     const description = row.getAttribute('data-description') || '';
+                     const rowPathId = row.getAttribute('data-path-id') || '';
+
+                     const matchesSearch = !query || 
+                         courseId.includes(query) ||
+                         title.includes(query) || 
+                         description.includes(query);
 
                     const matchesPath = !pathId || rowPathId === pathId;
 
@@ -165,9 +172,13 @@
                 const startIdx = (currentPage - 1) * pageSize;
                 const endIdx = startIdx + pageSize;
 
-                matchedRows.forEach((row, index) => {
-                    if (index >= startIdx && index < endIdx) {
+                matchedRows.forEach((row, idx) => {
+                    if (idx >= startIdx && idx < endIdx) {
                         row.style.display = '';
+                        const sttCell = row.querySelector('td:first-child');
+                        if (sttCell) {
+                            sttCell.innerText = idx + 1;
+                        }
                     } else {
                         row.style.display = 'none';
                     }

@@ -1,6 +1,9 @@
+@inject Microsoft.AspNetCore.Identity.UserManager<Career_Guidance_Platform.Models.User> UserManager
 @{
     var langCookie = Context.Request.Cookies["selected_lang"];
     var isEn = langCookie == "en";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var avatarUrl = currentUser?.AvatarUrl;
 }
 <!doctype html>
 <html lang="@(isEn ? "en" : "vi")">
@@ -213,14 +216,21 @@
 
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown">
-                            <span class="avatar avatar-sm">AD</span>
-                            <div class="d-none d-xl-block ps-2">
-                                <div>Admin</div>
+                            @if (!string.IsNullOrEmpty(avatarUrl))
+                            {
+                                <span class="avatar avatar-sm" style="background-image: url(@avatarUrl)"></span>
+                            }
+                            else
+                            {
+                                <span class="avatar avatar-sm">@((currentUser?.FullName ?? "AD").Substring(0, Math.Min(2, (currentUser?.FullName ?? "AD").Length)).ToUpper())</span>
+                            }
+                            <div class="d-none d-xl-block ps-2 text-start">
+                                <div>@(currentUser?.FullName ?? "Admin")</div>
                                 <div class="mt-1 small text-muted">@(isEn ? "CareerPath Manager" : "Quản trị viên")</div>
                             </div>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                            <a class="dropdown-item" href="/">@(isEn ? "Profile" : "Thông tin cá nhân")</a>
+                            <a class="dropdown-item" asp-controller="Manage" asp-action="Index">@(isEn ? "Profile" : "Thông tin cá nhân")</a>
                             <a class="dropdown-item" asp-controller="Admin" asp-action="Settings">@(isEn ? "Settings" : "Cài đặt")</a>
                             <div class="dropdown-divider"></div>
                             <form id="logoutForm" asp-controller="Account" asp-action="Logout" method="post" style="display:none;">

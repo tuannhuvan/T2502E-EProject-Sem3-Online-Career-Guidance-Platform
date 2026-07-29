@@ -201,10 +201,10 @@
         }
         else
         {
-            <div class="skill-grid">
+            <div class="skill-grid" id="skill-inventory-grid">
                 @foreach (var item in allSkills)
                 {
-                    <div class="skill-card" style="position: relative;">
+                    <div class="skill-card skill-inventory-item" style="position: relative;">
                         <span>🛡️</span>
                         <div>
                             <h4>@(item.Skill?.Name ?? "Tên kỹ năng")</h4>
@@ -230,6 +230,8 @@
                     </div>
                 }
             </div>
+            
+            <div id="skill-inventory-pagination" class="pagination-controls" style="display: flex; justify-content: center; gap: 8px; margin-top: 28px; align-items: center;"></div>
         }
     </div>
 

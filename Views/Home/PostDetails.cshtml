@@ -6,9 +6,19 @@
 <section class="page-hero" style="background: radial-gradient(circle at top right, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
     <span class="page-badge">👥 Chi tiết thảo luận</span>
     <h1 style="font-size: 32px; max-width: 800px; margin: 10px auto; line-height: 1.3;">@Model.Title</h1>
-    <div style="display: flex; justify-content: center; gap: 20px; font-size: 13.5px; color: #64748b; margin-top: 15px;">
+    <div style="display: flex; justify-content: center; gap: 20px; font-size: 13.5px; color: #64748b; margin-top: 15px; align-items: center;">
         <span style="font-weight: 700; color: #4f46e5; text-transform: uppercase; background: #e0e7ff; padding: 2px 10px; border-radius: 999px;">@Model.Category</span>
-        <span>👤 Người đăng: <strong>@Model.AuthorName</strong></span>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            @if (Model.Author != null && !string.IsNullOrEmpty(Model.Author.AvatarUrl))
+            {
+                <img src="@Model.Author.AvatarUrl" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
+            }
+            else
+            {
+                <span class="avatar-letter" style="width: 24px; height: 24px; border-radius: 50%; background-color: #f1f5f9; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #475569; border: 1px solid #e2e8f0;">@Model.AuthorName[0].ToString().ToUpper()</span>
+            }
+            <span>Người đăng: <strong>@Model.AuthorName</strong></span>
+        </div>
         <span>📅 Ngày: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
     </div>
 </section>
@@ -46,7 +56,18 @@
                 {
                     <div class="info-card" style="padding: 20px; border-radius: 16px; background: #fafafa; border-color: #f1f5f9;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px;">
-                            <span style="color: #0f172a;">👤 <strong><a href="/Profile/Details/@comment.AuthorId" style="color: inherit; text-decoration: none;">@(comment.Author?.FullName ?? comment.Author?.UserName ?? "Thành viên")</a></strong></span>
+                            <span style="color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                                @if (comment.Author != null && !string.IsNullOrEmpty(comment.Author.AvatarUrl))
+                                {
+                                    <img src="@comment.Author.AvatarUrl" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    var commentAuthorName = comment.Author?.FullName ?? comment.Author?.UserName ?? "Thành viên";
+                                    <span class="avatar-letter" style="width: 24px; height: 24px; border-radius: 50%; background-color: #f1f5f9; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #475569; border: 1px solid #e2e8f0;">@commentAuthorName[0].ToString().ToUpper()</span>
+                                }
+                                <strong><a href="/Profile/Details/@comment.AuthorId" style="color: inherit; text-decoration: none;">@(comment.Author?.FullName ?? comment.Author?.UserName ?? "Thành viên")</a></strong>
+                            </span>
                             <span style="color: #94a3b8;">📅 @comment.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
                         </div>
                         <p style="color: #334155; font-size: 14.5px; line-height: 1.6; margin: 0; white-space: pre-line;">@comment.Content</p>

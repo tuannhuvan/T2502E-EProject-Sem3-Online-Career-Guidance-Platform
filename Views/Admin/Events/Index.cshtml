@@ -29,7 +29,7 @@
                 <table class="table card-table table-vcenter text-nowrap datatable">
                     <thead>
                         <tr>
-                            <th class="w-1">ID</th>
+                            <th class="w-1">STT</th>
                             <th>Tên sự kiện</th>
                             <th>Diễn giả</th>
                             <th>Thời gian diễn ra</th>
@@ -39,11 +39,14 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @{
+                            int index = 1;
+                        }
                         @foreach (var ev in Model)
                         {
                             var regCount = counts.ContainsKey(ev.Id) ? counts[ev.Id] : 0;
                             <tr>
-                                <td>@ev.Id</td>
+                                <td>@index</td>
                                 <td class="font-weight-medium">@ev.Title</td>
                                 <td>@ev.Speaker</td>
                                 <td>@ev.EventDate.ToString("dd/MM/yyyy HH:mm")</td>
@@ -60,6 +63,7 @@
                                     </div>
                                 </td>
                             </tr>
+                            index++;
                         }
                     </tbody>
                 </table>

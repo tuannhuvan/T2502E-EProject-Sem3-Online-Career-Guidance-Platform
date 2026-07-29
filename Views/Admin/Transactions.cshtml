@@ -1,0 +1,245 @@
+@model List<Career_Guidance_Platform.Models.PaymentHistory>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Lịch sử giao dịch Premium";
+}
+
+<div class="page-header d-print-none mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="page-pretitle">Báo cáo & Phân tích</div>
+            <h2 class="page-title text-primary"><i class="ti ti-list me-2"></i>Lịch sử giao dịch Premium</h2>
+        </div>
+        <div class="col-auto ms-auto d-flex gap-2">
+            <a asp-controller="Admin" asp-action="Reports" class="btn btn-outline-secondary">
+                <i class="ti ti-arrow-left me-1"></i> Quay lại Báo cáo
+            </a>
+            <button onclick="exportExcel();" class="btn btn-success text-white">
+                <i class="ti ti-file-spreadsheet me-1"></i> Xuất Excel
+            </button>
+            <button onclick="window.print();" class="btn btn-outline-secondary">
+                <i class="ti ti-printer me-1"></i> In danh sách
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bộ lọc tìm kiếm -->
+<div class="card mb-4 d-print-none">
+    <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-filter me-2"></i>Bộ lọc tìm kiếm giao dịch</h3>
+    </div>
+    <div class="card-body">
+        <form method="get" asp-controller="Admin" asp-action="Transactions" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Tìm kiếm người dùng</label>
+                <div class="input-icon">
+                    <span class="input-icon-addon">
+                        <i class="ti ti-search"></i>
+                    </span>
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập tên hoặc email..." />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Từ ngày</label>
+                <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Đến ngày</label>
+                <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="ti ti-search me-1"></i> Lọc
+                </button>
+                <a asp-controller="Admin" asp-action="Transactions" class="btn btn-outline-secondary w-100">
+                    Xóa lọc
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Chi tiết giao dịch -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title"><i class="ti ti-list me-2"></i>Lịch sử nâng cấp Premium (Dữ liệu động)</h3>
+        <span class="badge bg-blue-lt">@Model.Count giao dịch</span>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Khách hàng</th>
+                    <th>Mã đơn hàng PayPal</th>
+                    <th>Số tiền</th>
+                    <th>Thời gian</th>
+                    <th class="text-center">Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    int index = 1;
+                    foreach (var payment in Model)
+                    {
+                        <tr class="payment-row">
+                            <td>@index</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="avatar avatar-sm bg-blue-lt me-2">@payment.User?.FullName?[0].ToString().ToUpper()</span>
+                                    <div>
+                                        <div class="font-weight-medium">@payment.User?.FullName</div>
+                                        <div class="text-muted small">@payment.User?.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="font-monospace text-muted">@payment.PaypalOrderId</span>
+                            </td>
+                            <td class="font-weight-medium text-success">
+                                $@payment.Amount.ToString("0.00") @payment.Currency
+                            </td>
+                            <td>
+                                @payment.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td class="text-center">
+                                @if (payment.PaymentStatus == "Completed")
+                                {
+                                    <span class="badge bg-success-lt"><i class="ti ti-check me-1"></i>Thành công</span>
+                                }
+                                else if (payment.PaymentStatus == "Pending")
+                                {
+                                    <span class="badge bg-warning-lt"><i class="ti ti-clock me-1"></i>Đang xử lý</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-lt"><i class="ti ti-x me-1"></i>Thất bại</span>
+                                }
+                            </td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="ti ti-database-off" style="font-size: 28px; display: block; margin-bottom: 8px;"></i>
+                            Không có dữ liệu giao dịch nào khớp với bộ lọc.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        <span id="entryText">
+            Showing 1 to 5 of @(Model?.Count() ?? 0) entries
+        </span>
+        <ul class="pagination m-0 ms-auto" id="pagination-ul">
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function exportExcel() {
+            const search = '@Html.Raw(ViewBag.Search)';
+            const startDate = '@Html.Raw(ViewBag.StartDate)';
+            const endDate = '@Html.Raw(ViewBag.EndDate)';
+            window.location.href = `/Admin/ExportToExcel?search=${encodeURIComponent(search)}&startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const rows = document.querySelectorAll('.payment-row');
+            const pageSize = 5;
+            let currentPage = 1;
+
+            function paginate() {
+                const totalItems = rows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                rows.forEach((row, idx) => {
+                    if (idx >= startIdx && idx < endIdx) {
+                        row.style.display = '';
+                        const sttCell = row.querySelector('td:first-child');
+                        if (sttCell) {
+                            sttCell.innerText = idx + 1;
+                        }
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update entry text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} giao dịch`;
+
+                // Render pagination
+                const paginationUl = document.getElementById('pagination-ul');
+                if (paginationUl) {
+                    paginationUl.innerHTML = '';
+
+                    // Prev Button
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                    if (currentPage > 1) {
+                        prevLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            paginate();
+                        });
+                    }
+                    paginationUl.appendChild(prevLi);
+
+                    // Page buttons
+                    const maxButtons = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                        li.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage = i;
+                            paginate();
+                        });
+                        paginationUl.appendChild(li);
+                    }
+
+                    // Next Button
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                    if (currentPage < totalPages) {
+                        nextLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            paginate();
+                        });
+                    }
+                    paginationUl.appendChild(nextLi);
+                }
+            }
+
+            paginate();
+        });
+    </script>
+}

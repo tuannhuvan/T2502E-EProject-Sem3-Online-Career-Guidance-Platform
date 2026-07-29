@@ -8,46 +8,28 @@ using Career_Guidance_Platform.Service.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using Career_Guidance_Platform.Service;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
-builder.Services.AddSession(); // Add session services
-builder.Services.AddSignalR(); // Add SignalR services
-
-// Register AppDbContext with MySQL (Pomelo)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-
-builder.Services.AddDistributedMemoryCache();
-
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddSignalR();
+builder.Services.AddDistributedMemoryCache();
 
 // DbContext
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseMySql(
-        connectionString,
-        ServerVersion.AutoDetect(connectionString));
-});
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 // Identity
-builder.Services
-    .AddIdentity<User, IdentityRole>(options =>
+builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
     {
         options.Password.RequireDigit = true;
         options.Password.RequiredLength = 6;
@@ -56,35 +38,25 @@ builder.Services
         options.Password.RequireNonAlphanumeric = false;
     })
     .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddErrorDescriber<VietnameseIdentityErrorDescriber>();
 
-// Repository
+// Repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-
-// Service
-builder.Services.AddScoped<IAuthService, AuthService>();
-// Email
-builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+builder.Services.AddScoped<IQuestionUserRepository, QuestionUserRepository>();
+
+// Services
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IQuestionUserService, QuestionUserService>();
-builder.Services.AddScoped<IQuestionUserRepository, QuestionUserRepository>();
-var app = builder.Build();
-using (var scope = app.Services.CreateScope())
-{
-    await SeedRoles.SeedAsync(scope.ServiceProvider);
-}
-// Middleware
-builder.Services.AddIdentity<User, IdentityRole<int>>()
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders()
-    .AddErrorDescriber<Career_Guidance_Platform.Service.VietnameseIdentityErrorDescriber>();
-builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddSingleton<PresenceTracker>();
+
 var app = builder.Build();
 
-// Apply migrations on startup
+// Run migrations and seed data
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -127,9 +99,16 @@ using (var scope = app.Services.CreateScope())
 
         if (tableExists)
         {
-            // Pre-populate __EFMigrationsHistory with known migrations if they aren't there yet
             var migrations = new[]
             {
+                "20260616195539_InitDatabase",
+                "20260617071207_RenameQuestionTypeNameToTitle",
+                "20260617080422_FixQuestionTable",
+                "20260618112323_careertest",
+                "20260618113000_Careertests",
+                "20260618145308_UserAnswer",
+                "20260618145831_updateUserAnswer",
+                "20260619010439_userAnswerupdate",
                 "20260623201748_InitialCreate",
                 "20260624040356_AddDateTakenToTestResult",
                 "20260624162724_AddTeamMembersTable",
@@ -143,7 +122,10 @@ using (var scope = app.Services.CreateScope())
                 "20260702112800_AddGoalUserSkillFields",
                 "20260703062347_AddMentorshipUpdates",
                 "20260714071928_AddPremiumFieldsToUser",
-                "20260714081724_AddPaymentHistory"
+                "20260714081724_AddPaymentHistory",
+                "20260722044410_AddUserFieldsAndNotification",
+                "20260722054421_RemoveEmployerReviewsTable",
+                "20260722062012_AddIsVipToEventRegistration"
             };
 
             foreach (var migration in migrations)
@@ -153,6 +135,31 @@ using (var scope = app.Services.CreateScope())
                     VALUES ('{migration}', '8.0.0');
                 ");
             }
+
+            // Manually run ALTER statements in try-catch to ensure columns/tables exist
+            try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `resume_templates` ADD `is_premium` tinyint(1) NOT NULL DEFAULT FALSE;"); } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `career_events` ADD `max_participants` int NOT NULL DEFAULT 0;"); } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `AspNetUsers` ADD `avatar_url` longtext CHARACTER SET utf8mb4 NULL;"); } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `AspNetUsers` ADD `experience` longtext CHARACTER SET utf8mb4 NULL;"); } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `AspNetUsers` ADD `headline` longtext CHARACTER SET utf8mb4 NULL;"); } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `AspNetUsers` ADD `major` longtext CHARACTER SET utf8mb4 NULL;"); } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `AspNetUsers` ADD `school` longtext CHARACTER SET utf8mb4 NULL;"); } catch {}
+            try {
+                dbContext.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS `notifications` (
+                        `id` int NOT NULL AUTO_INCREMENT,
+                        `user_id` int NOT NULL,
+                        `message` longtext CHARACTER SET utf8mb4 NOT NULL,
+                        `is_read` tinyint(1) NOT NULL,
+                        `created_at` datetime(6) NOT NULL,
+                        CONSTRAINT `PK_notifications` PRIMARY KEY (`id`),
+                        CONSTRAINT `FK_notifications_AspNetUsers_user_id` FOREIGN KEY (`user_id`) REFERENCES `AspNetUsers` (`Id`) ON DELETE CASCADE
+                    ) CHARACTER SET=utf8mb4;
+                ");
+            } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("CREATE INDEX `IX_notifications_user_id` ON `notifications` (`user_id`);"); } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS `employer_reviews`;"); } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `event_registrations` ADD `is_vip` tinyint(1) NOT NULL DEFAULT FALSE;"); } catch {}
         }
     }
     catch (Exception ex)
@@ -206,10 +213,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 app.UseSession();
-app.UseAuthentication(); // Bắt buộc có
-app.UseSession(); // Use session middleware
-
-app.UseAuthentication(); // ensure Authentication is registered if you use it
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

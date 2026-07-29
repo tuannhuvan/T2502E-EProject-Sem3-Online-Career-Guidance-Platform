@@ -21,19 +21,21 @@ using System.Collections.Generic;
 namespace Career_Guidance_Platform.Controllers;
 
 public class HomeController : Controller
-{ private readonly IQuestionUserService _questionUserService;
-
-    public HomeController(IQuestionUserService questionUserService)
-    {
-        _questionUserService = questionUserService;
-    }
+{
+    private readonly IQuestionUserService _questionUserService;
     private readonly ILogger<HomeController> _logger;
     private readonly AppDbContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IConfiguration _configuration;
 
-    public HomeController(ILogger<HomeController> logger, AppDbContext context, UserManager<User> userManager, IConfiguration configuration)
+    public HomeController(
+        IQuestionUserService questionUserService,
+        ILogger<HomeController> logger,
+        AppDbContext context,
+        UserManager<User> userManager,
+        IConfiguration configuration)
     {
+        _questionUserService = questionUserService;
         _logger = logger;
         _context = context;
         _userManager = userManager;
@@ -41,30 +43,6 @@ public class HomeController : Controller
     }
 
     public IActionResult Index() => View();
-
-    public async Task<IActionResult> CareerTest(int questionNumber = 1)
-    {
-        var totalQuestions = await _questionUserService.GetCountAsync();
-        
-        if (questionNumber < 1)
-        {
-            questionNumber = 1;
-        }
-
-        if (questionNumber > totalQuestions)
-        {
-            questionNumber = totalQuestions;
-        }
-        var question = await _questionUserService.GetQuestionByOrderAsync(questionNumber);
-
-        if (question == null)
-            return NotFound();
-
-        ViewBag.CurrentQuestion = questionNumber;
-        ViewBag.TotalQuestions = totalQuestions;
-
-        return View(question);
-    }
     [TypeFilter(typeof(PremiumAccessFilter))]
     public async Task<IActionResult> CareerTest()
     {
@@ -325,6 +303,7 @@ public class HomeController : Controller
     public async Task<IActionResult> Community()
     {
         var posts = await _context.CommunityPosts
+            .Include(p => p.Author)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
         return View(posts);
@@ -372,6 +351,7 @@ public class HomeController : Controller
     public async Task<IActionResult> PostDetails(int id)
     {
         var post = await _context.CommunityPosts
+            .Include(p => p.Author)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.Author)
             .FirstOrDefaultAsync(p => p.Id == id);
