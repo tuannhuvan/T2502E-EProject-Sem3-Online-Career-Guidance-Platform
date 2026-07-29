@@ -16,6 +16,13 @@ public class QuestionType
     [Column("name")]
     public string Name { get; set; } = string.Empty;
 
+    [NotMapped]
+    public string Title
+    {
+        get => Name;
+        set => Name = value;
+    }
+
     [Column("description")]
     public string? Description { get; set; }
 

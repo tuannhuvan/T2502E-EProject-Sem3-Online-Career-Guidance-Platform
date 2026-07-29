@@ -382,6 +382,7 @@ public class GoalController : Controller
 
     // GET: /Goal/GetSkillDetails
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetSkillDetails(int skillId)
     {
         var skill = await _context.Skills

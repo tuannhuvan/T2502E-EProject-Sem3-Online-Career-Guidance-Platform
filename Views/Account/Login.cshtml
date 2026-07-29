@@ -1,5 +1,4 @@
-﻿@model Career_Guidance_Platform.Dtos.Auth.LoginViewModel
-@model Career_Guidance_Platform.Models.ViewModels.LoginViewModel
+﻿@model Career_Guidance_Platform.Models.ViewModels.LoginViewModel
 
 @{
     ViewData["Title"] = "Đăng nhập";
@@ -12,12 +11,6 @@
         <h1>Đăng nhập</h1>
         <p>Chào mừng bạn quay trở lại. Tiếp tục hành trình định hướng nghề nghiệp của bạn.</p>
 
-        <form asp-action="Login" asp-controller="Account" method="post">
-            @Html.AntiForgeryToken()
-
-            <div class="form-group">
-                <label>Email</label>
-                <input asp-for="Email" class="form-control" placeholder="Nhập email của bạn" />
         @if (TempData["RequireAuthForTestResult"] != null)
         {
             <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; line-height: 1.5; font-weight: 500;">
@@ -27,30 +20,23 @@
 
         <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
             <div class="form-group">
-                <label asp-for="Email"></label>
+                <label asp-for="Email">Email</label>
                 <input asp-for="Email" class="form-control" placeholder="Nhập email của bạn" required />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
 
             <div class="form-group">
-                <label>Mật khẩu</label>
-                <input asp-for="Password" type="password" class="form-control" placeholder="Nhập mật khẩu" />
-                <label asp-for="Password"></label>
-                <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu" required />
+                <label asp-for="Password">Mật khẩu</label>
+                <input asp-for="Password" type="password" class="form-control" placeholder="Nhập mật khẩu" required />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
 
             <div class="form-row">
-                <label>
-                    <input asp-for="RememberMe" />
-                    Ghi nhớ đăng nhập
-                </label>
-
-                <a href="#">Quên mật khẩu?</a>
                 <label asp-for="RememberMe">
                     <input asp-for="RememberMe" />
-                    @Html.DisplayNameFor(m => m.RememberMe)
+                    Ghi nhớ đăng nhập
                 </label>
                 <a asp-controller="Account" asp-action="ForgotPassword">
                     Quên mật khẩu?

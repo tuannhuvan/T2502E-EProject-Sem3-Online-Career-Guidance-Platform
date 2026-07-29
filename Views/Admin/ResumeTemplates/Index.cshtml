@@ -28,7 +28,7 @@
                 <table class="table card-table table-vcenter text-nowrap datatable">
                     <thead>
                         <tr>
-                            <th class="w-1">ID</th>
+                            <th class="w-1">STT</th>
                             <th>Mẫu CV</th>
                             <th>Mã Template Code</th>
                             <th>Phân loại</th>
@@ -38,10 +38,13 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @{
+                            int index = 1;
+                        }
                         @foreach (var temp in Model)
                         {
                             <tr>
-                                <td>@temp.Id</td>
+                                <td>@index</td>
                                 <td>
                                     <div class="d-flex py-1 align-items-center">
                                         <span class="avatar me-2" style="background-image: url(@(string.IsNullOrEmpty(temp.ThumbnailUrl) ? "/uploads/templates/default.png" : temp.ThumbnailUrl))"></span>
@@ -85,6 +88,7 @@
                                     </div>
                                 </td>
                             </tr>
+                            index++;
                         }
                     </tbody>
                 </table>

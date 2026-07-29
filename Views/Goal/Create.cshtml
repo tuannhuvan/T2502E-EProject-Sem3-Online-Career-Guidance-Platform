@@ -148,7 +148,7 @@
 
         <div class="form-group">
             <label asp-for="TargetDate">Deadline</label>
-            <input asp-for="TargetDate" type="date" class="form-control" />
+            <input asp-for="TargetDate" type="date" class="form-control" min="@DateTime.Now.ToString("yyyy-MM-dd")" />
         </div>
 
         <button type="submit" class="btn btn-primary">Lưu</button>

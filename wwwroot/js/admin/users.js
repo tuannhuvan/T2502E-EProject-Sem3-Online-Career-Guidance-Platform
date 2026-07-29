@@ -116,23 +116,32 @@ function filterUsers(resetPage = false) {
     const matchedRows = [];
 
     rows.forEach(row => {
-        const name = row.querySelector('.user-name').innerText.toLowerCase();
-        const email = row.querySelector('.user-email').innerText.toLowerCase();
-        const role = row.querySelector('.user-role').innerText.trim();
-        const status = row.querySelector('.status-badge').innerText.trim();
-        const isPremium = row.getAttribute('data-premium') === 'true';
+        try {
+            const nameEl = row.querySelector('.user-name');
+            const emailEl = row.querySelector('.user-email');
+            const roleEl = row.querySelector('.user-role');
+            const statusEl = row.querySelector('.status-badge');
 
-        const matchSearch = name.includes(searchValue) || email.includes(searchValue);
-        const matchRole = roleValue === '' || role === roleValue;
-        const matchStatus = statusValue === '' || status === statusValue;
-        const matchMembership = membershipValue === '' || 
-                                (membershipValue === 'premium' && isPremium) || 
-                                (membershipValue === 'free' && !isPremium);
+            const name = nameEl ? nameEl.innerText.toLowerCase() : '';
+            const email = emailEl ? emailEl.innerText.toLowerCase() : '';
+            const role = roleEl ? roleEl.innerText.trim() : '';
+            const status = statusEl ? statusEl.innerText.trim() : '';
+            const isPremium = row.getAttribute('data-premium') === 'true';
 
-        if (matchSearch && matchRole && matchStatus && matchMembership) {
-            matchedRows.push(row);
-        } else {
-            row.style.display = 'none';
+            const matchSearch = name.includes(searchValue) || email.includes(searchValue);
+            const matchRole = roleValue === '' || role === roleValue;
+            const matchStatus = statusValue === '' || status === statusValue;
+            const matchMembership = membershipValue === '' || 
+                                    (membershipValue === 'premium' && isPremium) || 
+                                    (membershipValue === 'free' && !isPremium);
+
+            if (matchSearch && matchRole && matchStatus && matchMembership) {
+                matchedRows.push(row);
+            } else {
+                row.style.display = 'none';
+            }
+        } catch (e) {
+            console.error("Error processing row:", e, row);
         }
     });
 

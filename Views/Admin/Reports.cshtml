@@ -17,9 +17,6 @@
             <h2 class="page-title text-primary"><i class="ti ti-chart-bar me-2"></i>Thống kê doanh thu Premium</h2>
         </div>
         <div class="col-auto ms-auto d-flex gap-2">
-            <button onclick="exportExcel();" class="btn btn-success text-white">
-                <i class="ti ti-file-spreadsheet me-1"></i> Xuất Excel
-            </button>
             <button onclick="window.print();" class="btn btn-outline-secondary">
                 <i class="ti ti-printer me-1"></i> In báo cáo
             </button>
@@ -30,16 +27,16 @@
 <!-- Thống kê tổng quan -->
 <div class="row row-deck row-cards mb-4">
     <div class="col-sm-6 col-lg-3">
-        <div class="card bg-primary-lt">
+        <a asp-controller="Admin" asp-action="Transactions" class="card bg-primary-lt hover-shadow-sm" style="text-decoration: none; display: block; transition: all 0.2s ease-in-out;">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="subheader text-primary">Tổng doanh thu (USD)</div>
                     <span class="avatar bg-primary text-white"><i class="ti ti-currency-dollar"></i></span>
                 </div>
                 <div class="h1 mb-1 text-primary">$@(((decimal)ViewBag.TotalRevenue).ToString("N2"))</div>
-                <div class="text-muted text-truncate">Cộng dồn từ giao dịch thành công</div>
+                <div class="text-muted text-truncate">Cộng dồn từ giao dịch thành công (Xem chi tiết)</div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-sm-6 col-lg-3">
@@ -124,41 +121,6 @@
     </div>
 </div>
 
-<!-- Bộ lọc tìm kiếm -->
-<div class="card mb-4 d-print-none">
-    <div class="card-header">
-        <h3 class="card-title"><i class="ti ti-filter me-2"></i>Bộ lọc tìm kiếm giao dịch</h3>
-    </div>
-    <div class="card-body">
-        <form method="get" asp-controller="Admin" asp-action="Reports" class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">Tìm kiếm người dùng</label>
-                <div class="input-icon">
-                    <span class="input-icon-addon">
-                        <i class="ti ti-search"></i>
-                    </span>
-                    <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập tên hoặc email..." />
-                </div>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Từ ngày</label>
-                <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Đến ngày</label>
-                <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" />
-            </div>
-            <div class="col-md-2 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="ti ti-search me-1"></i> Lọc
-                </button>
-                <a asp-controller="Admin" asp-action="Reports" class="btn btn-outline-secondary w-100">
-                    Xóa lọc
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
 
 <!-- Biểu đồ phân tích -->
 <div class="row row-cards mb-4">
@@ -199,82 +161,6 @@
     </div>
 </div>
 
-<!-- Chi tiết giao dịch -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title"><i class="ti ti-list me-2"></i>Lịch sử nâng cấp Premium (Dữ liệu động)</h3>
-        <span class="badge bg-blue-lt">@Model.Count giao dịch</span>
-    </div>
-    
-    <div class="table-responsive">
-        <table class="table table-vcenter card-table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>STT</th>
-                    <th>Khách hàng</th>
-                    <th>Mã đơn hàng PayPal</th>
-                    <th>Số tiền</th>
-                    <th>Thời gian</th>
-                    <th class="text-center">Trạng thái</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model != null && Model.Any())
-                {
-                    int index = 1;
-                    foreach (var payment in Model)
-                    {
-                        <tr>
-                            <td>@index</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <span class="avatar avatar-sm bg-blue-lt me-2">@payment.User?.FullName?[0].ToString().ToUpper()</span>
-                                    <div>
-                                        <div class="font-weight-medium">@payment.User?.FullName</div>
-                                        <div class="text-muted small">@payment.User?.Email</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="font-monospace text-muted">@payment.PaypalOrderId</span>
-                            </td>
-                            <td class="font-weight-medium text-success">
-                                $@payment.Amount.ToString("0.00") @payment.Currency
-                            </td>
-                            <td>
-                                @payment.CreatedAt.ToString("dd/MM/yyyy HH:mm")
-                            </td>
-                            <td class="text-center">
-                                @if (payment.PaymentStatus == "Completed")
-                                {
-                                    <span class="badge bg-success-lt"><i class="ti ti-check me-1"></i>Thành công</span>
-                                }
-                                else if (payment.PaymentStatus == "Pending")
-                                {
-                                    <span class="badge bg-warning-lt"><i class="ti ti-clock me-1"></i>Đang xử lý</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger-lt"><i class="ti ti-x me-1"></i>Thất bại</span>
-                                }
-                            </td>
-                        </tr>
-                        index++;
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-4">
-                            <i class="ti ti-database-off" style="font-size: 28px; display: block; margin-bottom: 8px;"></i>
-                            Không có dữ liệu giao dịch nào khớp với bộ lọc.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
 
 @section Scripts {
     <script>
@@ -377,14 +263,5 @@
                 }
             });
         });
-
-        function exportExcel() {
-            const searchVal = document.querySelector('input[name="search"]').value;
-            const startDateVal = document.querySelector('input[name="startDate"]').value;
-            const endDateVal = document.querySelector('input[name="endDate"]').value;
-            
-            let url = `/Admin/ExportToExcel?search=${encodeURIComponent(searchVal)}&startDate=${encodeURIComponent(startDateVal)}&endDate=${encodeURIComponent(endDateVal)}`;
-            window.location.href = url;
-        }
     </script>
 }

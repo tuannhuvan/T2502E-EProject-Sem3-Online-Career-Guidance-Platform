@@ -20,7 +20,7 @@
             <!-- Avatar & Primary Name Area -->
             <div style="display: flex; gap: 24px; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 24px; margin-bottom: 24px;">
                 <div style="position: relative;">
-                    <img id="profileAvatarImg" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "/images/default-avatar.png" : Model.AvatarUrl)" alt="@Model.FullName" style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #f8fafc;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=@Model.FullName'" />
+                    <img id="profileAvatarImg" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? $"https://api.dicebear.com/7.x/initials/svg?seed={Model.FullName}" : Model.AvatarUrl)" alt="@Model.FullName" style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #f8fafc;" onerror="this.src='https://api.dicebear.com/7.x/adventurer/svg?seed=@Model.FullName'" />
                 </div>
                 <div style="flex-grow: 1;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">

@@ -6,6 +6,9 @@
     var jobList = ViewBag.JobList as IEnumerable<Career_Guidance_Platform.Models.JobPosting> ?? new List<Career_Guidance_Platform.Models.JobPosting>();
     int? selectedJobId = ViewBag.SelectedJobId as int?;
     string? selectedStatus = ViewBag.SelectedStatus as string;
+    
+    var selectedLang = Context.Request.Cookies["selected_lang"] ?? "vi";
+    bool isEn = selectedLang == "en";
 }
 
 <div class="page-header d-print-none mb-3">
@@ -63,11 +66,11 @@
             <div class="col-md-4">
                 <label class="form-label text-muted small mb-1">Lọc theo trạng thái:</label>
                 <select name="status" class="form-select" onchange="this.form.submit()">
-                    <option value="">-- Tất cả trạng thái --</option>
-                    <option value="Applied" selected="@(selectedStatus == "Applied")">Applied (Mới nộp)</option>
-                    <option value="Interviewing" selected="@(selectedStatus == "Interviewing")">Interviewing (Phỏng vấn)</option>
-                    <option value="Offered" selected="@(selectedStatus == "Offered")">Offered (Trúng tuyển)</option>
-                    <option value="Rejected" selected="@(selectedStatus == "Rejected")">Rejected (Từ chối)</option>
+                    <option value="">@(isEn ? "-- All Statuses --" : "-- Tất cả trạng thái --")</option>
+                    <option value="Applied" selected="@(selectedStatus == "Applied")">@(isEn ? "Applied" : "Mới nộp")</option>
+                    <option value="Interviewing" selected="@(selectedStatus == "Interviewing")">@(isEn ? "Interviewing" : "Phỏng vấn")</option>
+                    <option value="Offered" selected="@(selectedStatus == "Offered")">@(isEn ? "Offered" : "Trúng tuyển")</option>
+                    <option value="Rejected" selected="@(selectedStatus == "Rejected")">@(isEn ? "Rejected" : "Từ chối")</option>
                 </select>
             </div>
             <div class="col-md-3 d-flex align-items-end">
@@ -98,7 +101,7 @@
                 {
                     foreach (var app in Model)
                     {
-                        <tr>
+                        <tr class="application-row">
                             <td>
                                 <div class="font-weight-bold">@(app.User?.FullName ?? "N/A")</div>
                                 <div class="small text-muted"><i class="ti ti-mail me-1"></i>@(app.User?.Email ?? "N/A")</div>
@@ -161,11 +164,13 @@
                                 <form asp-controller="Admin" asp-action="UpdateApplicationStatus" method="post" class="d-inline-flex gap-1 align-items-center">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="applicationId" value="@app.Id" />
+                                    <input type="hidden" name="currentJobId" value="@selectedJobId" />
+                                    <input type="hidden" name="currentStatus" value="@selectedStatus" />
                                     <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                                        <option value="Applied" selected="@(app.Status == "Applied")">Applied</option>
-                                        <option value="Interviewing" selected="@(app.Status == "Interviewing")">Interviewing</option>
-                                        <option value="Offered" selected="@(app.Status == "Offered")">Offered</option>
-                                        <option value="Rejected" selected="@(app.Status == "Rejected")">Rejected</option>
+                                        <option value="Applied" selected="@(app.Status == "Applied")">@(isEn ? "Applied" : "Mới nộp")</option>
+                                        <option value="Interviewing" selected="@(app.Status == "Interviewing")">@(isEn ? "Interviewing" : "Phỏng vấn")</option>
+                                        <option value="Offered" selected="@(app.Status == "Offered")">@(isEn ? "Offered" : "Trúng tuyển")</option>
+                                        <option value="Rejected" selected="@(app.Status == "Rejected")">@(isEn ? "Rejected" : "Từ chối")</option>
                                     </select>
                                 </form>
                             </td>
@@ -184,4 +189,105 @@
             </tbody>
         </table>
     </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        <span id="entryText">
+            Hiển thị từ 1 đến 5 trong số @(Model?.Count() ?? 0) đơn ứng tuyển
+        </span>
+        <ul class="pagination m-0 ms-auto" id="pagination-ul">
+        </ul>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const rows = document.querySelectorAll('.application-row');
+            const pageSize = 5;
+            let currentPage = 1;
+            const isEn = @(isEn ? "true" : "false");
+
+            function paginate() {
+                const totalItems = rows.length;
+                const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+
+                const startIdx = (currentPage - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+
+                rows.forEach((row, idx) => {
+                    if (idx >= startIdx && idx < endIdx) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update entry text
+                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+                const endEntry = Math.min(endIdx, totalItems);
+                if (isEn) {
+                    document.getElementById('entryText').innerHTML = `Showing ${startEntry} to ${endEntry} of ${totalItems} entries`;
+                } else {
+                    document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} đơn ứng tuyển`;
+                }
+
+                // Render pagination
+                const paginationUl = document.getElementById('pagination-ul');
+                if (paginationUl) {
+                    paginationUl.innerHTML = '';
+
+                    // Prev Button
+                    const prevLi = document.createElement('li');
+                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                    if (currentPage > 1) {
+                        prevLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            paginate();
+                        });
+                    }
+                    paginationUl.appendChild(prevLi);
+
+                    // Page buttons
+                    const maxButtons = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                    if (endPage - startPage + 1 < maxButtons) {
+                        startPage = Math.max(1, endPage - maxButtons + 1);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                        li.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage = i;
+                            paginate();
+                        });
+                        paginationUl.appendChild(li);
+                    }
+
+                    // Next Button
+                    const nextLi = document.createElement('li');
+                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                    if (currentPage < totalPages) {
+                        nextLi.querySelector('a').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            paginate();
+                        });
+                    }
+                    paginationUl.appendChild(nextLi);
+                }
+            }
+
+            paginate();
+        });
+    </script>
+}

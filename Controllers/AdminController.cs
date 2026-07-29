@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Career_Guidance_Platform.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace Career_Guidance_Platform.Controllers;
 
@@ -26,17 +27,20 @@ public class AdminController : Controller
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<IdentityRole<int>> _roleManager;
     private readonly Microsoft.AspNetCore.SignalR.IHubContext<Career_Guidance_Platform.Hubs.PresenceAndNotificationHub> _hubContext;
+    private readonly IEmailSender _emailSender;
 
     public AdminController(
         AppDbContext context,
         UserManager<User> userManager,
         RoleManager<IdentityRole<int>> roleManager,
-        Microsoft.AspNetCore.SignalR.IHubContext<Career_Guidance_Platform.Hubs.PresenceAndNotificationHub> hubContext)
+        Microsoft.AspNetCore.SignalR.IHubContext<Career_Guidance_Platform.Hubs.PresenceAndNotificationHub> hubContext,
+        IEmailSender emailSender)
     {
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
         _hubContext = hubContext;
+        _emailSender = emailSender;
     }
 
     public IActionResult Index()
@@ -210,6 +214,7 @@ public class AdminController : Controller
     {
         var mentors = await _context.MentorProfiles
             .Include(m => m.User)
+            .OrderByDescending(m => m.UserId)
             .ToListAsync();
         return View(mentors);
     }
@@ -220,6 +225,7 @@ public class AdminController : Controller
         var mentors = await _context.MentorProfiles
             .Include(m => m.User)
             .Where(m => !m.IsVerified)
+            .OrderByDescending(m => m.UserId)
             .ToListAsync();
         return View("~/Views/Admin/Mentors.cshtml", mentors);
     }
@@ -247,6 +253,30 @@ public class AdminController : Controller
             if (!await _userManager.IsInRoleAsync(user, "Mentor"))
             {
                 await _userManager.AddToRoleAsync(user, "Mentor");
+            }
+
+            // Generate password reset token and send email
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var resetLink = Url.Action(
+                "ResetPassword",
+                "Account",
+                new { email = user.Email, token },
+                Request.Scheme);
+
+            try
+            {
+                await _emailSender.SendEmailAsync(
+                    user.Email ?? "",
+                    "Phê duyệt hồ sơ Cố vấn (Mentor) thành công!",
+                    $"<h3>Xin chúc mừng!</h3>" +
+                    $"<p>Hồ sơ đăng ký làm Cố vấn (Mentor) của bạn trên hệ thống đã được phê duyệt thành công.</p>" +
+                    $"<p>Vui lòng click vào liên kết sau để đặt lại mật khẩu mới và đăng nhập với tư cách là Cố vấn (Mentor):</p>" +
+                    $"<p><a href='{resetLink}' style='background-color:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;'>Thiết lập mật khẩu & Đăng nhập</a></p>" +
+                    $"<p>Nếu nút trên không hoạt động, bạn có thể sao chép liên kết này: {resetLink}</p>");
+            }
+            catch (Exception ex)
+            {
+                // Silently catch mail sending errors in case SMTP is not configured in local environment
             }
         }
 
@@ -641,38 +671,17 @@ public class AdminController : Controller
         }
         return RedirectToAction(nameof(Jobs));
     }
-    public async Task<IActionResult> Reports(DateTime? startDate, DateTime? endDate, string? search)
+    public async Task<IActionResult> Reports()
     {
-        var query = _context.PaymentHistories
-            .Include(p => p.User)
-            .AsQueryable();
-
-        if (startDate.HasValue)
-        {
-            query = query.Where(p => p.CreatedAt >= startDate.Value);
-        }
-        if (endDate.HasValue)
-        {
-            var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
-            query = query.Where(p => p.CreatedAt <= endOfDate);
-        }
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var searchLower = search.Trim().ToLower();
-            query = query.Where(p => p.User != null && (p.User.FullName.ToLower().Contains(searchLower) || p.User.Email.ToLower().Contains(searchLower)));
-        }
-
-        var payments = await query
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
-
+        var allPayments = await _context.PaymentHistories.ToListAsync();
+        
         // Aggregates (Doanh thu chỉ tính từ các giao dịch Completed)
-        var totalRevenue = payments.Where(p => p.PaymentStatus == "Completed").Sum(p => p.Amount);
-        var totalTransactions = payments.Count(p => p.PaymentStatus == "Completed");
+        var totalRevenue = allPayments.Where(p => p.PaymentStatus == "Completed").Sum(p => p.Amount);
+        var totalTransactions = allPayments.Count(p => p.PaymentStatus == "Completed");
 
-        var completedCount = payments.Count(p => p.PaymentStatus == "Completed");
-        var cancelledCount = payments.Count(p => p.PaymentStatus == "Cancelled");
-        var pendingCount = payments.Count(p => p.PaymentStatus == "Pending");
+        var completedCount = allPayments.Count(p => p.PaymentStatus == "Completed");
+        var cancelledCount = allPayments.Count(p => p.PaymentStatus == "Cancelled");
+        var pendingCount = allPayments.Count(p => p.PaymentStatus == "Pending");
 
         // Monthly data for chart (last 6 months)
         var sixMonthsAgo = DateTime.Now.Date.AddMonths(-5);
@@ -710,11 +719,40 @@ public class AdminController : Controller
         ViewBag.MonthlyValues = monthlyValues;
         ViewBag.PremiumUsers = premiumUsers;
         ViewBag.FreeUsers = freeUsers;
+
+        return View();
+    }
+
+    public async Task<IActionResult> Transactions(DateTime? startDate, DateTime? endDate, string? search)
+    {
+        var query = _context.PaymentHistories
+            .Include(p => p.User)
+            .AsQueryable();
+
+        if (startDate.HasValue)
+        {
+            query = query.Where(p => p.CreatedAt >= startDate.Value);
+        }
+        if (endDate.HasValue)
+        {
+            var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(p => p.CreatedAt <= endOfDate);
+        }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.Trim().ToLower();
+            query = query.Where(p => p.User != null && (p.User.FullName.ToLower().Contains(searchLower) || p.User.Email.ToLower().Contains(searchLower)));
+        }
+
+        var payments = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
         ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
         ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
         ViewBag.Search = search;
 
-        return View(payments);
+        return View("~/Views/Admin/Transactions.cshtml", payments);
     }
 
     [HttpGet]
@@ -1076,9 +1114,9 @@ public class AdminController : Controller
     {
         var courses = await _context.CareerPathCourses
             .Include(c => c.CareerPath)
-            .OrderBy(c => c.Id)
+            .OrderByDescending(c => c.Id)
             .ToListAsync();
-
+ 
         return View(courses);
     }
 
@@ -1854,7 +1892,7 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
     {
         var skills = await _context.Skills
             .Include(s => s.Resources)
-            .OrderBy(s => s.Id)
+            .OrderByDescending(s => s.Id)
             .ToListAsync();
 
         ViewBag.PathCounts = await _context.CareerPathSkills
@@ -2198,7 +2236,7 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
     // POST: /Admin/UpdateApplicationStatus
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateApplicationStatus(int applicationId, string status)
+    public async Task<IActionResult> UpdateApplicationStatus(int applicationId, string status, int? currentJobId, string? currentStatus)
     {
         var application = await _context.JobApplications.FindAsync(applicationId);
         if (application == null)
@@ -2211,7 +2249,7 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
         await _context.SaveChangesAsync();
 
         TempData["Success"] = $"Đã cập nhật trạng thái đơn ứng tuyển sang: {status}";
-        return RedirectToAction(nameof(JobApplications), new { jobId = application.JobPostingId });
+        return RedirectToAction(nameof(JobApplications), new { jobId = currentJobId, status = currentStatus });
     }
 
     // GET: /Admin/ViewResume/5
@@ -2268,7 +2306,7 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
     public async Task<IActionResult> Events()
     {
         var events = await _context.CareerEvents
-            .OrderByDescending(e => e.EventDate)
+            .OrderByDescending(e => e.Id)
             .ToListAsync();
 
         var registrationCounts = new Dictionary<int, int>();

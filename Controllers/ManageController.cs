@@ -16,12 +16,14 @@ namespace Career_Guidance_Platform.Controllers
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public ManageController(UserManager<User> userManager, SignInManager<User> signInManager, AppDbContext context)
+        public ManageController(UserManager<User> userManager, SignInManager<User> signInManager, AppDbContext context, IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
+            _configuration = configuration;
         }
 
         public async Task<IActionResult> Index()
@@ -169,6 +171,62 @@ namespace Career_Guidance_Platform.Controllers
 
             await _signInManager.RefreshSignInAsync(user);
             return RedirectToAction("Index", new { Message = "Password changed successfully." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateAvatar(IFormFile avatarFile)
+        {
+            if (avatarFile == null || avatarFile.Length == 0)
+            {
+                return Json(new { success = false, message = "Vui lòng chọn một tệp hình ảnh." });
+            }
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+            var extension = System.IO.Path.GetExtension(avatarFile.FileName).ToLower();
+            if (!allowedExtensions.Contains(extension))
+            {
+                return Json(new { success = false, message = "Định dạng file không được hỗ trợ. Chỉ chấp nhận JPG, PNG, GIF, WEBP." });
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "Vui lòng đăng nhập." });
+            }
+
+            var cloudName = _configuration["CloudinarySettings:CloudName"];
+            var apiKey = _configuration["CloudinarySettings:ApiKey"];
+            var apiSecret = _configuration["CloudinarySettings:ApiSecret"];
+
+            if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret))
+            {
+                return Json(new { success = false, message = "Cấu hình Cloudinary không hợp lệ hoặc thiếu thông tin." });
+            }
+
+            var account = new CloudinaryDotNet.Account(cloudName, apiKey, apiSecret);
+            var cloudinary = new CloudinaryDotNet.Cloudinary(account);
+
+            using (var stream = avatarFile.OpenReadStream())
+            {
+                var uploadParams = new CloudinaryDotNet.Actions.ImageUploadParams()
+                {
+                    File = new CloudinaryDotNet.FileDescription(avatarFile.FileName, stream),
+                    Folder = "avatars",
+                    Transformation = new CloudinaryDotNet.Transformation().Width(500).Height(500).Crop("fill").Gravity("face")
+                };
+
+                var uploadResult = await cloudinary.UploadAsync(uploadParams);
+                if (uploadResult.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    user.AvatarUrl = uploadResult.SecureUrl.ToString();
+                    await _userManager.UpdateAsync(user);
+                    return Json(new { success = true, avatarUrl = user.AvatarUrl, message = "Cập nhật ảnh đại diện lên Cloudinary thành công!" });
+                }
+                else
+                {
+                    return Json(new { success = false, message = $"Lỗi tải lên Cloudinary: {uploadResult.Error?.Message}" });
+                }
+            }
         }
     }
 }

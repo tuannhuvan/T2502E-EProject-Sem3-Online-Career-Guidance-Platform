@@ -51,7 +51,7 @@
         <table class="table table-vcenter card-table align-middle" id="skills-table">
             <thead>
             <tr>
-                <th style="width: 50px;">ID</th>
+                <th style="width: 50px;">STT</th>
                 <th>Tên Kỹ năng</th>
                 <th>Phân loại</th>
                 <th>Độ khó</th>
@@ -61,13 +61,16 @@
             </tr>
             </thead>
             <tbody>
+            @{
+                int index = 1;
+            }
             @foreach (var item in Model)
             {
                 var pathCount = ViewBag.PathCounts.ContainsKey(item.Id) ? ViewBag.PathCounts[item.Id] : 0;
                 var stageCount = ViewBag.StageCounts.ContainsKey(item.Id) ? ViewBag.StageCounts[item.Id] : 0;
 
-                <tr class="skill-row" data-name="@item.Name.ToLower()" data-type="@item.SkillType.ToLower()" data-difficulty="@item.Difficulty.ToLower()">
-                    <td>@item.Id</td>
+                <tr class="skill-row" data-id="@item.Id" data-name="@item.Name.ToLower()" data-type="@item.SkillType.ToLower()" data-difficulty="@item.Difficulty.ToLower()">
+                    <td>@index</td>
                     <td>
                         <strong class="text-dark" style="font-size: 15px;">@item.Name</strong>
                         <div class="text-muted small my-1">@(item.Description?.Length > 120 ? item.Description.Substring(0, 120) + "..." : item.Description)</div>
@@ -139,6 +142,7 @@
                         </form>
                     </td>
                 </tr>
+                index++;
             }
             </tbody>
         </table>
@@ -164,11 +168,16 @@
                 // First filter all rows
                 const matchedRows = [];
                 rows.forEach(row => {
+                    const skillId = row.getAttribute('data-id') || '';
                     const name = row.getAttribute('data-name') || '';
                     const type = row.getAttribute('data-type') || '';
                     const diff = row.getAttribute('data-difficulty') || '';
 
-                    const matches = !query || name.includes(query) || type.includes(query) || diff.includes(query);
+                    const matches = !query || 
+                        skillId.includes(query) ||
+                        name.includes(query) || 
+                        type.includes(query) || 
+                        diff.includes(query);
                     if (matches) {
                         matchedRows.push(row);
                     } else {
@@ -187,9 +196,13 @@
                 const startIdx = (currentPage - 1) * pageSize;
                 const endIdx = startIdx + pageSize;
 
-                matchedRows.forEach((row, index) => {
-                    if (index >= startIdx && index < endIdx) {
+                matchedRows.forEach((row, idx) => {
+                    if (idx >= startIdx && idx < endIdx) {
                         row.style.display = '';
+                        const sttCell = row.querySelector('td:first-child');
+                        if (sttCell) {
+                            sttCell.innerText = idx + 1;
+                        }
                     } else {
                         row.style.display = 'none';
                     }

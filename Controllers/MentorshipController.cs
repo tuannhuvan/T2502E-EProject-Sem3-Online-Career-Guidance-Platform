@@ -585,6 +585,10 @@ namespace Career_Guidance_Platform.Controllers
                 return RedirectToAction("Index");
             }
 
+            var user = await _userManager.FindByIdAsync(userIdValue);
+            ViewBag.UserEmail = user?.Email;
+            ViewBag.UserPhone = user?.PhoneNumber;
+
             return View("~/Views/Mentorship/Apply.cshtml");
         }
 
@@ -592,7 +596,7 @@ namespace Career_Guidance_Platform.Controllers
         [HttpPost("/Mentor/Apply")]
         [HttpPost("/Mentorship/Apply")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Apply(string jobTitle, string company, string specialization, string biography, string? linkedInUrl, string experienceDescription, string expertise)
+        public async Task<IActionResult> Apply(string jobTitle, string company, string specialization, string biography, string? linkedInUrl, string experienceDescription, string expertise, string phoneNumber, string email)
         {
             var userIdValue = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userIdValue))
@@ -606,10 +610,45 @@ namespace Career_Guidance_Platform.Controllers
                 return RedirectToAction("Index");
             }
 
-            if (string.IsNullOrWhiteSpace(jobTitle) || string.IsNullOrWhiteSpace(company) || string.IsNullOrWhiteSpace(specialization) || string.IsNullOrWhiteSpace(biography) || string.IsNullOrWhiteSpace(experienceDescription) || string.IsNullOrWhiteSpace(expertise))
+            if (string.IsNullOrWhiteSpace(jobTitle) || string.IsNullOrWhiteSpace(company) || string.IsNullOrWhiteSpace(specialization) || string.IsNullOrWhiteSpace(biography) || string.IsNullOrWhiteSpace(experienceDescription) || string.IsNullOrWhiteSpace(expertise) || string.IsNullOrWhiteSpace(phoneNumber) || string.IsNullOrWhiteSpace(email))
             {
-                ModelState.AddModelError("", "Vui lòng điền đầy đủ các thông tin bắt buộc.");
+                ModelState.AddModelError("", "Vui lòng điền đầy đủ các thông tin bắt buộc bao gồm Số điện thoại và Email.");
                 return View("~/Views/Mentorship/Apply.cshtml");
+            }
+
+            // Update user properties
+            var user = await _userManager.FindByIdAsync(userIdValue);
+            if (user != null)
+            {
+                user.PhoneNumber = phoneNumber;
+                
+                if (!string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase))
+                {
+                    var existingUserByEmail = await _userManager.FindByEmailAsync(email);
+                    if (existingUserByEmail != null && existingUserByEmail.Id != user.Id)
+                    {
+                        ModelState.AddModelError("", "Email này đã được sử dụng bởi một tài khoản khác.");
+                        ViewBag.UserEmail = email;
+                        ViewBag.UserPhone = phoneNumber;
+                        return View("~/Views/Mentorship/Apply.cshtml");
+                    }
+                    user.Email = email;
+                    user.NormalizedEmail = email.ToUpper();
+                    user.UserName = email;
+                    user.NormalizedUserName = email.ToUpper();
+                }
+                
+                var updateResult = await _userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    foreach (var error in updateResult.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                    }
+                    ViewBag.UserEmail = email;
+                    ViewBag.UserPhone = phoneNumber;
+                    return View("~/Views/Mentorship/Apply.cshtml");
+                }
             }
 
             var profile = new MentorProfile
