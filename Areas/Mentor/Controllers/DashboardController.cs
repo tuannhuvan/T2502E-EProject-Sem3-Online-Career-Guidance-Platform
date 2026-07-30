@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Career_Guidance_Platform.Models;
 using Career_Guidance_Platform.Data;
+using OfficeOpenXml;
+using System.IO;
 
 namespace Career_Guidance_Platform.Areas.Mentor.Controllers
 {
@@ -198,6 +200,86 @@ namespace Career_Guidance_Platform.Areas.Mentor.Controllers
 
             TempData["DashboardSuccess"] = "Đã đánh dấu buổi tư vấn là Vắng mặt (học viên không tham gia).";
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReplyReview(int reviewId, string replyComment)
+        {
+            var userIdValue = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdValue)) return Json(new { success = false, message = "Bạn cần đăng nhập." });
+            var userId = int.Parse(userIdValue);
+
+            var review = await _context.MentorReviews.FindAsync(reviewId);
+            if (review == null || review.MentorId != userId)
+            {
+                return Json(new { success = false, message = "Không tìm thấy đánh giá hợp lệ." });
+            }
+
+            review.ReplyComment = replyComment ?? string.Empty;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Phản hồi đánh giá thành công!" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel()
+        {
+            var userIdValue = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdValue)) return Challenge();
+            var userId = int.Parse(userIdValue);
+
+            var meetings = await _context.MentorshipMeetings
+                .Include(mm => mm.Mentee)
+                .Where(mm => mm.MentorId == userId)
+                .OrderByDescending(mm => mm.ScheduledTime)
+                .ToListAsync();
+
+            OfficeOpenXml.ExcelPackage.License.SetNonCommercialPersonal("Tuan");
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Lịch hẹn tư vấn");
+
+                worksheet.Cells[1, 1].Value = "ID Cuộc hẹn";
+                worksheet.Cells[1, 2].Value = "Chủ đề";
+                worksheet.Cells[1, 3].Value = "Mô tả";
+                worksheet.Cells[1, 4].Value = "Học viên";
+                worksheet.Cells[1, 5].Value = "Email Học viên";
+                worksheet.Cells[1, 6].Value = "SĐT Học viên";
+                worksheet.Cells[1, 7].Value = "Thời gian hẹn";
+                worksheet.Cells[1, 8].Value = "Trạng thái";
+                worksheet.Cells[1, 9].Value = "Ngày tạo";
+
+                using (var range = worksheet.Cells[1, 1, 1, 9])
+                {
+                    range.Style.Font.Bold = true;
+                    range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
+                }
+
+                int row = 2;
+                foreach (var m in meetings)
+                {
+                    worksheet.Cells[row, 1].Value = m.Id;
+                    worksheet.Cells[row, 2].Value = m.Title;
+                    worksheet.Cells[row, 3].Value = m.Description;
+                    worksheet.Cells[row, 4].Value = m.Mentee?.FullName;
+                    worksheet.Cells[row, 5].Value = m.Mentee?.Email;
+                    worksheet.Cells[row, 6].Value = m.Mentee?.PhoneNumber;
+                    worksheet.Cells[row, 7].Value = m.ScheduledTime.ToString("dd/MM/yyyy HH:mm");
+                    worksheet.Cells[row, 8].Value = m.Status;
+                    worksheet.Cells[row, 9].Value = m.CreatedAt.ToString("dd/MM/yyyy");
+                    row++;
+                }
+
+                worksheet.Cells.AutoFitColumns();
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+                string excelName = $"LichHen_TuVan_Mentor_{userId}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+                return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
+            }
         }
     }
 }
