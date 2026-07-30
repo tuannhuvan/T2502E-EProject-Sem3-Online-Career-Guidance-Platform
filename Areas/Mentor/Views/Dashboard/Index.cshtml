@@ -1,0 +1,697 @@
+@model Career_Guidance_Platform.Models.MentorProfile
+@{
+    ViewData["Title"] = "Bảng điều khiển Cố vấn";
+    var requests = ViewBag.Requests as IEnumerable<Career_Guidance_Platform.Models.MentorshipRequest>;
+    var meetings = ViewBag.Meetings as IEnumerable<Career_Guidance_Platform.Models.MentorshipMeeting> ?? new List<Career_Guidance_Platform.Models.MentorshipMeeting>();
+    var reviews = ViewBag.Reviews as IEnumerable<Career_Guidance_Platform.Models.MentorReview> ?? new List<Career_Guidance_Platform.Models.MentorReview>();
+
+    // Calculate statistics
+    var totalMeetings = meetings.Count();
+    var completedMeetings = meetings.Count(m => m.Status == "Completed");
+    var scheduledMeetings = meetings.Count(m => m.Status == "Scheduled");
+    var noShowMeetings = meetings.Count(m => m.Status == "NoShow");
+    var expiredMeetings = meetings.Count(m => m.Status == "Expired");
+    
+    var totalRequests = requests?.Count() ?? 0;
+    var pendingRequests = requests?.Count(r => r.Status == "Pending") ?? 0;
+    var approvedRequests = requests?.Count(r => r.Status == "Approved") ?? 0;
+
+    double avgRating = reviews.Any() ? reviews.Average(r => r.Rating) : 5.0;
+    
+    // Completion rate percentage
+    double completionRate = totalMeetings > 0 ? Math.Round((double)completedMeetings / totalMeetings * 100, 1) : 100.0;
+}
+
+<!-- Custom Styles for Dashboard page -->
+@section Styles {
+    <style>
+        /* Card & Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+        }
+
+        .stat-card {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
+
+        .stat-details h3 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 8px;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .stat-icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-blue { background-color: #e0f2fe; color: #0284c7; }
+        .stat-green { background-color: #dcfce7; color: #15803d; }
+        .stat-purple { background-color: #f3e8ff; color: #7c3aed; }
+        .stat-yellow { background-color: #fef3c7; color: #d97706; }
+
+        /* Sections Grid */
+        .dashboard-section {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Filter Tab Styles */
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .filter-tab {
+            background-color: #f1f5f9;
+            color: var(--text-secondary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .filter-tab:hover {
+            background-color: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .filter-tab.active {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+
+        /* Table Design */
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14.5px;
+        }
+
+        .custom-table th {
+            padding: 16px;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .custom-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .custom-table tbody tr {
+            transition: all 0.2s;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Badge Styles */
+        .status-badge {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .badge-scheduled { background-color: #e0f2fe; color: #0369a1; }
+        .badge-completed { background-color: #dcfce7; color: #15803d; }
+        .badge-noshow { background-color: #fee2e2; color: #991b1b; }
+        .badge-expired { background-color: #f1f5f9; color: #64748b; }
+        .badge-pending { background-color: #fef3c7; color: #d97706; }
+
+        /* Action Buttons */
+        .btn-action {
+            padding: 8px 14px;
+            font-weight: 700;
+            font-size: 13px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-success { background-color: #10b981; color: #ffffff; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-outline-danger { background-color: transparent; color: #ef4444; border: 1px solid #ef4444; }
+        .btn-outline-danger:hover { background-color: #fef2f2; }
+        .btn-primary-sm { background-color: var(--primary); color: #ffffff; }
+        .btn-primary-sm:hover { background-color: var(--primary-hover); }
+
+        /* Requests list */
+        .request-item {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .request-item:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .request-user-info h4 {
+            margin: 0 0 4px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .request-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .request-message {
+            margin: 0;
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        /* Review Grid */
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .review-card {
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .review-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .review-author {
+            font-weight: 700;
+            font-size: 14.5px;
+        }
+
+        .review-date {
+            font-size: 11.5px;
+            color: var(--text-secondary);
+        }
+
+        .stars-box {
+            color: #fbbf24;
+            display: flex;
+            gap: 2px;
+        }
+
+        .review-comment {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0;
+            font-style: italic;
+        }
+    </style>
+}
+
+<!-- Overview Statistics section -->
+<section id="overview" class="stats-grid">
+    <!-- Stat 1: Completed Sessions -->
+    <div class="stat-card">
+        <div class="stat-details">
+            <h3>Buổi tư vấn hoàn thành</h3>
+            <p class="stat-number">@completedMeetings</p>
+            <div style="font-size: 12px; color: #10b981; font-weight: 600; margin-top: 6px;">
+                Tỷ lệ hoàn thành: @completionRate%
+            </div>
+        </div>
+        <div class="stat-icon-box stat-green">
+            <i class="bi bi-calendar-check-fill"></i>
+        </div>
+    </div>
+
+    <!-- Stat 2: Scheduled Sessions -->
+    <div class="stat-card">
+        <div class="stat-details">
+            <h3>Buổi hẹn đã lên lịch</h3>
+            <p class="stat-number">@scheduledMeetings</p>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
+                Đang chờ thực hiện
+            </div>
+        </div>
+        <div class="stat-icon-box stat-blue">
+            <i class="bi bi-clock-fill"></i>
+        </div>
+    </div>
+
+    <!-- Stat 3: Connection Requests -->
+    <div class="stat-card">
+        <div class="stat-details">
+            <h3>Yêu cầu kết nối</h3>
+            <p class="stat-number">@pendingRequests</p>
+            <div style="font-size: 12px; color: #d97706; font-weight: 600; margin-top: 6px;">
+                Đang chờ phê duyệt
+            </div>
+        </div>
+        <div class="stat-icon-box stat-yellow">
+            <i class="bi bi-person-plus-fill"></i>
+        </div>
+    </div>
+
+    <!-- Stat 4: Average Rating -->
+    <div class="stat-card">
+        <div class="stat-details">
+            <h3>Đánh giá trung bình</h3>
+            <p class="stat-number">@avgRating.ToString("F1") <span style="font-size: 18px; color: #fbbf24;">★</span></p>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
+                Từ @reviews.Count() nhận xét
+            </div>
+        </div>
+        <div class="stat-icon-box stat-purple">
+            <i class="bi bi-star-fill"></i>
+        </div>
+    </div>
+</section>
+
+<!-- Alerts Block -->
+@if (TempData["DashboardSuccess"] != null)
+{
+    <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 16px; border-radius: 12px; font-weight: 600; font-size: 14.5px;">
+        🎉 @TempData["DashboardSuccess"]
+    </div>
+}
+
+@if (TempData["MessageWarning"] != null)
+{
+    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; padding: 16px; border-radius: 12px; font-weight: 600; font-size: 14.5px;">
+        ⚠️ @TempData["MessageWarning"]
+    </div>
+}
+
+<!-- Meetings Section with Interactive Filter Tabs -->
+<section id="meetings" class="dashboard-section">
+    <div class="section-header">
+        <h3 class="section-title">
+            <i class="bi bi-calendar-event-fill" style="color: var(--primary);"></i>
+            Lịch hẹn tư vấn
+        </h3>
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">Tất cả (@totalMeetings)</button>
+            <button class="filter-tab" data-filter="Scheduled">Đã lên lịch (@scheduledMeetings)</button>
+            <button class="filter-tab" data-filter="Completed">Hoàn thành (@completedMeetings)</button>
+            <button class="filter-tab" data-filter="NoShow">Vắng mặt (@noShowMeetings)</button>
+            <button class="filter-tab" data-filter="Expired">Quá hạn (@expiredMeetings)</button>
+        </div>
+    </div>
+
+    @if (meetings != null && meetings.Any())
+    {
+        <div class="table-responsive">
+            <table class="custom-table" id="meetingsTable">
+                <thead>
+                    <tr>
+                        <th>Trạng thái</th>
+                        <th>Chủ đề</th>
+                        <th>Học viên</th>
+                        <th>Thời gian</th>
+                        <th>Phòng họp</th>
+                        <th style="text-align: right;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var meeting in meetings)
+                    {
+                        <tr class="meeting-row" data-status="@meeting.Status">
+                            <td>
+                                @if (meeting.Status == "Scheduled")
+                                {
+                                    <span class="status-badge badge-scheduled">Đã lên lịch</span>
+                                }
+                                else if (meeting.Status == "Completed")
+                                {
+                                    <span class="status-badge badge-completed">Hoàn thành</span>
+                                }
+                                else if (meeting.Status == "NoShow")
+                                {
+                                    <span class="status-badge badge-noshow">Vắng mặt</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge badge-expired">Quá hạn</span>
+                                }
+                            </td>
+                            <td>
+                                <strong style="color: var(--text-main); font-weight: 700;">@meeting.Title</strong>
+                                @if (!string.IsNullOrEmpty(meeting.Description))
+                                {
+                                    <span style="display: block; font-size: 12.5px; color: var(--text-secondary); margin-top: 4px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@meeting.Description">
+                                        @meeting.Description
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div style="font-weight: 600;">@meeting.Mentee?.FullName</div>
+                                <div style="font-size: 11.5px; color: var(--text-secondary);">@meeting.Mentee?.Email</div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: #1e293b;">@meeting.ScheduledTime.ToString("dd/MM/yyyy HH:mm")</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+                                    Tạo ngày @meeting.CreatedAt.ToString("dd/MM/yyyy")
+                                </div>
+                            </td>
+                            <td>
+                                @if (meeting.Status == "Scheduled")
+                                {
+                                    <a href="@meeting.MeetingUrl" target="_blank" class="btn-action btn-primary-sm" style="text-decoration: none; padding: 6px 12px; font-size: 12px;">
+                                        <i class="bi bi-camera-video-fill"></i> Vào phòng
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span style="font-size: 13px; color: var(--text-secondary);">N/A</span>
+                                }
+                            </td>
+                            <td style="text-align: right;">
+                                @if (meeting.Status == "Scheduled")
+                                {
+                                    <div style="display: inline-flex; gap: 8px; justify-content: flex-end;">
+                                        <form asp-area="Mentor" asp-controller="Dashboard" asp-action="CompleteMeeting" method="post" class="ajax-form" style="margin: 0;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="meetingId" value="@meeting.Id" />
+                                            <button type="submit" class="btn-action btn-success">
+                                                <i class="bi bi-check-circle-fill"></i> Hoàn thành
+                                            </button>
+                                        </form>
+                                        @if (meeting.ScheduledTime <= DateTime.Now)
+                                        {
+                                            <form asp-area="Mentor" asp-controller="Dashboard" asp-action="MarkNoShow" method="post" class="ajax-form" style="margin: 0;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="meetingId" value="@meeting.Id" />
+                                                <button type="submit" class="btn-action btn-outline-danger">
+                                                    <i class="bi bi-x-circle-fill"></i> Vắng mặt
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-secondary); font-size: 13.5px; font-style: italic;">Đã đóng giao dịch</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            <i class="bi bi-inbox" style="font-size: 40px; display: block; margin-bottom: 12px; opacity: 0.5;"></i>
+            <p style="font-style: italic; margin: 0; font-size: 14.5px;">Chưa có lịch hẹn tư vấn nào.</p>
+        </div>
+    }
+</section>
+
+<!-- Connection Requests Section -->
+<section id="requests" class="dashboard-section">
+    <div class="section-header">
+        <h3 class="section-title">
+            <i class="bi bi-people-fill" style="color: #d97706;"></i>
+            Yêu cầu kết nối từ Học viên
+        </h3>
+    </div>
+
+    @if (requests != null && requests.Any())
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;">
+            @foreach (var req in requests)
+            {
+                <div class="request-item">
+                    <div class="request-header">
+                        <div class="request-user-info">
+                            <h4>@req.Mentee?.FullName</h4>
+                            <span class="request-date">Gửi lúc @req.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <div>
+                            @if (req.Status == "Pending")
+                            {
+                                <span class="status-badge badge-pending">Chờ duyệt</span>
+                            }
+                            else if (req.Status == "Approved")
+                            {
+                                <span class="status-badge badge-completed">Đã kết nối</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge badge-noshow">@req.Status</span>
+                            }
+                        </div>
+                    </div>
+                    
+                    <p class="request-message">"@req.Message"</p>
+                    
+                    @if (req.Status == "Pending")
+                    {
+                        <div class="request-actions">
+                            <form asp-area="Mentor" asp-controller="Dashboard" asp-action="HandleRequest" method="post" class="ajax-form" style="margin: 0;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="requestId" value="@req.Id" />
+                                <input type="hidden" name="status" value="Approved" />
+                                <button type="submit" class="btn-action btn-success">Phê duyệt</button>
+                            </form>
+                            <form asp-area="Mentor" asp-controller="Dashboard" asp-action="HandleRequest" method="post" class="ajax-form" style="margin: 0;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="requestId" value="@req.Id" />
+                                <input type="hidden" name="status" value="Rejected" />
+                                <button type="submit" class="btn-action btn-outline-danger">Từ chối</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            <i class="bi bi-envelope-open" style="font-size: 40px; display: block; margin-bottom: 12px; opacity: 0.5;"></i>
+            <p style="font-style: italic; margin: 0; font-size: 14.5px;">Chưa có yêu cầu kết nối nào đang chờ duyệt.</p>
+        </div>
+    }
+</section>
+
+<!-- Student Reviews Section -->
+<section id="reviews" class="dashboard-section">
+    <div class="section-header">
+        <h3 class="section-title">
+            <i class="bi bi-star-fill" style="color: #fbbf24;"></i>
+            Đánh giá từ Học viên
+        </h3>
+    </div>
+
+    @if (reviews != null && reviews.Any())
+    {
+        <div class="reviews-grid">
+            @foreach (var review in reviews)
+            {
+                <div class="review-card">
+                    <div class="review-header">
+                        <div>
+                            <div class="review-author">@review.Mentee?.FullName</div>
+                            <span class="review-date">@review.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="stars-box" title="@review.Rating/5 Sao">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= review.Rating)
+                                {
+                                    <i class="bi bi-star-fill"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star"></i>
+                                }
+                            }
+                        </div>
+                    </div>
+                    <p class="review-comment">"@review.Comment"</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            <i class="bi bi-chat-left-text" style="font-size: 40px; display: block; margin-bottom: 12px; opacity: 0.5;"></i>
+            <p style="font-style: italic; margin: 0; font-size: 14.5px;">Chưa nhận được đánh giá nào.</p>
+        </div>
+    }
+</section>
+
+<!-- Interactive client-side scripts -->
+@section Scripts {
+    <script>
+        // Client-side filtering for Meetings Table
+        document.addEventListener("DOMContentLoaded", function() {
+            const filterTabs = document.querySelectorAll(".filter-tab");
+            const meetingRows = document.querySelectorAll(".meeting-row");
+
+            filterTabs.forEach(tab => {
+                tab.addEventListener("click", function() {
+                    // Toggle active class on tabs
+                    filterTabs.forEach(t => t.classList.remove("active"));
+                    this.classList.add("active");
+
+                    const filterValue = this.getAttribute("data-filter");
+
+                    meetingRows.forEach(row => {
+                        const status = row.getAttribute("data-status");
+                        if (filterValue === "all" || status === filterValue) {
+                            row.style.display = "";
+                        } else {
+                            row.style.display = "none";
+                        }
+                    });
+                });
+            });
+
+            // AJAX Form Submissions handler (keeps page synchronized automatically)
+            document.querySelectorAll("form.ajax-form").forEach(function(form) {
+                form.addEventListener("submit", function(e) {
+                    e.preventDefault();
+                    const submitBtn = form.querySelector("button[type=submit]");
+                    const originalText = submitBtn ? submitBtn.innerHTML : null;
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = "<span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span> Đang xử lý...";
+                    }
+
+                    fetch(form.action, {
+                        method: "POST",
+                        body: new FormData(form),
+                        credentials: "same-origin"
+                    })
+                    .then(function(response) {
+                        if (response.ok) {
+                            // Redirect to response destination (Index dashboard view) to show fresh state with notification messages
+                            window.location.href = response.url;
+                        } else {
+                            throw new Error("API error");
+                        }
+                    })
+                    .catch(function() {
+                        alert("Có lỗi xảy ra trong quá trình xử lý. Vui lòng tải lại trang và thử lại.");
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

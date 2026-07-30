@@ -13,14 +13,14 @@
         <h3 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 8px;">Thông tin Hồ sơ Cố vấn</h3>
         <p style="color: #64748b; font-size: 13.5px; margin-bottom: 25px; line-height: 1.5;">Vui lòng cung cấp chi tiết về kinh nghiệm và chuyên môn của bạn để ban quản trị kiểm duyệt hồ sơ đăng ký.</p>
 
-        @if (!ViewData.ModelState.IsValid)
-        {
-            <div class="alert alert-danger" style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; padding: 15px; color: #991b1b; font-size: 13.5px; margin-bottom: 25px;">
+        <div id="applyFormErrorBox" class="alert alert-danger" style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; padding: 15px; color: #991b1b; font-size: 13.5px; margin-bottom: 25px; display: @(ViewData.ModelState.IsValid ? "none" : "block");">
+            @if (!ViewData.ModelState.IsValid)
+            {
                 <div asp-validation-summary="All" class="text-danger"></div>
-            </div>
-        }
+            }
+        </div>
 
-        <form asp-controller="Mentorship" asp-action="Apply" method="post" style="display: flex; flex-direction: column; gap: 20px;">
+        <form asp-controller="Mentorship" asp-action="Apply" method="post" id="applyMentorForm" style="display: flex; flex-direction: column; gap: 20px;">
             @Html.AntiForgeryToken()
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -72,8 +72,73 @@
 
             <div style="border-top: 1px solid #e2e8f0; padding-top: 25px; margin-top: 10px; display: flex; justify-content: flex-end; gap: 12px;">
                 <a href="/Mentorship" class="btn secondary-btn" style="height: 42px; display: flex; align-items: center; justify-content: center; font-size: 13.5px; text-decoration: none; padding: 0 20px; border-radius: 12px;">Hủy bỏ</a>
-                <button type="submit" class="btn primary-btn" style="height: 42px; font-size: 13.5px; padding: 0 24px; border-radius: 12px; font-weight: 700;">Gửi đăng ký</button>
+                <button type="submit" id="applySubmitBtn" class="btn primary-btn" style="height: 42px; font-size: 13.5px; padding: 0 24px; border-radius: 12px; font-weight: 700;">Gửi đăng ký</button>
             </div>
         </form>
     </div>
 </section>
+
+<script>
+    // 1) Chặn double-submit: disable nút ngay khi bấm để tránh gửi trùng hồ sơ đăng ký Mentor.
+    // 2) Xử lý lỗi thông minh: nếu server trả về lỗi (ví dụ trùng email) thì KHÔNG điều hướng đi nơi khác,
+    //    giữ nguyên toàn bộ dữ liệu học viên đã nhập trên form (vì trang không bị reload) và chỉ hiển thị lại thông báo lỗi tại chỗ.
+    document.addEventListener("DOMContentLoaded", function () {
+        var form = document.getElementById("applyMentorForm");
+        if (!form) return;
+
+        var submitBtn = document.getElementById("applySubmitBtn");
+        var errorBox = document.getElementById("applyFormErrorBox");
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            if (submitBtn.disabled) return; // Chặn click đúp khi request trước chưa xử lý xong
+            var originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = "Đang gửi đăng ký...";
+
+            fetch(form.action, {
+                method: "POST",
+                body: new FormData(form),
+                credentials: "same-origin"
+            })
+            .then(function (response) {
+                if (response.redirected) {
+                    // Thành công -> server đã RedirectToAction("Index"), điều hướng sang trang đích
+                    window.location.href = response.url;
+                    return null;
+                }
+                // Không có redirect nghĩa là ModelState lỗi (server trả lại View kèm lỗi, ví dụ email đã tồn tại)
+                // => KHÔNG điều hướng đi nơi khác để giữ nguyên toàn bộ dữ liệu học viên đã nhập trên form.
+                return response.text();
+            })
+            .then(function (html) {
+                if (html === null || html === undefined) return; // đã xử lý redirect thành công ở trên
+
+                // Trích thông báo lỗi từ HTML server trả về và hiển thị ngay tại chỗ, không reload trang nen không mất dữ liệu đã nhập
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(html, "text/html");
+                var serverErrorBox = doc.querySelector("#applyFormErrorBox") || doc.querySelector(".alert-danger");
+                var messages = serverErrorBox && serverErrorBox.innerText.trim()
+                    ? serverErrorBox.innerText.trim()
+                    : "Có lỗi xảy ra, vui lòng kiểm tra lại thông tin đã nhập.";
+
+                if (errorBox) {
+                    errorBox.style.display = "block";
+                    errorBox.innerText = messages;
+                    errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+                } else {
+                    alert(messages);
+                }
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            })
+            .catch(function () {
+                alert("Không thể kết nối tới máy chủ, vui lòng thử lại.");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    });
+</script>

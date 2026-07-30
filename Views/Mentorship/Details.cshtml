@@ -207,7 +207,7 @@
                         <h4 style="font-size: 16px; color: #0f172a; margin-top: 0; margin-bottom: 12px; font-weight: 700; border-top: 1px solid #f1f5f9; padding-top: 20px;">Gửi yêu cầu kết nối</h4>
                         <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 15px;">Bạn cần được cố vấn phê duyệt kết nối học tập trước khi có thể đặt lịch hẹn tư vấn 1-1.</p>
                         
-                        <form asp-controller="Mentorship" asp-action="RequestMentorship" method="post">
+                        <form asp-controller="Mentorship" asp-action="RequestMentorship" method="post" class="ajax-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="mentorId" value="@Model.UserId" />
                             <textarea name="message" required placeholder="Nhập mục tiêu học tập, dự án bạn muốn nhận định hướng..." style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13.5px; min-height: 80px; margin-bottom: 15px; resize: vertical;"></textarea>
@@ -259,7 +259,7 @@
                         {
                             <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 15px;">Hãy điền các thông tin hẹn lịch tư vấn 1-1 bên dưới:</p>
                             
-                            <form asp-controller="Mentorship" asp-action="BookMentor" method="post">
+                            <form asp-controller="Mentorship" asp-action="BookMentor" method="post" class="ajax-form">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="mentorId" value="@Model.UserId" />
 
@@ -367,3 +367,42 @@
 
     </div>
 </section>
+
+<script>
+    // Đồng bộ giao diện ngay sau khi gửi yêu cầu kết nối / đặt lịch hẹn, không cần Student tự F5 lại trang
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("form.ajax-form").forEach(function (form) {
+            form.addEventListener("submit", function (e) {
+                e.preventDefault();
+                const submitBtn = form.querySelector("button[type=submit]");
+                const originalText = submitBtn ? submitBtn.innerHTML : null;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = "Đang xử lý...";
+                }
+
+                fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    credentials: "same-origin"
+                })
+                .then(function (response) {
+                    if (response.ok) {
+                        // Các action RequestMentorship/BookMentor luôn RedirectToAction (cả khi thành công lẫn khi cảnh báo),
+                        // nên response.url chính là trang Details mới nhất kèm TempData tương ứng -> điều hướng thẳng tới đó
+                        window.location.href = response.url || window.location.href;
+                    } else {
+                        throw new Error("request failed");
+                    }
+                })
+                .catch(function () {
+                    alert("Có lỗi xảy ra, vui lòng thử lại.");
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                });
+            });
+        });
+    });
+</script>

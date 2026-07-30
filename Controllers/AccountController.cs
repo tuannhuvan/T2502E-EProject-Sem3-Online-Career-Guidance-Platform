@@ -75,7 +75,7 @@ namespace Career_Guidance_Platform.Controllers
                         }
                         if (user.Role == "Mentor" || await _userManager.IsInRoleAsync(user, "Mentor"))
                         {
-                            return RedirectToAction("Dashboard", "Mentorship");
+                            return RedirectToAction("Index", "Dashboard", new { area = "Mentor" });
                         }
                     }
 

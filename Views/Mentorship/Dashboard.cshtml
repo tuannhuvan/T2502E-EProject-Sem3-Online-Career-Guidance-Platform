@@ -33,6 +33,13 @@
         </div>
     }
 
+    @if (TempData["MessageWarning"] != null)
+    {
+        <div style="background: #fef3c7; border: 1px solid #fde68a; color: #b45309; padding: 16px; border-radius: 12px; margin-bottom: 30px; font-weight: 600;">
+            ⚠️ @TempData["MessageWarning"]
+        </div>
+    }
+
     <div style="display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 40px; align-items: start;">
         
         <!-- Left Column: Availability info & Connection Requests -->
@@ -61,13 +68,13 @@
                                 <p style="color: #64748b; font-size: 12.5px; margin: 0 0 12px; line-height: 1.5;">"@req.Message"</p>
                                 
                                 <div style="display: flex; gap: 8px;">
-                                    <form asp-controller="Mentorship" asp-action="HandleRequest" method="post" style="margin: 0;">
+                                    <form asp-controller="Mentorship" asp-action="HandleRequest" method="post" class="ajax-form" style="margin: 0;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="requestId" value="@req.Id" />
                                         <input type="hidden" name="status" value="Approved" />
                                         <button type="submit" class="btn btn-sm" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer;">Phê duyệt</button>
                                     </form>
-                                    <form asp-controller="Mentorship" asp-action="HandleRequest" method="post" style="margin: 0;">
+                                    <form asp-controller="Mentorship" asp-action="HandleRequest" method="post" class="ajax-form" style="margin: 0;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="requestId" value="@req.Id" />
                                         <input type="hidden" name="status" value="Rejected" />
@@ -121,9 +128,9 @@
                         <div class="meeting-slide" style="flex: 0 0 100%; scroll-snap-align: start; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.01); box-sizing: border-box;">
                             <div>
                                 <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; margin-bottom: 6px; display: inline-block;
-                                             background: @(meeting.Status == "Scheduled" ? "#e0f2fe" : meeting.Status == "Completed" ? "#dcfce7" : "#fee2e2");
-                                             color: @(meeting.Status == "Scheduled" ? "#0369a1" : meeting.Status == "Completed" ? "#15803d" : "#991b1b");">
-                                    @meeting.Status
+                                             background: @(meeting.Status == "Scheduled" ? "#e0f2fe" : meeting.Status == "Completed" ? "#dcfce7" : meeting.Status == "Expired" ? "#f1f5f9" : "#fee2e2");
+                                             color: @(meeting.Status == "Scheduled" ? "#0369a1" : meeting.Status == "Completed" ? "#15803d" : meeting.Status == "Expired" ? "#64748b" : "#991b1b");">
+                                    @(meeting.Status == "Expired" ? "Quá hạn" : meeting.Status == "NoShow" ? "Vắng mặt" : meeting.Status)
                                 </span>
                                 <h4 style="font-size: 16px; color: #0f172a; margin: 4px 0 6px; font-weight: 800; line-height: 1.4;">@meeting.Title</h4>
                                 <div style="font-size: 13.5px; color: #475569; margin-bottom: 4px;">Học viên: <strong>@meeting.Mentee?.FullName</strong></div>
@@ -138,13 +145,25 @@
                             <div>
                                 @if (meeting.Status == "Scheduled")
                                 {
-                                    <form asp-controller="Mentorship" asp-action="CompleteMeeting" method="post" style="margin: 0;">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="meetingId" value="@meeting.Id" />
-                                        <button type="submit" class="btn" style="background: #10b981; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap;">
-                                            Hoàn thành
-                                        </button>
-                                    </form>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <form asp-controller="Mentorship" asp-action="CompleteMeeting" method="post" class="ajax-form" style="margin: 0;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="meetingId" value="@meeting.Id" />
+                                            <button type="submit" class="btn" style="background: #10b981; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; width: 100%;">
+                                                Hoàn thành
+                                            </button>
+                                        </form>
+                                        @if (meeting.ScheduledTime <= DateTime.Now)
+                                        {
+                                            <form asp-controller="Mentorship" asp-action="MarkNoShow" method="post" class="ajax-form" style="margin: 0;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="meetingId" value="@meeting.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" style="padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 12.5px; cursor: pointer; width: 100%;">
+                                                    Vắng mặt
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -224,5 +243,40 @@
                 slider.scrollBy({ left: cardWidth + 20, behavior: 'smooth' });
             });
         }
+    });
+</script>
+
+<script>
+    // Đồng bộ dữ liệu ngay sau khi gửi/duyệt yêu cầu, không cần người dùng tự F5 lại trang
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("form.ajax-form").forEach(function (form) {
+            form.addEventListener("submit", function (e) {
+                e.preventDefault();
+                const submitBtn = form.querySelector("button[type=submit]");
+                const originalText = submitBtn ? submitBtn.innerHTML : null;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = "Đang xử lý...";
+                }
+
+                fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    credentials: "same-origin"
+                })
+                .then(function (response) {
+                    // Ép buộc trình duyệt tải lại toàn bộ trang theo response.url (sau RedirectToAction)
+                    // để đảm bảo TempData["MessageWarning"]/TempData["DashboardSuccess"] được hiển thị đầy đủ trên giao diện mới
+                    window.location.href = response.url;
+                })
+                .catch(function () {
+                    alert("Có lỗi xảy ra, vui lòng thử lại.");
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                });
+            });
+        });
     });
 </script>
