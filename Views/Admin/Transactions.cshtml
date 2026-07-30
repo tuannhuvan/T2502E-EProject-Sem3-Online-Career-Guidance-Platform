@@ -77,6 +77,7 @@
                     <th>Số tiền</th>
                     <th>Thời gian</th>
                     <th class="text-center">Trạng thái</th>
+                    <th class="text-center">Hành động</th>
                 </tr>
             </thead>
             <tbody>
@@ -119,6 +120,19 @@
                                     <span class="badge bg-danger-lt"><i class="ti ti-x me-1"></i>Thất bại</span>
                                 }
                             </td>
+                            <td class="text-center">
+                                <button class="btn btn-icon btn-sm btn-outline-info view-payment-btn"
+                                        data-stt="@index"
+                                        data-fullname="@payment.User?.FullName"
+                                        data-email="@payment.User?.Email"
+                                        data-paypal="@payment.PaypalOrderId"
+                                        data-amount="$@payment.Amount.ToString("0.00") @payment.Currency"
+                                        data-date="@payment.CreatedAt.ToString("dd/MM/yyyy HH:mm")"
+                                        data-status="@payment.PaymentStatus"
+                                        title="Chi tiết giao dịch">
+                                    <i class="ti ti-eye"></i>
+                                </button>
+                            </td>
                         </tr>
                         index++;
                     }
@@ -126,9 +140,16 @@
                 else
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">
+                        <td colspan="7" class="text-center text-muted py-4">
                             <i class="ti ti-database-off" style="font-size: 28px; display: block; margin-bottom: 8px;"></i>
-                            Không có dữ liệu giao dịch nào khớp với bộ lọc.
+                            @if (ViewBag.SelectedMonth != null)
+                            {
+                                <span>Không có giao dịch trong tháng @ViewBag.SelectedMonth</span>
+                            }
+                            else
+                            {
+                                <span>Không có dữ liệu giao dịch nào khớp với bộ lọc.</span>
+                            }
                         </td>
                     </tr>
                 }
@@ -236,10 +257,83 @@
                         });
                     }
                     paginationUl.appendChild(nextLi);
-                }
             }
 
             paginate();
+
+            // Bind view detail popups
+            const tableBody = document.querySelector('.table tbody');
+            if (tableBody) {
+                tableBody.addEventListener('click', function(e) {
+                    const btn = e.target.closest('.view-payment-btn');
+                    if (btn) {
+                        const name = btn.getAttribute('data-fullname') || 'N/A';
+                        const email = btn.getAttribute('data-email') || '';
+                        const paypalId = btn.getAttribute('data-paypal') || 'N/A';
+                        const amount = btn.getAttribute('data-amount') || '';
+                        const date = btn.getAttribute('data-date') || '';
+                        const status = btn.getAttribute('data-status') || '';
+
+                        document.getElementById('txCustomerName').innerText = name;
+                        document.getElementById('txCustomerEmail').innerText = email;
+                        document.getElementById('txPaypalOrderId').innerText = 'PayPal Order ID: ' + paypalId;
+                        document.getElementById('txAmount').innerText = amount;
+                        document.getElementById('txDate').innerText = date;
+
+                        const avatar = document.getElementById('txAvatar');
+                        avatar.innerText = name ? name.charAt(0).toUpperCase() : 'P';
+
+                        const badge = document.getElementById('txStatusBadge');
+                        badge.innerText = status === 'Completed' ? 'Thành công' : (status === 'Pending' ? 'Đang xử lý' : 'Thất bại');
+                        badge.className = 'badge ' + (status === 'Completed' ? 'bg-success-lt' : (status === 'Pending' ? 'bg-warning-lt' : 'bg-danger-lt'));
+
+                        const myModal = new bootstrap.Modal(document.getElementById('transactionDetailsModal'));
+                        myModal.show();
+                    }
+                });
+            }
         });
     </script>
 }
+
+<!-- Modal Chi Tiết Giao Dịch -->
+<div class="modal modal-blur fade" id="transactionDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-credit-card me-2 text-primary"></i>Chi tiết lịch sử giao dịch PayPal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-start">
+                <div class="bg-primary-lt p-3 rounded mb-3 text-center">
+                    <span class="avatar avatar-md bg-primary text-white mb-2" id="txAvatar" style="font-size: 20px; font-weight: 700;">P</span>
+                    <h3 class="m-0 font-weight-bold" id="txAmount" style="color: #1a73e8;"></h3>
+                    <small class="text-muted" id="txPaypalOrderId"></small>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label text-muted mb-1">Khách hàng</label>
+                        <div class="font-weight-medium text-dark" id="txCustomerName"></div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label text-muted mb-1">Email liên hệ</label>
+                        <div class="font-weight-medium text-dark" id="txCustomerEmail"></div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-muted mb-1">Thời gian thanh toán</label>
+                        <div class="font-weight-medium text-dark" id="txDate"></div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-muted mb-1">Trạng thái giao dịch</label>
+                        <div>
+                            <span id="txStatusBadge" class="badge"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>

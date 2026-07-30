@@ -170,28 +170,40 @@
             const monthlyLabels = @Html.Raw(Json.Serialize(ViewBag.MonthlyLabels ?? new List<string>()));
             const monthlyValues = @Html.Raw(Json.Serialize(ViewBag.MonthlyValues ?? new List<decimal>()));
             
-            new Chart(ctxTrend, {
+            const myChart = new Chart(ctxTrend, {
                 type: 'line',
                 data: {
                     labels: monthlyLabels,
                     datasets: [{
                         label: 'Doanh thu ($)',
                         data: monthlyValues,
-                        borderColor: '#206bc4',
-                        backgroundColor: 'rgba(32, 107, 196, 0.1)',
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.08)',
                         fill: true,
                         tension: 0.35,
-                        borderWidth: 2,
-                        pointBackgroundColor: '#206bc4',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#0d6efd',
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7
+                        pointRadius: 6,
+                        pointHoverRadius: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    onClick: function(evt, elements) {
+                        const activePoints = myChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                        if (activePoints.length > 0) {
+                            const firstPoint = activePoints[0];
+                            const label = myChart.data.labels[firstPoint.index]; // Ví dụ: "Tháng 07" hoặc "07/2026"
+                            const match = label.match(/\d+/);
+                            if (match) {
+                                const month = match[0]; // Trích xuất chỉ số số của tháng
+                                window.location.href = `/Admin/Transactions?month=${month}`;
+                            }
+                        }
+                    },
                     plugins: {
                         legend: {
                             display: false
@@ -216,7 +228,7 @@
                                     return '$' + value;
                                 },
                                 font: {
-                                    family: 'Inter, sans-serif'
+                                    family: 'Outfit, Inter, sans-serif'
                                 }
                             }
                         },
@@ -226,7 +238,7 @@
                             },
                             ticks: {
                                 font: {
-                                    family: 'Inter, sans-serif'
+                                    family: 'Outfit, Inter, sans-serif'
                                 }
                             }
                         }
@@ -245,7 +257,7 @@
                     labels: ['Premium', 'Free'],
                     datasets: [{
                         data: [premiumCount, freeCount],
-                        backgroundColor: ['#206bc4', '#64748b'],
+                        backgroundColor: ['#198754', '#fd7e14'],
                         borderWidth: 3,
                         borderColor: '#ffffff',
                         hoverOffset: 4

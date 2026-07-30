@@ -15,10 +15,153 @@
     <link href="@("https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css")" rel="stylesheet"/>
     <link href="@("https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css")" rel="stylesheet"/>
 
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --stitch-bg: #f8fafd;
+            --stitch-card-bg: #ffffff;
+            --stitch-radius: 16px;
+            --stitch-radius-sm: 8px;
+            --stitch-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            --stitch-shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.1);
+            /* Tech Pastel Palette */
+            --stitch-pastel-blue: #e8f0fe;
+            --stitch-pastel-green: #e6f4ea;
+            --stitch-pastel-red: #fce8e6;
+            --stitch-pastel-yellow: #fef7e0;
+            --stitch-pastel-purple: #f3e8fd;
+            --stitch-text-blue: #1a73e8;
+            --stitch-text-green: #137333;
+            --stitch-text-red: #c5221f;
+            --stitch-text-yellow: #b06000;
+            --stitch-text-purple: #9c27b0;
+        }
+
+        body {
+            background-color: var(--stitch-bg) !important;
+            font-family: 'Outfit', 'Inter', -apple-system, sans-serif !important;
+        }
+
         .navbar-brand { font-weight: 800; }
         .admin-logo { font-size: 22px; }
         .table-actions { white-space: nowrap; }
+
+        /* Google Stitch 2.0 Overrides */
+        .card {
+            background-color: var(--stitch-card-bg) !important;
+            border-radius: var(--stitch-radius) !important;
+            box-shadow: var(--stitch-shadow) !important;
+            border: 1px solid rgba(0, 0, 0, 0.04) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .card:hover {
+            box-shadow: 0 12px 20px -5px rgba(0,0,0,0.08) !important;
+        }
+
+        .stitch-interactive-card {
+            transition: all 0.3s ease !important;
+            cursor: pointer;
+            text-decoration: none !important;
+        }
+
+        .stitch-interactive-card:hover {
+            transform: translateY(-4px) !important;
+            box-shadow: var(--stitch-shadow-hover) !important;
+        }
+
+        /* Modernized Stitch 2.0 Tables */
+        .table {
+            background-color: transparent !important;
+            border-collapse: separate !important;
+            border-spacing: 0 8px !important;
+        }
+
+        .table thead th {
+            background-color: transparent !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+            color: #475569 !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            font-size: 0.75rem !important;
+            letter-spacing: 0.05em !important;
+            padding: 12px 16px !important;
+        }
+
+        .table tbody tr {
+            background-color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .table tbody tr td {
+            border-top: 1px solid #f1f5f9 !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            padding: 14px 16px !important;
+        }
+
+        .table tbody tr td:first-child {
+            border-left: 1px solid #f1f5f9 !important;
+            border-top-left-radius: 12px !important;
+            border-bottom-left-radius: 12px !important;
+        }
+
+        .table tbody tr td:last-child {
+            border-right: 1px solid #f1f5f9 !important;
+            border-top-right-radius: 12px !important;
+            border-bottom-right-radius: 12px !important;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8fafc !important;
+            transform: scale(1.002);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        /* Modernized Badges */
+        .badge {
+            border-radius: 50rem !important;
+            padding: 0.4em 0.8em !important;
+            font-weight: 600 !important;
+            font-size: 0.75rem !important;
+            letter-spacing: 0.02em !important;
+            text-transform: capitalize !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border: none !important;
+        }
+
+        .badge.bg-success-lt, .badge.bg-green-lt {
+            background-color: var(--stitch-pastel-green) !important;
+            color: var(--stitch-text-green) !important;
+        }
+
+        .badge.bg-warning-lt, .badge.bg-yellow-lt {
+            background-color: var(--stitch-pastel-yellow) !important;
+            color: var(--stitch-text-yellow) !important;
+        }
+
+        .badge.bg-danger-lt, .badge.bg-red-lt {
+            background-color: var(--stitch-pastel-red) !important;
+            color: var(--stitch-text-red) !important;
+        }
+
+        .badge.bg-primary-lt, .badge.bg-blue-lt {
+            background-color: var(--stitch-pastel-blue) !important;
+            color: var(--stitch-text-blue) !important;
+        }
+
+        .badge.bg-purple-lt {
+            background-color: var(--stitch-pastel-purple) !important;
+            color: var(--stitch-text-purple) !important;
+        }
+
+        .badge.bg-secondary-lt {
+            background-color: #f1f3f4 !important;
+            color: #5f6368 !important;
+        }
 
         @@media print {
             .page-wrapper {
@@ -37,7 +180,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <h1 class="navbar-brand navbar-brand-autodark">
-                <a asp-controller="Admin" asp-action="Dashboard" class="text-white text-decoration-none">
+                <a href="/Admin/Dashboard" class="text-white text-decoration-none">
                     <i class="ti ti-school admin-logo me-2"></i>
                     CareerPath
                 </a>
@@ -47,68 +190,69 @@
                 <ul class="navbar-nav pt-lg-3">
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Dashboard">
+                        <a class="nav-link" href="/Admin/Dashboard">
                             <span class="nav-link-icon"><i class="ti ti-dashboard"></i></span>
                             <span class="nav-link-title">@(isEn ? "Dashboard" : "Bảng điều khiển")</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Users">
+                        <a class="nav-link" href="/Admin/Users">
                             <span class="nav-link-icon"><i class="ti ti-users"></i></span>
                             <span class="nav-link-title">@(isEn ? "Users" : "Người dùng")</span>
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Mentors">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#menu-mentors" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="false">
                             <span class="nav-link-icon"><i class="ti ti-user-star"></i></span>
-                            <span class="nav-link-title">@(isEn ? "Mentors" : "Cố vấn")</span>
+                            <span class="nav-link-title">Quản lý Cố vấn</span>
                         </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="/Admin/Mentors">
+                                🔹 Tất cả cố vấn
+                            </a>
+                            <a class="dropdown-item" href="/Admin/Mentors/PendingApprovals">
+                                🔹 Danh sách chờ duyệt
+                            </a>
+                        </div>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="/Admin/Mentors/PendingApprovals">
-                            <span class="nav-link-icon"><i class="ti ti-user-check"></i></span>
-                            <span class="nav-link-title">Duyệt Cố vấn</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="CareerTests">
+                        <a class="nav-link" href="/Admin/CareerTests">
                             <span class="nav-link-icon"><i class="ti ti-clipboard-check"></i></span>
                             <span class="nav-link-title">@(isEn ? "Career Tests" : "Bài trắc nghiệm")</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Categories">
+                        <a class="nav-link" href="/Admin/Categories">
                             <span class="nav-link-icon"><i class="ti ti-category"></i></span>
                             <span class="nav-link-title">@(isEn ? "Categories" : "Chuyên mục")</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Jobs">
+                        <a class="nav-link" href="/Admin/Jobs">
                             <span class="nav-link-icon"><i class="ti ti-briefcase"></i></span>
                             <span class="nav-link-title">@(isEn ? "Jobs" : "Việc làm")</span>
                         </a>
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="CareerPaths">
+                        <a class="nav-link" href="/Admin/CareerPaths">
                             <span class="nav-link-icon"><i class="ti ti-route"></i></span>
                             <span class="nav-link-title">@(isEn ? "Career Paths" : "Lộ trình nghề nghiệp")</span>
                         </a>
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Skills">
+                        <a class="nav-link" href="/Admin/Skills">
                             <span class="nav-link-icon"><i class="ti ti-bulb"></i></span>
                             <span class="nav-link-title">@(isEn ? "Skills" : "Kỹ năng")</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Goals">
+                        <a class="nav-link" href="/Admin/Goals">
                             <span class="nav-link-icon d-md-none d-lg-inline-block">
                                 <i class="ti ti-target"></i>
                             </span>
@@ -119,13 +263,13 @@
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Resources">
+                        <a class="nav-link" href="/Admin/Resources">
                             <span class="nav-link-icon"><i class="ti ti-books"></i></span>
                             <span class="nav-link-title">@(isEn ? "Resources" : "Học liệu")</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Courses">
+                        <a class="nav-link" href="/Admin/Courses">
                             <span class="nav-link-icon">
                                 <i class="ti ti-school"></i>
                             </span>
@@ -134,13 +278,13 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="AdminResumeTemplates" asp-action="Index">
+                        <a class="nav-link" href="/AdminResumeTemplates">
                             <span class="nav-link-icon"><i class="ti ti-template"></i></span>
                             <span class="nav-link-title">Mẫu CV</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Events">
+                        <a class="nav-link" href="/Admin/Events">
                             <span class="nav-link-icon"><i class="ti ti-calendar-event"></i></span>
                             <span class="nav-link-title">Sự kiện</span>
                         </a>
@@ -148,21 +292,28 @@
 
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Reports">
+                        <a class="nav-link" href="/Admin/Reports">
                             <span class="nav-link-icon"><i class="ti ti-chart-bar"></i></span>
                             <span class="nav-link-title">@(isEn ? "Reports" : "Báo cáo")</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Settings">
+                        <a class="nav-link" href="/Admin/Transactions">
+                            <span class="nav-link-icon"><i class="ti ti-credit-card"></i></span>
+                            <span class="nav-link-title">@(isEn ? "Payment History" : "Lịch sử thanh toán")</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Admin/Settings">
                             <span class="nav-link-icon"><i class="ti ti-settings"></i></span>
                             <span class="nav-link-title">@(isEn ? "Settings" : "Cài đặt")</span>
                         </a>
                     </li>
 
                     <li class="nav-item mt-3">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">
+                        <a class="nav-link" href="/">
                             <span class="nav-link-icon"><i class="ti ti-arrow-left"></i></span>
                             <span class="nav-link-title">@(isEn ? "Back to Website" : "Quay lại trang chủ")</span>
                         </a>

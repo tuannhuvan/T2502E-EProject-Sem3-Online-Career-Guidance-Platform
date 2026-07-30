@@ -5,6 +5,11 @@
 }
 
 <div class="page-header d-print-none mb-3">
+    <div class="mb-2">
+        <a href="/Admin/Dashboard" class="btn btn-outline-secondary btn-sm">
+            ⬅️ Quay lại Bảng điều khiển
+        </a>
+    </div>
     <div class="row g-2 align-items-center">
         <div class="col">
             <div class="page-pretitle">Hệ thống</div>
@@ -108,7 +113,12 @@
                                 </td>
                                 <td>
                                     <div class="btn-list flex-nowrap">
-                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#mentorModal-@mentor.UserId">Xem chi tiết</button>
+                                        <button class="btn btn-icon btn-sm btn-outline-info me-1" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#mentorModal-@mentor.UserId"
+                                                title="Xem chi tiết">
+                                            <i class="ti ti-eye"></i>
+                                        </button>
                                         @if (!mentor.IsVerified)
                                         {
                                             <form asp-controller="Admin" asp-action="ApproveMentor" asp-route-id="@mentor.UserId" method="post" class="d-inline">
