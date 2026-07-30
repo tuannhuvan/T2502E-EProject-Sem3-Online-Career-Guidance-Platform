@@ -13,15 +13,6 @@
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.13" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.13" />
       <PackageReference Include="EPPlus" Version="8.6.1" />
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.4" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.4">
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        <PrivateAssets>all</PrivateAssets>
-      </PackageReference>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        <PrivateAssets>all</PrivateAssets>
-      </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.13">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -33,7 +24,6 @@
     <ItemGroup>
       <Folder Include="Controllers\Admin\" />
       <Folder Include="Migrations\" />
-      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
     </ItemGroup>
 
     <ItemGroup>

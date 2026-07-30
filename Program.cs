@@ -41,6 +41,19 @@ builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
     .AddDefaultTokenProviders()
     .AddErrorDescriber<VietnameseIdentityErrorDescriber>();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Events.OnRedirectToLogin = context => {
+        if (context.Request.Path.StartsWithSegments("/Admin")) {
+            context.Response.Redirect("/Account/AdminLogin" + context.Request.QueryString);
+        } else {
+            context.Response.Redirect("/Account/Login" + context.Request.QueryString);
+        }
+        return System.Threading.Tasks.Task.CompletedTask;
+    };
+});
+
+
 // Repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
@@ -160,6 +173,7 @@ using (var scope = app.Services.CreateScope())
             try { dbContext.Database.ExecuteSqlRaw("CREATE INDEX `IX_notifications_user_id` ON `notifications` (`user_id`);"); } catch {}
             try { dbContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS `employer_reviews`;"); } catch {}
             try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `event_registrations` ADD `is_vip` tinyint(1) NOT NULL DEFAULT FALSE;"); } catch {}
+            try { dbContext.Database.ExecuteSqlRaw("ALTER TABLE `mentor_reviews` ADD `reply_comment` longtext CHARACTER SET utf8mb4 NULL;"); } catch {}
         }
     }
     catch (Exception ex)
@@ -235,5 +249,6 @@ app.MapControllerRoute(
 
 app.MapHub<Career_Guidance_Platform.Hubs.ChatHub>("/chatHub");
 app.MapHub<Career_Guidance_Platform.Hubs.PresenceAndNotificationHub>("/hubs/presenceNotification");
+app.MapHub<Career_Guidance_Platform.Hubs.NotificationHub>("/notificationHub");
 
 app.Run();

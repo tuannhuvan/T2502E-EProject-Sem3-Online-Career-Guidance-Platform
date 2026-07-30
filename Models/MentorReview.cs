@@ -26,6 +26,9 @@ namespace Career_Guidance_Platform.Models
         [Column("comment")]
         public string? Comment { get; set; }
 
+        [Column("reply_comment")]
+        public string? ReplyComment { get; set; }
+
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
