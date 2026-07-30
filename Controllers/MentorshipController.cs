@@ -35,6 +35,34 @@ namespace Career_Guidance_Platform.Controllers
             return user?.IsPremium == true;
         }
 
+        // Cấu hình vòng đời buổi tư vấn
+        private const int EarlyCompleteWindowMinutes = 30; // Cho phép Mentor bấm "Hoàn thành" sớm tối đa 30 phút trước giờ hẹn
+        private const int ExpireGraceHours = 3;             // Quá 3 tiếng kể từ giờ hẹn mà chưa ai xác nhận -> tự động "Expired"
+
+        // Tự động chuyển các lịch hẹn quá giờ quá lâu mà không ai bấm "Hoàn thành" sang trạng thái "Expired".
+        // Được gọi ở đầu Dashboard()/Details() để dữ liệu luôn đúng thực tế mỗi lần người dùng ghé trang,
+        // không cần dựng thêm background job/scheduler riêng.
+        private async Task AutoExpireOverdueMeetingsAsync(int? mentorId = null, int? menteeId = null)
+        {
+            var cutoff = DateTime.Now.AddHours(-ExpireGraceHours);
+
+            var query = _context.MentorshipMeetings
+                .Where(mm => mm.Status == "Scheduled" && mm.ScheduledTime < cutoff);
+
+            if (mentorId.HasValue) query = query.Where(mm => mm.MentorId == mentorId.Value);
+            if (menteeId.HasValue) query = query.Where(mm => mm.MenteeId == menteeId.Value);
+
+            var overdueMeetings = await query.ToListAsync();
+            if (overdueMeetings.Count == 0) return;
+
+            foreach (var meeting in overdueMeetings)
+            {
+                meeting.Status = "Expired"; // Quá hạn: không bên nào xác nhận hoàn thành trong thời gian ân hạn
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
         // 1. MENTEE VIEW: Danh sách Mentor hỗ trợ tìm kiếm & xếp hạng thông minh
         [AllowAnonymous]
         public async Task<IActionResult> Index(string? search, string? skill, string? careerPath)
@@ -191,6 +219,10 @@ namespace Career_Guidance_Platform.Controllers
             if (!string.IsNullOrEmpty(userIdValue))
             {
                 var userId = int.Parse(userIdValue);
+
+                // Quét và tự động đánh dấu "Expired" các lịch hẹn quá hạn trước khi hiển thị cho học viên
+                await AutoExpireOverdueMeetingsAsync(menteeId: userId);
+
                 ViewBag.CurrentRequest = await _context.MentorshipRequests
                     .FirstOrDefaultAsync(mr => mr.MenteeId == userId && mr.MentorId == id);
 
@@ -223,6 +255,14 @@ namespace Career_Guidance_Platform.Controllers
             var userIdValue = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userIdValue)) return Challenge();
             var userId = int.Parse(userIdValue);
+
+            // Chặn tài khoản Mentor gửi yêu cầu kết nối như học viên, và chặn tự kết nối với chính mình
+            var isMentorAccount = User.IsInRole("Mentor") || await _context.MentorProfiles.AnyAsync(mp => mp.UserId == userId);
+            if (isMentorAccount || userId == mentorId)
+            {
+                TempData["MessageWarning"] = "Tài khoản Cố vấn (Mentor) không thể gửi yêu cầu kết nối như học viên, hoặc bạn không thể tự kết nối với chính mình.";
+                return RedirectToAction("Index", "Home");
+            }
 
             // Kiểm tra xem đã gửi yêu cầu trước đó chưa
             var existing = await _context.MentorshipRequests
@@ -259,6 +299,14 @@ namespace Career_Guidance_Platform.Controllers
             if (string.IsNullOrEmpty(userIdValue)) return Challenge();
             var userId = int.Parse(userIdValue);
 
+            // Chặn tài khoản Mentor tự đặt lịch như học viên, và chặn tự đặt lịch với chính mình
+            var isMentorAccount = User.IsInRole("Mentor") || await _context.MentorProfiles.AnyAsync(mp => mp.UserId == userId);
+            if (isMentorAccount || userId == mentorId)
+            {
+                TempData["MessageWarning"] = "Tài khoản Cố vấn (Mentor) không thể tự đặt lịch tư vấn như học viên, hoặc bạn không thể tự đặt lịch với chính mình.";
+                return RedirectToAction("Index", "Home");
+            }
+
             var mentorProfile = await _context.MentorProfiles.Include(m => m.User).FirstOrDefaultAsync(m => m.UserId == mentorId);
             if (mentorProfile == null)
             {
@@ -291,7 +339,35 @@ namespace Career_Guidance_Platform.Controllers
                 }
             }
 
-            var parsedTime = DateTime.Parse($"{meetingDate} {meetingTime}");
+            // Thay thế DateTime.Parse bằng TryParse để tránh lỗi 500 khi input sai định dạng
+            if (!DateTime.TryParse($"{meetingDate} {meetingTime}", out var parsedTime))
+            {
+                TempData["MessageWarning"] = "Ngày giờ đặt lịch không hợp lệ. Vui lòng kiểm tra lại định dạng.";
+                return RedirectToAction(nameof(Details), new { id = mentorId });
+            }
+
+            // Chặn đặt lịch trong quá khứ
+            if (parsedTime <= DateTime.Now)
+            {
+                TempData["MessageWarning"] = "Không thể đặt lịch hẹn trong quá khứ. Vui lòng chọn thời gian khác.";
+                return RedirectToAction(nameof(Details), new { id = mentorId });
+            }
+
+            // Kiểm tra trùng lịch (double-booking) của Mentor trong khoảng ±60 phút
+            var windowStart = parsedTime.AddMinutes(-60);
+            var windowEnd = parsedTime.AddMinutes(60);
+
+            var isMentorBusy = await _context.MentorshipMeetings
+                .AnyAsync(mm => mm.MentorId == mentorId
+                                && mm.Status == "Scheduled"
+                                && mm.ScheduledTime > windowStart
+                                && mm.ScheduledTime < windowEnd);
+
+            if (isMentorBusy)
+            {
+                TempData["MessageWarning"] = "Mentor đã có lịch hẹn khác gần khung giờ này (±60 phút). Vui lòng chọn thời gian khác.";
+                return RedirectToAction(nameof(Details), new { id = mentorId });
+            }
 
             var meeting = new MentorshipMeeting
             {
@@ -312,90 +388,6 @@ namespace Career_Guidance_Platform.Controllers
             return RedirectToAction(nameof(Details), new { id = mentorId });
         }
 
-        // 5. MENTOR ACTION: Quản lý Yêu cầu & Lịch hẹn (Dashboard)
-        public async Task<IActionResult> Dashboard()
-        {
-            var userIdValue = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userIdValue)) return Challenge();
-            var userId = int.Parse(userIdValue);
-
-            var mentorProfile = await _context.MentorProfiles.FirstOrDefaultAsync(m => m.UserId == userId);
-            if (mentorProfile == null)
-            {
-                return RedirectToAction("Index", "Home");
-            }
-
-            // Lấy các yêu cầu kết nối đang chờ duyệt
-            var requests = await _context.MentorshipRequests
-                .Include(r => r.Mentee)
-                .Where(r => r.MentorId == userId)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-            // Lấy danh sách lịch hẹn
-            var meetings = await _context.MentorshipMeetings
-                .Include(mm => mm.Mentee)
-                .Where(mm => mm.MentorId == userId)
-                .OrderBy(mm => mm.Status == "Completed" ? 1 : 0)
-                .ThenBy(mm => mm.ScheduledTime)
-                .ToListAsync();
-
-            // Lấy danh sách đánh giá từ người học
-            var reviews = await _context.MentorReviews
-                .Include(r => r.Mentee)
-                .Where(r => r.MentorId == userId)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-            ViewBag.Requests = requests;
-            ViewBag.Meetings = meetings;
-            ViewBag.Reviews = reviews;
-
-            return View(mentorProfile);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> HandleRequest(int requestId, string status)
-        {
-            var userIdValue = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userIdValue)) return Challenge();
-            var userId = int.Parse(userIdValue);
-
-            var request = await _context.MentorshipRequests.FindAsync(requestId);
-            if (request == null || request.MentorId != userId)
-            {
-                return NotFound("Không tìm thấy yêu cầu.");
-            }
-
-            request.Status = status; // Approved, Rejected, Cancelled
-            await _context.SaveChangesAsync();
-
-            TempData["DashboardSuccess"] = $"Đã cập nhật trạng thái yêu cầu kết nối thành: {status}";
-            return RedirectToAction(nameof(Dashboard));
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CompleteMeeting(int meetingId)
-        {
-            var userIdValue = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userIdValue)) return Challenge();
-            var userId = int.Parse(userIdValue);
-
-            var meeting = await _context.MentorshipMeetings.FindAsync(meetingId);
-            if (meeting == null || meeting.MentorId != userId)
-            {
-                return NotFound("Không tìm thấy buổi tư vấn.");
-            }
-
-            meeting.Status = "Completed";
-            await _context.SaveChangesAsync();
-
-            // Kích hoạt thông báo đánh giá cho mentee bằng TempData
-            TempData["DashboardSuccess"] = "Buổi tư vấn đã được đánh dấu hoàn thành. Hệ thống sẽ mở form đánh giá cho người học.";
-            return RedirectToAction(nameof(Dashboard));
-        }
 
         // 6. MENTEE VIEW & ACTION: Viết Đánh giá
         public async Task<IActionResult> WriteReview(int meetingId)
