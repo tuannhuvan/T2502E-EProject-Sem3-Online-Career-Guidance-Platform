@@ -79,29 +79,39 @@
                     </span>
                 </h3>
 
-                @if (reviews != null && reviews.Any())
-                {
-                    <div style="display: flex; flex-direction: column; gap: 20px; max-height: 380px; overflow-y: auto; padding-right: 8px;">
-                        @foreach (var review in reviews)
-                        {
-                            <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <strong style="color: #0f172a;"><a href="/Profile/Details/@review.MenteeId" style="color: inherit; text-decoration: none;">@review.Mentee?.FullName</a></strong>
-                                    <span style="color: #f59e0b; font-weight: 700;">
-                                        @for (int i = 0; i < review.Rating; i++) { <span>★</span> }
-                                        @for (int i = review.Rating; i < 5; i++) { <span style="color: #cbd5e1;">★</span> }
-                                    </span>
+                <div id="reviews-list-container">
+                    @if (reviews != null && reviews.Any())
+                    {
+                        <div style="display: flex; flex-direction: column; gap: 20px; max-height: 380px; overflow-y: auto; padding-right: 8px;" id="reviews-list-inner">
+                            @foreach (var review in reviews)
+                            {
+                                <div style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc;" class="review-item" data-meeting-id="@review.MeetingId">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <strong style="color: #0f172a;"><a href="/Profile/Details/@review.MenteeId" style="color: inherit; text-decoration: none;">@review.Mentee?.FullName</a></strong>
+                                        <span style="color: #f59e0b; font-weight: 700;">
+                                            @for (int i = 0; i < review.Rating; i++) { <span>★</span> }
+                                            @for (int i = review.Rating; i < 5; i++) { <span style="color: #cbd5e1;">★</span> }
+                                        </span>
+                                    </div>
+                                    <p style="color: #475569; font-size: 13.5px; line-height: 1.6; margin: 0 0 8px 0;" class="review-comment">@review.Comment</p>
+                                    @if (!string.IsNullOrEmpty(review.ReplyComment))
+                                    {
+                                        <div style="margin-top: 10px; padding: 10px; border-left: 3px solid #10b981; background: #ffffff; border-radius: 6px;" class="review-reply">
+                                            <strong style="font-size: 12px; color: #10b981; display: block; margin-bottom: 4px;">💬 Phản hồi từ Cố vấn:</strong>
+                                            <p style="margin: 0; font-size: 13px; color: #475569;">@review.ReplyComment</p>
+                                        </div>
+                                    }
+                                    <small style="color: #94a3b8; font-size: 11px;" class="review-date">Ngày đánh giá: @review.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
                                 </div>
-                                <p style="color: #475569; font-size: 13.5px; line-height: 1.6; margin: 0 0 8px 0;">@review.Comment</p>
-                                <small style="color: #94a3b8; font-size: 11px;">Ngày đánh giá: @review.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p style="font-style: italic; color: #64748b; margin: 0; text-align: center; padding: 20px;">Chưa có đánh giá nào cho cố vấn này. Hãy đặt lịch và chia sẻ nhận xét của bạn sau buổi học nhé!</p>
-                }
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="display: flex; flex-direction: column; gap: 20px; max-height: 380px; overflow-y: auto; padding-right: 8px;" id="reviews-list-inner"></div>
+                        <p style="font-style: italic; color: #64748b; margin: 0; text-align: center; padding: 20px;" id="no-reviews-placeholder">Chưa có đánh giá nào cho cố vấn này. Hãy đặt lịch và chia sẻ nhận xét của bạn sau buổi học nhé!</p>
+                    }
+                </div>
             </div>
 
             <!-- Mentorship Meetings List for Mentee -->
@@ -153,10 +163,26 @@
                                 }
                                 else if (meeting.Status == "Completed")
                                 {
-                                    <div style="margin-top: 5px;">
-                                        <a asp-controller="Mentorship" asp-action="WriteReview" asp-route-meetingId="@meeting.Id" class="btn" style="display: inline-flex; align-items: center; gap: 8px; background: #4f46e5; color: white; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px;">
-                                            ⭐ Viết đánh giá cho Mentor
-                                        </a>
+                                    var reviewedMeetingIds = ViewBag.ReviewedMeetingIds as List<int> ?? new List<int>();
+                                    var menteeReviews = ViewBag.MenteeReviews as Dictionary<int, Career_Guidance_Platform.Models.MentorReview> ?? new Dictionary<int, Career_Guidance_Platform.Models.MentorReview>();
+                                    var isReviewed = reviewedMeetingIds.Contains(meeting.Id);
+                                    var existingReview = isReviewed && menteeReviews.ContainsKey(meeting.Id) ? menteeReviews[meeting.Id] : null;
+
+                                    <div style="margin-top: 5px;" id="review-container-@meeting.Id">
+                                        @if (isReviewed && existingReview != null)
+                                        {
+                                            var starsStr = "";
+                                            for (int i = 0; i < existingReview.Rating; i++) starsStr += "⭐";
+                                            <button type="button" class="btn btn-review-trigger" data-meeting-id="@meeting.Id" data-rating="@existingReview.Rating" data-comment="@existingReview.Comment" style="display: inline-flex; align-items: center; gap: 8px; background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer;">
+                                                📝 Xem/Sửa đánh giá (@starsStr)
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-review-trigger" data-meeting-id="@meeting.Id" data-rating="" data-comment="" style="display: inline-flex; align-items: center; gap: 8px; background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer;">
+                                                ⭐ Viết đánh giá cho Mentor
+                                            </button>
+                                        }
                                     </div>
                                 }
                             </div>
@@ -404,5 +430,256 @@
                 });
             });
         });
+    });
+</script>
+
+<!-- Review Modal -->
+<div id="reviewModal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div style="background-color: #ffffff; margin: auto; padding: 30px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); width: 100%; max-width: 480px; box-sizing: border-box; border: 1px solid #e2e8f0; position: relative; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <button id="closeModalBtn" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; transition: color 0.2s; padding: 4px; line-height: 1;">&times;</button>
+        
+        <h3 style="font-size: 18px; font-weight: 800; margin-top: 0; margin-bottom: 20px; color: #0f172a;">Viết đánh giá cho Cố vấn</h3>
+        
+        <form id="ajaxReviewForm" method="post" action="/Mentorship/SendReview">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="reviewMeetingId" name="meetingId" value="" />
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 13.5px; font-weight: 700; color: #475569; margin-bottom: 8px;">Số sao đánh giá</label>
+                <div style="display: flex; gap: 8px; font-size: 28px; color: #fbbf24; cursor: pointer;" id="starRatingSelect">
+                    <span data-val="1" class="star-item">★</span>
+                    <span data-val="2" class="star-item">★</span>
+                    <span data-val="3" class="star-item">★</span>
+                    <span data-val="4" class="star-item">★</span>
+                    <span data-val="5" class="star-item">★</span>
+                </div>
+                <input type="hidden" name="rating" id="reviewRatingInput" value="5" />
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 13.5px; font-weight: 700; color: #475569; margin-bottom: 8px;">Nhận xét của bạn</label>
+                <textarea name="comment" id="reviewCommentInput" rows="4" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; font-family: inherit; font-size: 14px; box-sizing: border-box; outline: none; transition: border-color 0.2s;" placeholder="Chia sẻ trải nghiệm của bạn với cố vấn..." required></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" id="cancelReviewBtn" class="btn" style="background-color: #f1f5f9; color: #475569; font-weight: 700; padding: 10px 20px; border-radius: 10px; cursor: pointer; border: none;">Hủy</button>
+                <button type="submit" class="btn" style="background-color: #4f46e5; color: #ffffff; font-weight: 700; padding: 10px 20px; border-radius: 10px; cursor: pointer; border: none;">Gửi đánh giá</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    @@keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const reviewModal = document.getElementById("reviewModal");
+        const closeModalBtn = document.getElementById("closeModalBtn");
+        const cancelReviewBtn = document.getElementById("cancelReviewBtn");
+        const reviewForm = document.getElementById("ajaxReviewForm");
+        const stars = document.querySelectorAll("#starRatingSelect .star-item");
+        const ratingInput = document.getElementById("reviewRatingInput");
+        const meetingIdInput = document.getElementById("reviewMeetingId");
+        const commentInput = document.getElementById("reviewCommentInput");
+
+        // Star selection interaction
+        stars.forEach(star => {
+            star.addEventListener("click", function() {
+                const val = parseInt(this.getAttribute("data-val"));
+                ratingInput.value = val;
+                
+                // Color selected stars
+                stars.forEach((s, idx) => {
+                    if (idx < val) {
+                        s.style.color = "#fbbf24";
+                    } else {
+                        s.style.color = "#cbd5e1";
+                    }
+                });
+            });
+
+            star.addEventListener("mouseover", function() {
+                const val = parseInt(this.getAttribute("data-val"));
+                stars.forEach((s, idx) => {
+                    if (idx < val) {
+                        s.style.color = "#fbbf24";
+                    } else {
+                        s.style.color = "#cbd5e1";
+                    }
+                });
+            });
+        });
+
+        const ratingSelect = document.getElementById("starRatingSelect");
+        if (ratingSelect) {
+            ratingSelect.addEventListener("mouseleave", function() {
+                const val = parseInt(ratingInput.value);
+                stars.forEach((s, idx) => {
+                    if (idx < val) {
+                        s.style.color = "#fbbf24";
+                    } else {
+                        s.style.color = "#cbd5e1";
+                    }
+                });
+            });
+        }
+
+        // Open modal
+        function bindReviewTrigger(btn) {
+            btn.addEventListener("click", function() {
+                const meetingId = this.getAttribute("data-meeting-id");
+                meetingIdInput.value = meetingId;
+                
+                const existingRating = this.getAttribute("data-rating");
+                const existingComment = this.getAttribute("data-comment");
+                
+                if (existingRating) {
+                    reviewForm.action = "/Mentorship/UpdateReview";
+                    const ratingVal = parseInt(existingRating);
+                    ratingInput.value = ratingVal;
+                    stars.forEach((s, idx) => {
+                        if (idx < ratingVal) {
+                            s.style.color = "#fbbf24";
+                        } else {
+                            s.style.color = "#cbd5e1";
+                        }
+                    });
+                    commentInput.value = existingComment || "";
+                    document.querySelector("#reviewModal h3").innerText = "Sửa đánh giá Cố vấn";
+                    document.querySelector("#reviewModal button[type=submit]").innerText = "Cập nhật đánh giá";
+                } else {
+                    reviewForm.action = "/Mentorship/SendReview";
+                    ratingInput.value = 5;
+                    stars.forEach(s => s.style.color = "#fbbf24");
+                    commentInput.value = "";
+                    document.querySelector("#reviewModal h3").innerText = "Viết đánh giá cho Cố vấn";
+                    document.querySelector("#reviewModal button[type=submit]").innerText = "Gửi đánh giá";
+                }
+                
+                reviewModal.style.display = "flex";
+            });
+        }
+
+        document.querySelectorAll(".btn-review-trigger").forEach(bindReviewTrigger);
+
+        // Close modal
+        function closeModal() {
+            reviewModal.style.display = "none";
+        }
+        
+        if (closeModalBtn) closeModalBtn.addEventListener("click", closeModal);
+        if (cancelReviewBtn) cancelReviewBtn.addEventListener("click", closeModal);
+        
+        window.addEventListener("click", function(e) {
+            if (e.target === reviewModal) {
+                closeModal();
+            }
+        });
+
+        // AJAX submit review
+        if (reviewForm) {
+            reviewForm.addEventListener("submit", function(e) {
+                e.preventDefault();
+                const submitBtn = reviewForm.querySelector("button[type=submit]");
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = "Đang gửi...";
+
+                fetch(reviewForm.action, {
+                    method: "POST",
+                    body: new FormData(reviewForm),
+                    credentials: "same-origin"
+                })
+                .then(res => res.json())
+                .then(data => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    
+                    if (data.success) {
+                        closeModal();
+                        
+                        // Show success toast
+                        if (window.showToast) {
+                            window.showToast(data.message, "success");
+                        } else {
+                            alert(data.message);
+                        }
+
+                        const meetingId = meetingIdInput.value;
+                        const ratingVal = parseInt(ratingInput.value);
+                        const commentText = commentInput.value;
+                        
+                        // 1. Update the button
+                        const container = document.getElementById("review-container-" + meetingId);
+                        if (container) {
+                            let starsText = "";
+                            for (let i = 0; i < ratingVal; i++) starsText += "⭐";
+                            container.innerHTML = `
+                                <button type="button" class="btn btn-review-trigger" data-meeting-id="${meetingId}" data-rating="${ratingVal}" data-comment="${commentText}" style="display: inline-flex; align-items: center; gap: 8px; background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer;">
+                                    📝 Xem/Sửa đánh giá (${starsText})
+                                </button>
+                            `;
+                            bindReviewTrigger(container.querySelector(".btn-review-trigger"));
+                        }
+
+                        // 2. Dynamic Update/Append to reviews list
+                        const placeholder = document.getElementById("no-reviews-placeholder");
+                        if (placeholder) {
+                            placeholder.remove();
+                        }
+                        
+                        const listInner = document.getElementById("reviews-list-inner");
+                        if (listInner) {
+                            let existingItem = listInner.querySelector(`.review-item[data-meeting-id="${meetingId}"]`);
+                            
+                            let starsHtml = "";
+                            for(let i=0; i<ratingVal; i++) starsHtml += "<span>★</span>";
+                            for(let i=ratingVal; i<5; i++) starsHtml += `<span style="color: #cbd5e1;">★</span>`;
+                            
+                            const dateStr = "Vừa xong " + (existingItem ? "(Đã sửa)" : "(Đăng mới)");
+
+                            if (existingItem) {
+                                existingItem.querySelector(".review-comment").innerText = commentText;
+                                existingItem.querySelector("span[style*='font-weight: 700']").innerHTML = starsHtml;
+                                existingItem.querySelector(".review-date").innerText = "Ngày đánh giá: " + dateStr;
+                            } else {
+                                const newItem = document.createElement("div");
+                                newItem.className = "review-item";
+                                newItem.setAttribute("data-meeting-id", meetingId);
+                                newItem.style.padding = "16px";
+                                newItem.style.border = "1px solid #e2e8f0";
+                                newItem.style.borderRadius = "16px";
+                                newItem.style.backgroundColor = "#f8fafc";
+                                newItem.style.marginBottom = "20px";
+                                newItem.innerHTML = `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <strong style="color: #0f172a;">Bạn</strong>
+                                        <span style="color: #f59e0b; font-weight: 700;">
+                                            ${starsHtml}
+                                        </span>
+                                    </div>
+                                    <p style="color: #475569; font-size: 13.5px; line-height: 1.6; margin: 0 0 8px 0;" class="review-comment">${commentText}</p>
+                                    <small style="color: #94a3b8; font-size: 11px;" class="review-date">Ngày đánh giá: ${dateStr}</small>
+                                `;
+                                listInner.prepend(newItem);
+                            }
+                        }
+                    } else {
+                        alert(data.message || "Đã có lỗi xảy ra.");
+                    }
+                })
+                .catch(err => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    console.error("Error submitting review: ", err);
+                    alert("Có lỗi xảy ra, vui lòng thử lại.");
+                });
+            });
+        }
     });
 </script>

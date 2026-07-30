@@ -43,8 +43,9 @@ namespace Career_Guidance_Platform.Filters
                                 controller.TempData["PremiumLimitMessage"] = "Bạn đã đạt giới hạn 3 lần thực hiện bài trắc nghiệm đối với tài khoản miễn phí. Vui lòng nâng cấp lên gói thành viên Premium để mở khóa không giới hạn lượt làm test, lộ trình và kho học liệu.";
                             }
 
-                            // Điều hướng người dùng đến trang nâng cấp Premium
-                            context.Result = new RedirectToActionResult("UpgradePremium", "Home", null);
+                            // Điều hướng người dùng đến trang nâng cấp Premium, kèm theo returnUrl để quay lại đúng trang nguồn sau khi thanh toán
+                            var originalUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
+                            context.Result = new RedirectToActionResult("UpgradePremium", "Home", new { returnUrl = originalUrl });
                             return;
                         }
                     }
