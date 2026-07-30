@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Career_Guidance_Platform.Models;
 using Career_Guidance_Platform.Data;
+using Microsoft.AspNetCore.SignalR;
+using Career_Guidance_Platform.Hubs;
 
 namespace Career_Guidance_Platform.Controllers
 {
@@ -16,11 +18,13 @@ namespace Career_Guidance_Platform.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public MentorshipController(AppDbContext context, UserManager<User> userManager)
+        public MentorshipController(AppDbContext context, UserManager<User> userManager, IHubContext<NotificationHub> hubContext)
         {
             _context = context;
             _userManager = userManager;
+            _hubContext = hubContext;
         }
 
         private async Task<bool> IsPremiumUserAsync()
@@ -230,9 +234,15 @@ namespace Career_Guidance_Platform.Controllers
                     .Where(mr => mr.MenteeId == userId)
                     .Select(mr => mr.MeetingId)
                     .ToListAsync();
+                ViewBag.ReviewedMeetingIds = reviewedMeetingIds;
+
+                var menteeReviews = await _context.MentorReviews
+                    .Where(mr => mr.MenteeId == userId && mr.MentorId == id)
+                    .ToDictionaryAsync(mr => mr.MeetingId);
+                ViewBag.MenteeReviews = menteeReviews;
 
                 ViewBag.MenteeMeetings = await _context.MentorshipMeetings
-                    .Where(mm => mm.MenteeId == userId && mm.MentorId == id && !reviewedMeetingIds.Contains(mm.Id))
+                    .Where(mm => mm.MenteeId == userId && mm.MentorId == id)
                     .OrderByDescending(mm => mm.ScheduledTime)
                     .ToListAsync();
             }
@@ -285,6 +295,23 @@ namespace Career_Guidance_Platform.Controllers
 
             _context.MentorshipRequests.Add(request);
             await _context.SaveChangesAsync();
+
+            // Send notification to Mentor
+            var menteeUser = await _userManager.GetUserAsync(User);
+            var menteeName = menteeUser?.FullName ?? "Học viên";
+            var msg = $"Học viên {menteeName} đã gửi yêu cầu kết nối mới.";
+            
+            var notification = new Notification
+            {
+                UserId = mentorId,
+                Message = msg,
+                IsRead = false,
+                CreatedAt = DateTime.Now
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.User(mentorId.ToString()).SendAsync("ReceiveNotification", msg);
 
             TempData["MessageSuccess"] = "Yêu cầu kết nối của bạn đã được gửi thành công! Hãy đợi phản hồi từ cố vấn.";
             return RedirectToAction(nameof(Details), new { id = mentorId });
@@ -384,6 +411,23 @@ namespace Career_Guidance_Platform.Controllers
             _context.MentorshipMeetings.Add(meeting);
             await _context.SaveChangesAsync();
 
+            // Send notification to Mentor
+            var menteeUser = await _userManager.GetUserAsync(User);
+            var menteeName = menteeUser?.FullName ?? "Học viên";
+            var msg = $"Học viên {menteeName} đã đặt lịch hẹn tư vấn mới lúc {parsedTime:dd/MM/yyyy HH:mm}.";
+
+            var notification = new Notification
+            {
+                UserId = mentorId,
+                Message = msg,
+                IsRead = false,
+                CreatedAt = DateTime.Now
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.User(mentorId.ToString()).SendAsync("ReceiveNotification", msg);
+
             TempData["BookingSuccess"] = $"Đặt lịch hẹn tư vấn thành công lúc {parsedTime:dd/MM/yyyy HH:mm}! Link phòng họp: {meeting.MeetingUrl}";
             return RedirectToAction(nameof(Details), new { id = mentorId });
         }
@@ -474,6 +518,127 @@ namespace Career_Guidance_Platform.Controllers
 
             TempData["ReviewSuccess"] = "Cảm ơn bạn đã phản hồi đánh giá chất lượng Cố vấn!";
             return RedirectToAction(nameof(Details), new { id = meeting.MentorId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendReview(int meetingId, int rating, string comment)
+        {
+            var userIdValue = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdValue)) return Json(new { success = false, message = "Bạn cần đăng nhập." });
+            var userId = int.Parse(userIdValue);
+
+            var meeting = await _context.MentorshipMeetings.FindAsync(meetingId);
+            if (meeting == null || meeting.MenteeId != userId)
+            {
+                return Json(new { success = false, message = "Không tìm thấy buổi gặp hợp lệ." });
+            }
+
+            if (meeting.Status != "Completed")
+            {
+                return Json(new { success = false, message = "Chỉ được đánh giá buổi gặp đã hoàn thành." });
+            }
+
+            var existingReview = await _context.MentorReviews.AnyAsync(r => r.MeetingId == meetingId);
+            if (existingReview)
+            {
+                return Json(new { success = false, message = "Bạn đã thực hiện đánh giá cho buổi tư vấn này rồi!" });
+            }
+
+            var review = new MentorReview
+            {
+                MeetingId = meetingId,
+                MentorId = meeting.MentorId,
+                MenteeId = userId,
+                Rating = rating,
+                Comment = comment ?? string.Empty,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.MentorReviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            var allReviewsForMentor = await _context.MentorReviews
+                .Where(r => r.MentorId == meeting.MentorId)
+                .Select(r => r.Rating)
+                .ToListAsync();
+
+            decimal averageRating = allReviewsForMentor.Any() ? (decimal)allReviewsForMentor.Average() : 5.00m;
+
+            var mentorProfile = await _context.MentorProfiles.FindAsync(meeting.MentorId);
+            if (mentorProfile != null)
+            {
+                mentorProfile.Rating = averageRating;
+                await _context.SaveChangesAsync();
+            }
+
+            var menteeUser = await _userManager.GetUserAsync(User);
+            var menteeName = menteeUser?.FullName ?? "Học viên";
+            await _hubContext.Clients.User(meeting.MentorId.ToString()).SendAsync("ReceiveNewReview", new {
+                id = review.Id,
+                menteeName = menteeName,
+                rating = rating,
+                comment = comment ?? string.Empty,
+                createdAt = review.CreatedAt.ToString("dd/MM/yyyy"),
+                isUpdate = false
+            });
+
+            return Json(new { success = true, message = "Cảm ơn bạn đã đánh giá!" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateReview(int meetingId, int rating, string comment)
+        {
+            var userIdValue = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdValue)) return Json(new { success = false, message = "Bạn cần đăng nhập." });
+            var userId = int.Parse(userIdValue);
+
+            var meeting = await _context.MentorshipMeetings.FindAsync(meetingId);
+            if (meeting == null || meeting.MenteeId != userId)
+            {
+                return Json(new { success = false, message = "Không tìm thấy buổi gặp hợp lệ." });
+            }
+
+            var review = await _context.MentorReviews.FirstOrDefaultAsync(r => r.MeetingId == meetingId && r.MenteeId == userId);
+            if (review == null)
+            {
+                return Json(new { success = false, message = "Bạn chưa đánh giá buổi tư vấn này." });
+            }
+
+            review.Rating = rating;
+            review.Comment = comment ?? string.Empty;
+            review.CreatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            var allReviewsForMentor = await _context.MentorReviews
+                .Where(r => r.MentorId == meeting.MentorId)
+                .Select(r => r.Rating)
+                .ToListAsync();
+
+            decimal averageRating = allReviewsForMentor.Any() ? (decimal)allReviewsForMentor.Average() : 5.00m;
+
+            var mentorProfile = await _context.MentorProfiles.FindAsync(meeting.MentorId);
+            if (mentorProfile != null)
+            {
+                mentorProfile.Rating = averageRating;
+                await _context.SaveChangesAsync();
+            }
+
+            var menteeUser = await _userManager.GetUserAsync(User);
+            var menteeName = menteeUser?.FullName ?? "Học viên";
+
+            await _hubContext.Clients.User(meeting.MentorId.ToString()).SendAsync("ReceiveNewReview", new {
+                id = review.Id,
+                menteeName = menteeName,
+                rating = rating,
+                comment = comment ?? string.Empty,
+                createdAt = review.CreatedAt.ToString("dd/MM/yyyy"),
+                isUpdate = true
+            });
+
+            return Json(new { success = true, message = "Đánh giá của bạn đã được cập nhật thành công!" });
         }
 
         // 7. GROUP MENTORING SESSIONS: Xem danh sách và đăng ký

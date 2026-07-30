@@ -183,6 +183,24 @@
         {
             var currentUser = await UserManager.GetUserAsync(User);
             var avatarUrl = currentUser?.AvatarUrl;
+            
+            <!-- Notification Bell -->
+            <div class="notification-dropdown" style="position: relative; margin-right: 15px; display: inline-block;">
+                <button id="notificationBellBtn" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #475569; position: relative; padding: 4px; display: flex; align-items: center; justify-content: center;" title="Thông báo">
+                    <i class="bi bi-bell-fill"></i>
+                    <span id="notificationBadge" style="position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: 800; display: none; line-height: 1;">0</span>
+                </button>
+                <div id="notificationListDropdown" style="position: absolute; right: 0; top: 120%; width: 320px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); display: none; z-index: 1000; padding: 15px;">
+                    <div style="font-weight: 800; font-size: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; color: #0f172a;">
+                        <span>Thông báo mới</span>
+                        <a href="javascript:void(0)" id="clearNotifBtn" style="font-size: 11px; color: #4f46e5; text-decoration: none;">Đọc tất cả</a>
+                    </div>
+                    <div id="notificationList" style="max-height: 250px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 8px; color: #0f172a;">
+                        <div style="text-align: center; color: #64748b; padding: 10px; font-style: italic;">Chưa có thông báo mới</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="user-profile-dropdown">
                 <button class="profile-trigger-btn">
                     <div class="profile-avatar">
@@ -560,6 +578,90 @@
         }
     });
 </script>
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@latest/dist/browser/signalr.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/notificationHub")
+                .withAutomaticReconnect()
+                .build();
+
+            const badge = document.getElementById("notificationBadge");
+            const notifList = document.getElementById("notificationList");
+            const dropdown = document.getElementById("notificationListDropdown");
+            const bellBtn = document.getElementById("notificationBellBtn");
+            const clearBtn = document.getElementById("clearNotifBtn");
+
+            if (bellBtn && dropdown) {
+                bellBtn.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    const isVisible = dropdown.style.display === "block";
+                    dropdown.style.display = isVisible ? "none" : "block";
+                });
+                
+                document.addEventListener("click", function() {
+                    dropdown.style.display = "none";
+                });
+
+                dropdown.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                });
+            }
+
+            if (clearBtn) {
+                clearBtn.addEventListener("click", function() {
+                    if (badge) {
+                        badge.textContent = "0";
+                        badge.style.display = "none";
+                    }
+                    if (notifList) {
+                        notifList.innerHTML = `<div style="text-align: center; color: #64748b; padding: 10px; font-style: italic;">Chưa có thông báo mới</div>`;
+                    }
+                });
+            }
+
+            connection.on("ReceiveNotification", function(message) {
+                if (window.showToast) {
+                    window.showToast(message, "success");
+                } else {
+                    alert(message);
+                }
+
+                if (badge) {
+                    let currentCount = parseInt(badge.textContent || "0");
+                    currentCount++;
+                    badge.textContent = currentCount;
+                    badge.style.display = "inline-block";
+                }
+
+                if (notifList) {
+                    if (notifList.innerText.includes("Chưa có thông báo")) {
+                        notifList.innerHTML = "";
+                    }
+
+                    const newNotifItem = document.createElement("div");
+                    newNotifItem.style.padding = "8px 12px";
+                    newNotifItem.style.borderRadius = "8px";
+                    newNotifItem.style.backgroundColor = "#f8fafc";
+                    newNotifItem.style.borderLeft = "3px solid #4f46e5";
+                    newNotifItem.style.marginBottom = "4px";
+                    newNotifItem.innerHTML = `
+                        <div style="font-weight: 600;">${message}</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Vừa xong</div>
+                    `;
+                    notifList.prepend(newNotifItem);
+                }
+            });
+
+            connection.start().catch(function(err) {
+                console.error("SignalR connection failed: ", err.toString());
+            });
+        });
+    </script>
+}
 
 @await RenderSectionAsync("Scripts", required: false)
 </body>

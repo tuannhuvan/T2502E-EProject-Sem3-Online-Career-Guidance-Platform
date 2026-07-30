@@ -64,7 +64,7 @@
             </ul>
 
             <!-- PayPal Sandbox direct payment -->
-            <form asp-controller="Home" asp-action="UpgradeToPremium" method="post" style="margin: 0; width: 100%;" id="paypalPaymentForm">
+            <form asp-controller="Home" asp-action="UpgradeToPremium" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post" style="margin: 0; width: 100%;" id="paypalPaymentForm">
                 @Html.AntiForgeryToken()
                 
                 <button type="submit" class="btn primary-btn" id="btnPaypalCheckout" style="width: 100%; justify-content: center; background: #ffc439; border-color: #ffc439; color: #111; font-weight: 700; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px; transition: all 0.2s;">

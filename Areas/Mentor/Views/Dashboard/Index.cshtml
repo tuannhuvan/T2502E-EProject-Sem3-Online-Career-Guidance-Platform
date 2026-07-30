@@ -312,13 +312,64 @@
             margin: 0;
             font-style: italic;
         }
+
+        @@media print {
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            aside,
+            header,
+            .top-navbar,
+            .d-print-none,
+            .filter-tabs,
+            .request-actions,
+            .reply-form-wrapper,
+            form,
+            #detailsModal,
+            #overview,
+            #requests,
+            #reviews {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            .content-container {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+            .dashboard-section {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .custom-table {
+                width: 100% !important;
+                border: 1px solid #000000 !important;
+            }
+            .custom-table th, .custom-table td {
+                border-bottom: 1px solid #000000 !important;
+                color: #000000 !important;
+                padding: 8px !important;
+                font-size: 12px !important;
+            }
+            a {
+                color: #000000 !important;
+                text-decoration: none !important;
+            }
+        }
     </style>
 }
 
 <!-- Overview Statistics section -->
 <section id="overview" class="stats-grid">
     <!-- Stat 1: Completed Sessions -->
-    <div class="stat-card">
+    <div class="stat-card" style="cursor: pointer;" onclick="document.querySelector('[data-filter=Completed]').click(); window.location.hash='#meetings';">
         <div class="stat-details">
             <h3>Buổi tư vấn hoàn thành</h3>
             <p class="stat-number">@completedMeetings</p>
@@ -332,7 +383,7 @@
     </div>
 
     <!-- Stat 2: Scheduled Sessions -->
-    <div class="stat-card">
+    <div class="stat-card" style="cursor: pointer;" onclick="document.querySelector('[data-filter=Scheduled]').click(); window.location.hash='#meetings';">
         <div class="stat-details">
             <h3>Buổi hẹn đã lên lịch</h3>
             <p class="stat-number">@scheduledMeetings</p>
@@ -346,7 +397,7 @@
     </div>
 
     <!-- Stat 3: Connection Requests -->
-    <div class="stat-card">
+    <div class="stat-card" style="cursor: pointer;" onclick="window.location.hash='#requests';">
         <div class="stat-details">
             <h3>Yêu cầu kết nối</h3>
             <p class="stat-number">@pendingRequests</p>
@@ -360,7 +411,7 @@
     </div>
 
     <!-- Stat 4: Average Rating -->
-    <div class="stat-card">
+    <div class="stat-card" style="cursor: pointer;" onclick="window.location.hash='#reviews';">
         <div class="stat-details">
             <h3>Đánh giá trung bình</h3>
             <p class="stat-number">@avgRating.ToString("F1") <span style="font-size: 18px; color: #fbbf24;">★</span></p>
@@ -391,18 +442,30 @@
 
 <!-- Meetings Section with Interactive Filter Tabs -->
 <section id="meetings" class="dashboard-section">
-    <div class="section-header">
-        <h3 class="section-title">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+        <h3 class="section-title" style="margin: 0;">
             <i class="bi bi-calendar-event-fill" style="color: var(--primary);"></i>
             Lịch hẹn tư vấn
         </h3>
-        <!-- Filter Tabs -->
-        <div class="filter-tabs">
-            <button class="filter-tab active" data-filter="all">Tất cả (@totalMeetings)</button>
-            <button class="filter-tab" data-filter="Scheduled">Đã lên lịch (@scheduledMeetings)</button>
-            <button class="filter-tab" data-filter="Completed">Hoàn thành (@completedMeetings)</button>
-            <button class="filter-tab" data-filter="NoShow">Vắng mặt (@noShowMeetings)</button>
-            <button class="filter-tab" data-filter="Expired">Quá hạn (@expiredMeetings)</button>
+        
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <!-- Filter Tabs -->
+            <div class="filter-tabs" style="margin: 0;">
+                <button class="filter-tab active" data-filter="all">Tất cả (@totalMeetings)</button>
+                <button class="filter-tab" data-filter="Scheduled">Đã lên lịch (@scheduledMeetings)</button>
+                <button class="filter-tab" data-filter="Completed">Hoàn thành (@completedMeetings)</button>
+                <button class="filter-tab" data-filter="NoShow">Vắng mặt (@noShowMeetings)</button>
+                <button class="filter-tab" data-filter="Expired">Quá hạn (@expiredMeetings)</button>
+            </div>
+            
+            <div class="d-print-none" style="display: flex; gap: 8px;">
+                <a href="/Mentor/Dashboard/ExportToExcel" class="btn-action btn-success" style="text-decoration: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700;">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Xuất Excel
+                </a>
+                <button type="button" onclick="window.print();" class="btn-action" style="background-color: #4f46e5; color: white; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="bi bi-printer-fill"></i> In báo cáo
+                </button>
+            </div>
         </div>
     </div>
 
@@ -443,7 +506,18 @@
                                 }
                             </td>
                             <td>
-                                <strong style="color: var(--text-main); font-weight: 700;">@meeting.Title</strong>
+                                <a href="javascript:void(0)" class="view-meeting-details" 
+                                   data-title="@meeting.Title" 
+                                   data-desc="@meeting.Description" 
+                                   data-mentee-name="@meeting.Mentee?.FullName" 
+                                   data-mentee-email="@meeting.Mentee?.Email" 
+                                   data-mentee-phone="@(meeting.Mentee?.PhoneNumber ?? "Chưa cung cấp")" 
+                                   data-time="@meeting.ScheduledTime.ToString("dd/MM/yyyy HH:mm")" 
+                                   data-status-text="@(meeting.Status == "Scheduled" ? "Đã lên lịch" : meeting.Status == "Completed" ? "Hoàn thành" : meeting.Status == "NoShow" ? "Vắng mặt" : "Quá hạn")"
+                                   data-status-class="@(meeting.Status == "Scheduled" ? "badge-scheduled" : meeting.Status == "Completed" ? "badge-completed" : meeting.Status == "NoShow" ? "badge-noshow" : "badge-expired")"
+                                   style="text-decoration: none; color: var(--primary); font-weight: 700; display: block;">
+                                    @meeting.Title
+                                </a>
                                 @if (!string.IsNullOrEmpty(meeting.Description))
                                 {
                                     <span style="display: block; font-size: 12.5px; color: var(--text-secondary); margin-top: 4px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@meeting.Description">
@@ -593,56 +667,152 @@
         </h3>
     </div>
 
-    @if (reviews != null && reviews.Any())
-    {
-        <div class="reviews-grid">
-            @foreach (var review in reviews)
-            {
-                <div class="review-card">
-                    <div class="review-header">
-                        <div>
-                            <div class="review-author">@review.Mentee?.FullName</div>
-                            <span class="review-date">@review.CreatedAt.ToString("dd/MM/yyyy")</span>
+    <div id="reviews-list-container">
+        @if (reviews != null && reviews.Any())
+        {
+            <div class="reviews-grid" id="reviews-grid-inner">
+                @foreach (var review in reviews)
+                {
+                    <div class="review-card" data-review-id="@review.Id" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; background: #ffffff; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                        <div class="review-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div class="review-author" style="font-weight: 700; color: var(--text-main);">@review.Mentee?.FullName</div>
+                                <span class="review-date" style="font-size: 12px; color: var(--text-secondary);">@review.CreatedAt.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <div class="stars-box" title="@review.Rating/5 Sao" style="color: #fbbf24; font-size: 14px;">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= review.Rating)
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star"></i>
+                                    }
+                                }
+                            </div>
                         </div>
-                        <div class="stars-box" title="@review.Rating/5 Sao">
-                            @for (int i = 1; i <= 5; i++)
-                            {
-                                if (i <= review.Rating)
-                                {
-                                    <i class="bi bi-star-fill"></i>
-                                }
-                                else
-                                {
-                                    <i class="bi bi-star"></i>
-                                }
-                            }
+                        <p class="review-comment" style="color: var(--text-main); margin: 0; font-style: italic;">"@review.Comment"</p>
+                        
+                        <!-- Reply display area -->
+                        <div class="reply-area" style="background-color: #f8fafc; padding: 12px; border-left: 3px solid #10b981; border-radius: 6px; display: @(string.IsNullOrEmpty(review.ReplyComment) ? "none" : "block"); margin-top: 8px;">
+                            <strong style="font-size: 12px; color: #10b981; display: block; margin-bottom: 4px;">💬 Phản hồi của bạn:</strong>
+                            <p class="reply-text" style="margin: 0; font-size: 13.5px; color: var(--text-main);">@review.ReplyComment</p>
+                        </div>
+                        
+                        <!-- Reply form -->
+                        <div class="reply-form-wrapper" style="margin-top: 10px; display: @(string.IsNullOrEmpty(review.ReplyComment) ? "block" : "none");">
+                            <form action="/Mentor/Dashboard/ReplyReview" method="post" class="reply-ajax-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="reviewId" value="@review.Id" />
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" name="replyComment" class="form-control" style="flex: 1; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 13.5px;" placeholder="Viết phản hồi cho học viên..." required />
+                                    <button type="submit" class="btn-action btn-success" style="padding: 8px 16px; border-radius: 8px; font-size: 13px;">Gửi</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    <p class="review-comment">"@review.Comment"</p>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-            <i class="bi bi-chat-left-text" style="font-size: 40px; display: block; margin-bottom: 12px; opacity: 0.5;"></i>
-            <p style="font-style: italic; margin: 0; font-size: 14.5px;">Chưa nhận được đánh giá nào.</p>
-        </div>
-    }
+                }
+            </div>
+        }
+        else
+        {
+            <div class="reviews-grid" id="reviews-grid-inner"></div>
+            <div style="text-align: center; padding: 40px; color: var(--text-secondary);" id="no-reviews-mentor-placeholder">
+                <i class="bi bi-chat-left-text" style="font-size: 40px; display: block; margin-bottom: 12px; opacity: 0.5;"></i>
+                <p style="font-style: italic; margin: 0; font-size: 14.5px;">Chưa nhận được đánh giá nào.</p>
+            </div>
+        }
+    </div>
 </section>
 
-<!-- Interactive client-side scripts -->
+<!-- Meeting Details Modal -->
+<div id="detailsModal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div style="background-color: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); width: 100%; max-width: 500px; box-sizing: border-box; border: 1px solid #e2e8f0; position: relative;">
+        <button id="closeDetailsModalBtn" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 22px; cursor: pointer; color: #94a3b8; padding: 4px; line-height: 1;">&times;</button>
+        <h3 style="font-size: 18px; font-weight: 800; margin-top: 0; margin-bottom: 20px; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">🔍 Chi tiết cuộc hẹn tư vấn</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: #334155;">
+            <div>
+                <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Chủ đề tư vấn</strong>
+                <span id="modal-title" style="font-weight: 700; color: #0f172a; font-size: 15px;"></span>
+            </div>
+            <div>
+                <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Mô tả / Yêu cầu</strong>
+                <span id="modal-desc" style="white-space: pre-line; display: block; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #f1f5f9;"></span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Học viên</strong>
+                    <span id="modal-mentee-name" style="font-weight: 600; color: #0f172a;"></span>
+                </div>
+                <div>
+                    <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Số điện thoại</strong>
+                    <span id="modal-mentee-phone" style="font-weight: 600; color: #0f172a;"></span>
+                </div>
+            </div>
+            <div>
+                <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Email liên hệ</strong>
+                <span id="modal-mentee-email" style="font-weight: 600; color: #0f172a; word-break: break-all;"></span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Thời gian hẹn</strong>
+                    <span id="modal-time" style="font-weight: 700; color: #4f46e5;"></span>
+                </div>
+                <div>
+                    <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Trạng thái</strong>
+                    <span id="modal-status" class="status-badge" style="margin-top: 2px;"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        // Client-side filtering for Meetings Table
         document.addEventListener("DOMContentLoaded", function() {
+            // Details Modal interaction
+            const detailsModal = document.getElementById("detailsModal");
+            const closeDetailsBtn = document.getElementById("closeDetailsModalBtn");
+
+            document.querySelectorAll(".view-meeting-details").forEach(link => {
+                link.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    document.getElementById("modal-title").innerText = this.getAttribute("data-title") || "N/A";
+                    document.getElementById("modal-desc").innerText = this.getAttribute("data-desc") || "Không có mô tả.";
+                    document.getElementById("modal-mentee-name").innerText = this.getAttribute("data-mentee-name") || "N/A";
+                    document.getElementById("modal-mentee-phone").innerText = this.getAttribute("data-mentee-phone") || "Chưa cung cấp";
+                    document.getElementById("modal-mentee-email").innerText = this.getAttribute("data-mentee-email") || "N/A";
+                    document.getElementById("modal-time").innerText = this.getAttribute("data-time") || "N/A";
+                    
+                    const statusSpan = document.getElementById("modal-status");
+                    statusSpan.innerText = this.getAttribute("data-status-text") || "N/A";
+                    statusSpan.className = "status-badge " + this.getAttribute("data-status-class");
+
+                    detailsModal.style.display = "flex";
+                });
+            });
+
+            if (closeDetailsBtn) {
+                closeDetailsBtn.addEventListener("click", function() {
+                    detailsModal.style.display = "none";
+                });
+            }
+
+            window.addEventListener("click", function(e) {
+                if (e.target === detailsModal) {
+                    detailsModal.style.display = "none";
+                }
+            });
+
+            // Client-side filtering for Meetings Table
             const filterTabs = document.querySelectorAll(".filter-tab");
             const meetingRows = document.querySelectorAll(".meeting-row");
 
             filterTabs.forEach(tab => {
                 tab.addEventListener("click", function() {
-                    // Toggle active class on tabs
                     filterTabs.forEach(t => t.classList.remove("active"));
                     this.classList.add("active");
 
@@ -677,7 +847,6 @@
                     })
                     .then(function(response) {
                         if (response.ok) {
-                            // Redirect to response destination (Index dashboard view) to show fresh state with notification messages
                             window.location.href = response.url;
                         } else {
                             throw new Error("API error");
@@ -692,6 +861,149 @@
                     });
                 });
             });
+
+            // SignalR Live Reviews synchronization
+            if (typeof signalR !== 'undefined') {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl("/notificationHub")
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on("ReceiveNewReview", function(data) {
+                    if (window.showToast) {
+                        window.showToast("Học viên " + data.menteeName + " vừa gửi đánh giá " + data.rating + "★: " + data.comment, "success");
+                    }
+
+                    const placeholder = document.getElementById("no-reviews-mentor-placeholder");
+                    if (placeholder) {
+                        placeholder.remove();
+                    }
+
+                    const gridInner = document.getElementById("reviews-grid-inner");
+                    if (gridInner) {
+                        let existingCard = gridInner.querySelector(`.review-card[data-review-id="${data.id}"]`);
+                        
+                        let starsHtml = "";
+                        for(let i=1; i<=5; i++) {
+                            if (i <= data.rating) {
+                                starsHtml += '<i class="bi bi-star-fill"></i>';
+                            } else {
+                                starsHtml += '<i class="bi bi-star"></i>';
+                            }
+                        }
+
+                        if (existingCard) {
+                            existingCard.querySelector(".review-comment").innerText = `"${data.comment}"`;
+                            existingCard.querySelector(".stars-box").innerHTML = starsHtml;
+                            existingCard.querySelector(".review-date").innerText = data.createdAt + " (Đã cập nhật)";
+                        } else {
+                            const newCard = document.createElement("div");
+                            newCard.className = "review-card";
+                            newCard.setAttribute("data-review-id", data.id);
+                            newCard.style.border = "1px solid var(--border-color)";
+                            newCard.style.borderRadius = "12px";
+                            newCard.style.padding = "20px";
+                            newCard.style.backgroundColor = "#ffffff";
+                            newCard.style.display = "flex";
+                            newCard.style.flexDirection = "column";
+                            newCard.style.gap = "12px";
+                            newCard.style.marginBottom = "16px";
+                            
+                            newCard.innerHTML = `
+                                <div class="review-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div class="review-author" style="font-weight: 700; color: var(--text-main);">${data.menteeName}</div>
+                                        <span class="review-date" style="font-size: 12px; color: var(--text-secondary);">${data.createdAt}</span>
+                                    </div>
+                                    <div class="stars-box" title="${data.rating}/5 Sao" style="color: #fbbf24; font-size: 14px;">
+                                        ${starsHtml}
+                                    </div>
+                                </div>
+                                <p class="review-comment" style="color: var(--text-main); margin: 0; font-style: italic;">"${data.comment}"</p>
+                                
+                                <div class="reply-area" style="background-color: #f8fafc; padding: 12px; border-left: 3px solid #10b981; border-radius: 6px; display: none; margin-top: 8px;">
+                                    <strong style="font-size: 12px; color: #10b981; display: block; margin-bottom: 4px;">💬 Phản hồi của bạn:</strong>
+                                    <p class="reply-text" style="margin: 0; font-size: 13.5px; color: var(--text-main);"></p>
+                                </div>
+                                
+                                <div class="reply-form-wrapper" style="margin-top: 10px; display: block;">
+                                    <form action="/Mentor/Dashboard/ReplyReview" method="post" class="reply-ajax-form">
+                                        <input type="hidden" name="reviewId" value="${data.id}" />
+                                        <div style="display: flex; gap: 8px;">
+                                            <input type="text" name="replyComment" class="form-control" style="flex: 1; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 13.5px;" placeholder="Viết phản hồi cho học viên..." required />
+                                            <button type="submit" class="btn-action btn-success" style="padding: 8px 16px; border-radius: 8px; font-size: 13px;">Gửi</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            `;
+                            
+                            gridInner.prepend(newCard);
+                            bindReplyAjaxForm(newCard.querySelector("form.reply-ajax-form"));
+                        }
+                    }
+                });
+
+                connection.start().catch(err => console.error("SignalR failed: ", err));
+            }
+
+            function bindReplyAjaxForm(form) {
+                if (!form) return;
+                form.addEventListener("submit", function(e) {
+                    e.preventDefault();
+                    const submitBtn = form.querySelector("button[type=submit]");
+                    const inputField = form.querySelector("input[name=replyComment]");
+                    const originalText = submitBtn ? submitBtn.innerText : "";
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerText = "Gửi...";
+                    }
+
+                    fetch(form.action, {
+                        method: "POST",
+                        body: new FormData(form),
+                        credentials: "same-origin"
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerText = originalText;
+                        }
+                        if (data.success) {
+                            if (window.showToast) {
+                                window.showToast(data.message, "success");
+                            } else {
+                                alert(data.message);
+                            }
+
+                            const card = form.closest(".review-card");
+                            if (card) {
+                                const replyArea = card.querySelector(".reply-area");
+                                const replyText = card.querySelector(".reply-text");
+                                const formWrapper = card.querySelector(".reply-form-wrapper");
+                                
+                                if (replyArea && replyText && formWrapper) {
+                                    replyText.innerText = inputField.value;
+                                    replyArea.style.display = "block";
+                                    formWrapper.style.display = "none";
+                                }
+                            }
+                        } else {
+                            alert(data.message || "Có lỗi xảy ra.");
+                        }
+                    })
+                    .catch(err => {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerText = originalText;
+                        }
+                        console.error(err);
+                        alert("Có lỗi xảy ra, vui lòng thử lại.");
+                    });
+                });
+            }
+
+            document.querySelectorAll("form.reply-ajax-form").forEach(bindReplyAjaxForm);
         });
     </script>
 }

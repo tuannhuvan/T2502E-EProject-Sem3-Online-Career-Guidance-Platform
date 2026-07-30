@@ -228,10 +228,66 @@ function init() {
     const statusFilter = document.getElementById('statusFilter');
     const membershipFilter = document.getElementById('membershipFilter');
 
+    // Parse URL query parameter for role
+    const urlParams = new URLSearchParams(window.location.search);
+    let roleParam = urlParams.get('role');
+    if (roleParam) {
+        if (roleParam === 'Student') {
+            roleParam = 'User';
+        }
+        if (roleFilter) {
+            roleFilter.value = roleParam;
+        }
+    }
+
     if (searchInput) searchInput.addEventListener('input', () => filterUsers(true));
     if (roleFilter) roleFilter.addEventListener('change', () => filterUsers(true));
     if (statusFilter) statusFilter.addEventListener('change', () => filterUsers(true));
     if (membershipFilter) membershipFilter.addEventListener('change', () => filterUsers(true));
+
+    // View user details popup modal logic via event delegation
+    const tableBody = document.getElementById('userTableBody');
+    if (tableBody) {
+        tableBody.addEventListener('click', function(e) {
+            const btn = e.target.closest('.view-details-btn');
+            if (btn) {
+                const fullName = btn.getAttribute('data-fullname') || 'N/A';
+                const email = btn.getAttribute('data-email') || '';
+                const role = btn.getAttribute('data-role') || 'User';
+                const status = btn.getAttribute('data-status') || 'Active';
+                const premium = btn.getAttribute('data-premium') === 'true';
+                const created = btn.getAttribute('data-created') || 'N/A';
+                const headline = btn.getAttribute('data-headline') || 'Chưa cung cấp';
+                const school = btn.getAttribute('data-school') || 'Chưa cung cấp';
+                const major = btn.getAttribute('data-major') || 'Chưa cung cấp';
+                const experience = btn.getAttribute('data-experience') || 'Chưa cung cấp';
+
+                document.getElementById('viewUserFullName').innerText = fullName;
+                document.getElementById('viewUserEmail').innerText = email;
+                document.getElementById('viewUserRole').innerText = role;
+                document.getElementById('viewUserCreatedAt').innerText = created;
+                
+                const statusBadge = document.getElementById('viewUserStatus');
+                statusBadge.innerText = status;
+                statusBadge.className = 'badge ' + (status === 'Active' ? 'bg-green-lt' : (status === 'Pending' ? 'bg-yellow-lt' : 'bg-red-lt'));
+
+                const membershipBadge = document.getElementById('viewUserMembership');
+                membershipBadge.innerText = premium ? 'Premium' : 'Regular';
+                membershipBadge.className = 'badge ' + (premium ? 'bg-purple-lt' : 'bg-secondary-lt');
+
+                const avatar = document.getElementById('viewUserAvatar');
+                avatar.innerText = fullName ? fullName.charAt(0).toUpperCase() : 'U';
+
+                document.getElementById('viewUserHeadline').innerText = headline;
+                document.getElementById('viewUserSchool').innerText = school;
+                document.getElementById('viewUserMajor').innerText = major;
+                document.getElementById('viewUserExperience').innerText = experience;
+
+                const myModal = new bootstrap.Modal(document.getElementById('userViewModal'));
+                myModal.show();
+            }
+        });
+    }
 
     filterUsers(true);
 }

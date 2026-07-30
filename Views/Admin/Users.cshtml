@@ -5,6 +5,11 @@
 }
 
 <div class="page-header d-print-none mb-3">
+    <div class="mb-2">
+        <a href="/Admin/Dashboard" class="btn btn-outline-secondary btn-sm">
+            ⬅️ Quay lại Bảng điều khiển
+        </a>
+    </div>
     <div class="row g-2 align-items-center">
         <div class="col">
             <div class="page-pretitle">Management</div>
@@ -126,6 +131,22 @@
                             <span class="badge status-badge @badgeClass">@displayStatus</span>
                         </td>
                         <td class="table-actions">
+                            <button class="btn btn-icon btn-sm btn-outline-info me-1 view-details-btn"
+                                    data-id="@user.Id"
+                                    data-fullname="@user.FullName"
+                                    data-email="@user.Email"
+                                    data-role="@displayRole"
+                                    data-status="@displayStatus"
+                                    data-premium="@user.IsPremium.ToString().ToLower()"
+                                    data-created="@user.CreatedAt.ToString("dd/MM/yyyy HH:mm")"
+                                    data-headline="@user.Headline"
+                                    data-school="@user.School"
+                                    data-major="@user.Major"
+                                    data-experience="@user.Experience"
+                                    title="Xem chi tiết">
+                                <i class="ti ti-eye"></i>
+                            </button>
+
                             <button class="btn btn-sm btn-outline-primary me-1"
                                     data-id="@user.Id"
                                     data-fullname="@user.FullName"
@@ -276,6 +297,64 @@
 
     </div>
 
+</div>
+
+<!-- Modal Xem Chi Tiết Người Dùng -->
+<div class="modal modal-blur fade" id="userViewModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-user me-2 text-primary"></i>Hồ sơ chi tiết người dùng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center mb-4">
+                    <span class="avatar avatar-lg me-3 bg-primary-lt" id="viewUserAvatar" style="font-size: 24px; font-weight: 700;"></span>
+                    <div>
+                        <h4 class="m-0 font-weight-bold" id="viewUserFullName"></h4>
+                        <small class="text-muted" id="viewUserEmail"></small>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label text-muted mb-1">Vai trò</label>
+                        <div class="font-weight-medium" id="viewUserRole"></div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-muted mb-1">Trạng thái</label>
+                        <div id="viewUserStatus"></div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-muted mb-1">Hạng thành viên</label>
+                        <div id="viewUserMembership"></div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-muted mb-1">Ngày tạo tài khoản</label>
+                        <div class="font-weight-medium" id="viewUserCreatedAt"></div>
+                    </div>
+                    <div class="col-12" id="viewUserHeadlineGroup">
+                        <label class="form-label text-muted mb-1">Tiêu đề cá nhân</label>
+                        <div class="font-weight-medium text-dark" id="viewUserHeadline"></div>
+                    </div>
+                    <div class="col-6" id="viewUserSchoolGroup">
+                        <label class="form-label text-muted mb-1">Trường học</label>
+                        <div class="font-weight-medium text-dark" id="viewUserSchool"></div>
+                    </div>
+                    <div class="col-6" id="viewUserMajorGroup">
+                        <label class="form-label text-muted mb-1">Chuyên ngành</label>
+                        <div class="font-weight-medium text-dark" id="viewUserMajor"></div>
+                    </div>
+                    <div class="col-12" id="viewUserExperienceGroup">
+                        <label class="form-label text-muted mb-1">Kinh nghiệm làm việc</label>
+                        <div class="bg-light p-2 rounded text-secondary" id="viewUserExperience" style="white-space: pre-line; font-size: 13px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts

@@ -606,7 +606,7 @@ public class HomeController : Controller
     }
 
     [Authorize]
-    public async Task<IActionResult> UpgradePremium()
+    public async Task<IActionResult> UpgradePremium(string? returnUrl = null)
     {
         var userIdValue = _userManager.GetUserId(User);
         if (string.IsNullOrEmpty(userIdValue)) return Challenge();
@@ -614,19 +614,43 @@ public class HomeController : Controller
         var user = await _userManager.FindByIdAsync(userIdValue);
         if (user == null) return NotFound();
 
+        // Nếu không có returnUrl được truyền vào (từ PremiumAccessFilter hoặc link trực tiếp),
+        // thử lấy từ Referer để nhớ lại trang nguồn mà người dùng vừa thao tác trước đó
+        if (string.IsNullOrEmpty(returnUrl))
+        {
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer) && Uri.TryCreate(referer, UriKind.Absolute, out var refererUri))
+            {
+                returnUrl = refererUri.PathAndQuery;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(returnUrl) && !Url.IsLocalUrl(returnUrl))
+        {
+            returnUrl = null;
+        }
+
+        ViewBag.ReturnUrl = returnUrl;
         return View(user);
     }
 
     [HttpPost]
     [Authorize]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpgradeToPremium()
+    public async Task<IActionResult> UpgradeToPremium(string? returnUrl = null)
     {
         var userIdValue = _userManager.GetUserId(User);
         if (string.IsNullOrEmpty(userIdValue)) return Challenge();
 
         var user = await _userManager.FindByIdAsync(userIdValue);
         if (user == null) return NotFound();
+
+        // Kiểm tra an toàn returnUrl trước khi nhúng vào return_url/cancel_url của PayPal
+        if (!string.IsNullOrEmpty(returnUrl) && !Url.IsLocalUrl(returnUrl))
+        {
+            returnUrl = null;
+        }
+        var encodedReturnUrl = string.IsNullOrEmpty(returnUrl) ? "" : $"&returnUrl={Uri.EscapeDataString(returnUrl)}";
 
         // 1. Gọi PayPal API để tạo đơn hàng
         var accessToken = await GetPayPalAccessTokenAsync();
@@ -653,8 +677,8 @@ public class HomeController : Controller
                     },
                     application_context = new
                     {
-                        return_url = $"{Request.Scheme}://{Request.Host}/Home/PaymentSuccess",
-                        cancel_url = $"{Request.Scheme}://{Request.Host}/Home/PaymentCancel"
+                        return_url = $"{Request.Scheme}://{Request.Host}/Home/PaymentSuccess?token_placeholder=1{encodedReturnUrl}",
+                        cancel_url = $"{Request.Scheme}://{Request.Host}/Home/PaymentCancel?token_placeholder=1{encodedReturnUrl}"
                     }
                 };
 
@@ -718,17 +742,23 @@ public class HomeController : Controller
         _context.PaymentHistories.Add(mockPayment);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("PaymentSuccess", new { token = mockToken });
+        return RedirectToAction("PaymentSuccess", new { token = mockToken, returnUrl });
     }
 
     [Authorize]
-    public async Task<IActionResult> PaymentSuccess(string token)
+    public async Task<IActionResult> PaymentSuccess(string token, string? returnUrl = null)
     {
         var userIdValue = _userManager.GetUserId(User);
         if (string.IsNullOrEmpty(userIdValue)) return Challenge();
 
         var user = await _userManager.FindByIdAsync(userIdValue);
         if (user == null) return NotFound();
+
+        // Kiểm tra an toàn returnUrl trước khi sử dụng để điều hướng sau khi thanh toán thành công
+        if (!string.IsNullOrEmpty(returnUrl) && !Url.IsLocalUrl(returnUrl))
+        {
+            returnUrl = null;
+        }
 
         bool isPaymentCaptured = false;
 
@@ -793,18 +823,30 @@ public class HomeController : Controller
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = "Chúc mừng! Bạn đã trở thành thành viên Premium và mở khóa toàn bộ tính năng vĩnh viễn.";
+
+            // Điều hướng chính xác về trang mà người dùng vừa thực hiện thao tác thanh toán trước đó
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
             return RedirectToAction("Index", "Manage");
         }
 
         TempData["ErrorMessage"] = "Không thể xác nhận giao dịch thanh toán từ PayPal.";
-        return RedirectToAction(nameof(UpgradePremium));
+        return RedirectToAction(nameof(UpgradePremium), new { returnUrl });
     }
 
     [Authorize]
-    public async Task<IActionResult> PaymentCancel(string token)
+    public async Task<IActionResult> PaymentCancel(string token, string? returnUrl = null)
     {
         var userIdValue = _userManager.GetUserId(User);
         if (string.IsNullOrEmpty(userIdValue)) return Challenge();
+
+        // Kiểm tra an toàn returnUrl trước khi sử dụng
+        if (!string.IsNullOrEmpty(returnUrl) && !Url.IsLocalUrl(returnUrl))
+        {
+            returnUrl = null;
+        }
 
         if (!string.IsNullOrEmpty(token))
         {
@@ -821,7 +863,7 @@ public class HomeController : Controller
         }
 
         TempData["ErrorMessage"] = "Bạn đã hủy quá trình thanh toán nâng cấp Premium.";
-        return RedirectToAction(nameof(UpgradePremium));
+        return RedirectToAction(nameof(UpgradePremium), new { returnUrl });
     }
 
     private async Task<string?> GetPayPalAccessTokenAsync()

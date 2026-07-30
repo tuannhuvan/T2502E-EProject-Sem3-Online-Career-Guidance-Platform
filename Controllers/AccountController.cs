@@ -92,6 +92,45 @@ namespace Career_Guidance_Platform.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public IActionResult AdminLogin(string? returnUrl = null)
+        {
+            returnUrl = SanitizeReturnUrl(returnUrl);
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AdminLogin(LoginViewModel model, string? returnUrl = null)
+        {
+            returnUrl = SanitizeReturnUrl(returnUrl);
+            ViewData["ReturnUrl"] = returnUrl;
+
+            if (ModelState.IsValid)
+            {
+                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+
+                if (result.Succeeded)
+                {
+                    var user = await _userManager.FindByEmailAsync(model.Email);
+                    bool isAdmin = user != null && (user.Role == "Admin" || await _userManager.IsInRoleAsync(user, "Admin"));
+
+                    if (!isAdmin)
+                    {
+                        await _signInManager.SignOutAsync();
+                        ModelState.AddModelError(string.Empty, "Tài khoản không có quyền truy cập cổng quản trị!");
+                        return View(model);
+                    }
+
+                    return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+                }
+
+                ModelState.AddModelError(string.Empty, "Email hoặc mật khẩu không chính xác.");
+            }
+
+            return View(model);
+        }
+
         public IActionResult Register(string? returnUrl = null)
         {
             returnUrl = SanitizeReturnUrl(returnUrl);

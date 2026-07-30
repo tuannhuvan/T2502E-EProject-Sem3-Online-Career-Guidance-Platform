@@ -723,21 +723,44 @@ public class AdminController : Controller
         return View();
     }
 
-    public async Task<IActionResult> Transactions(DateTime? startDate, DateTime? endDate, string? search)
+    public async Task<IActionResult> Transactions(DateTime? startDate, DateTime? endDate, string? search, int? month, int? year)
     {
         var query = _context.PaymentHistories
             .Include(p => p.User)
             .AsQueryable();
 
-        if (startDate.HasValue)
+        if (month.HasValue)
         {
-            query = query.Where(p => p.CreatedAt >= startDate.Value);
+            query = query.Where(p => p.CreatedAt.Month == month.Value);
+            if (year.HasValue)
+            {
+                query = query.Where(p => p.CreatedAt.Year == year.Value);
+            }
+            else
+            {
+                query = query.Where(p => p.CreatedAt.Year == DateTime.Now.Year);
+            }
+            ViewBag.SelectedMonth = month.Value;
+            var startOfMonth = new DateTime(year ?? DateTime.Now.Year, month.Value, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddTicks(-1);
+            ViewBag.StartDate = startOfMonth.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endOfMonth.ToString("yyyy-MM-dd");
         }
-        if (endDate.HasValue)
+        else
         {
-            var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
-            query = query.Where(p => p.CreatedAt <= endOfDate);
+            if (startDate.HasValue)
+            {
+                query = query.Where(p => p.CreatedAt >= startDate.Value);
+            }
+            if (endDate.HasValue)
+            {
+                var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(p => p.CreatedAt <= endOfDate);
+            }
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
         }
+
         if (!string.IsNullOrWhiteSpace(search))
         {
             var searchLower = search.Trim().ToLower();
@@ -748,8 +771,6 @@ public class AdminController : Controller
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
 
-        ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
-        ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
         ViewBag.Search = search;
 
         return View("~/Views/Admin/Transactions.cshtml", payments);

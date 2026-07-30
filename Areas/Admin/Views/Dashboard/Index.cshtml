@@ -1,0 +1,386 @@
+@model IEnumerable<Career_Guidance_Platform.Models.MentorshipMeeting>
+@{
+    ViewData["Title"] = "Bảng điều khiển Admin Real-time";
+}
+
+<div class="page-header d-print-none">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <h2 class="page-title">
+                    Bảng điều khiển Admin (Real-time Live Stats)
+                </h2>
+                <div class="text-muted mt-1">Hệ thống tự động cập nhật số liệu mỗi 30 giây ngầm</div>
+            </div>
+            <div class="col-md-7 d-print-none d-flex gap-2 justify-content-md-end align-items-center flex-wrap">
+                <div>
+                    <select id="roleFilter" class="form-select form-select-sm" style="min-width: 140px;">
+                        <option value="">Tất cả vai trò</option>
+                        <option value="Student">Học viên</option>
+                        <option value="Mentor">Cố vấn</option>
+                    </select>
+                </div>
+                <div>
+                    <select id="timeRangeFilter" class="form-select form-select-sm" style="min-width: 140px;">
+                        <option value="">Tất cả thời gian</option>
+                        <option value="1day">1 ngày</option>
+                        <option value="1week" selected>1 tuần</option>
+                        <option value="1month">1 tháng</option>
+                    </select>
+                </div>
+                <div class="btn-list">
+                    <a href="/Admin/Dashboard/ExportToExcel" class="btn btn-success" style="display: inline-flex; align-items: center;">
+                        <i class="bi bi-file-earmark-excel-fill" style="margin-right: 6px;"></i> Xuất Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="container-xl">
+        <!-- Stats Cards Grid -->
+        <div class="row row-cards mb-4">
+            <div class="col-sm-6 col-lg-3">
+                <a href="/Admin/Users" class="card card-sm stitch-interactive-card" style="display: block;">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <span class="bg-primary text-white avatar">
+                                    <i class="ti ti-users" style="font-size: 24px;"></i>
+                                </span>
+                            </div>
+                            <div class="col">
+                                <div class="font-weight-medium text-secondary">Tổng Người Dùng</div>
+                                <div class="text-dark" id="stat-total-users" style="font-size: 24px; font-weight: 800;">
+                                    @ViewBag.TotalUsers
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <a href="/Admin/Mentors" class="card card-sm stitch-interactive-card" style="display: block;">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <span class="bg-green text-white avatar">
+                                    <i class="ti ti-user-star" style="font-size: 24px;"></i>
+                                </span>
+                            </div>
+                            <div class="col">
+                                <div class="font-weight-medium text-secondary">Tổng Cố Vấn</div>
+                                <div class="text-dark" id="stat-total-mentors" style="font-size: 24px; font-weight: 800;">
+                                    @ViewBag.TotalMentors
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <a href="/Admin/Users?role=Student" class="card card-sm stitch-interactive-card" style="display: block;">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <span class="bg-yellow text-white avatar">
+                                    <i class="ti ti-school" style="font-size: 24px;"></i>
+                                </span>
+                            </div>
+                            <div class="col">
+                                <div class="font-weight-medium text-secondary">Tổng Học Viên</div>
+                                <div class="text-dark" id="stat-total-students" style="font-size: 24px; font-weight: 800;">
+                                    @ViewBag.TotalStudents
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <a href="#" class="card card-sm stitch-interactive-card" style="display: block;" onclick="event.preventDefault(); document.querySelector('.card-table').scrollIntoView({behavior: 'smooth'});">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <span class="bg-indigo text-white avatar">
+                                    <i class="ti ti-calendar" style="font-size: 24px;"></i>
+                                </span>
+                            </div>
+                            <div class="col">
+                                <div class="font-weight-medium text-secondary">Tổng Cuộc Hẹn</div>
+                                <div class="text-dark" id="stat-total-meetings" style="font-size: 24px; font-weight: 800;">
+                                    @ViewBag.TotalMeetings
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Transactions/Meetings Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Danh sách các cuộc hẹn tư vấn mới nhất</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Chủ đề</th>
+                            <th>Cố vấn</th>
+                            <th>Học viên</th>
+                            <th>Thời gian</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meetingsTableBody">
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var meeting in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <a href="javascript:void(0)" class="view-meeting-details" 
+                                           data-title="@meeting.Title" 
+                                           data-desc="@meeting.Description" 
+                                           data-mentor-name="@meeting.Mentor?.FullName"
+                                           data-mentor-email="@meeting.Mentor?.Email"
+                                           data-mentee-name="@meeting.Mentee?.FullName" 
+                                           data-mentee-email="@meeting.Mentee?.Email" 
+                                           data-mentee-phone="@(meeting.Mentee?.PhoneNumber ?? "Chưa cung cấp")" 
+                                           data-time="@meeting.ScheduledTime.ToString("dd/MM/yyyy HH:mm")" 
+                                           data-status-text="@(meeting.Status == "Scheduled" ? "Đã lên lịch" : meeting.Status == "Completed" ? "Hoàn thành" : meeting.Status == "NoShow" ? "Vắng mặt" : meeting.Status)"
+                                           data-status-class="@(meeting.Status == "Scheduled" ? "bg-blue-lt" : meeting.Status == "Completed" ? "bg-green-lt" : meeting.Status == "NoShow" ? "bg-red-lt" : "bg-secondary-lt")"
+                                           style="text-decoration: none; font-weight: 700; color: #1a73e8;">
+                                            @meeting.Title
+                                        </a>
+                                        @if (!string.IsNullOrEmpty(meeting.Description))
+                                        {
+                                            <div class="text-muted small">@meeting.Description</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>@meeting.Mentor?.FullName</div>
+                                        <div class="text-muted small">@meeting.Mentor?.Email</div>
+                                    </td>
+                                    <td>
+                                        <div>@meeting.Mentee?.FullName</div>
+                                        <div class="text-muted small">@meeting.Mentee?.Email</div>
+                                    </td>
+                                    <td>
+                                        <div>@meeting.ScheduledTime.ToString("dd/MM/yyyy HH:mm")</div>
+                                        <div class="text-muted small">Tạo ngày: @meeting.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                    </td>
+                                    <td>
+                                        @if (meeting.Status == "Scheduled")
+                                        {
+                                            <span class="badge bg-blue-lt">Đã lên lịch</span>
+                                        }
+                                        else if (meeting.Status == "Completed")
+                                        {
+                                            <span class="badge bg-green-lt">Hoàn thành</span>
+                                        }
+                                        else if (meeting.Status == "NoShow")
+                                        {
+                                            <span class="badge bg-red-lt">Vắng mặt</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-lt">@meeting.Status</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu cuộc hẹn nào.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Meeting Details Modal for Admin -->
+<div id="detailsModal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div style="background-color: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); width: 100%; max-width: 550px; box-sizing: border-box; border: 1px solid #e2e8f0; position: relative;">
+        <button id="closeDetailsModalBtn" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 22px; cursor: pointer; color: #94a3b8; padding: 4px; line-height: 1;">&times;</button>
+        <h3 style="font-size: 18px; font-weight: 800; margin-top: 0; margin-bottom: 20px; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">🔍 Chi tiết cuộc hẹn tư vấn (Quản trị viên)</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: #334155;">
+            <div>
+                <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Chủ đề tư vấn</strong>
+                <span id="modal-title" style="font-weight: 700; color: #0f172a; font-size: 15px;"></span>
+            </div>
+            <div>
+                <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Mô tả / Yêu cầu</strong>
+                <span id="modal-desc" style="white-space: pre-line; display: block; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #f1f5f9;"></span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Cố vấn chuyên môn</strong>
+                    <span id="modal-mentor-name" style="font-weight: 600; color: #0f172a;"></span>
+                    <span id="modal-mentor-email" style="font-size: 12px; color: #64748b; display: block;"></span>
+                </div>
+                <div>
+                    <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Học viên liên kết</strong>
+                    <span id="modal-mentee-name" style="font-weight: 600; color: #0f172a;"></span>
+                    <span id="modal-mentee-email" style="font-size: 12px; color: #64748b; display: block; word-break: break-all;"></span>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Số điện thoại học viên</strong>
+                    <span id="modal-mentee-phone" style="font-weight: 600; color: #0f172a;"></span>
+                </div>
+                <div>
+                    <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Thời gian hẹn</strong>
+                    <span id="modal-time" style="font-weight: 700; color: #4f46e5;"></span>
+                </div>
+            </div>
+            <div>
+                <strong style="color: #64748b; font-size: 12px; text-transform: uppercase; display: block; margin-bottom: 4px;">Trạng thái</strong>
+                <span id="modal-status" class="badge" style="margin-top: 2px; padding: 6px 12px; font-size: 12px;"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const detailsModal = document.getElementById("detailsModal");
+            const closeDetailsBtn = document.getElementById("closeDetailsModalBtn");
+            const timeRangeFilter = document.getElementById("timeRangeFilter");
+            const roleFilter = document.getElementById("roleFilter");
+
+            function showDetailsModal(e) {
+                e.preventDefault();
+                document.getElementById("modal-title").innerText = this.getAttribute("data-title") || "N/A";
+                document.getElementById("modal-desc").innerText = this.getAttribute("data-desc") || "Không có mô tả.";
+                document.getElementById("modal-mentor-name").innerText = this.getAttribute("data-mentor-name") || "N/A";
+                document.getElementById("modal-mentor-email").innerText = this.getAttribute("data-mentor-email") || "";
+                document.getElementById("modal-mentee-name").innerText = this.getAttribute("data-mentee-name") || "N/A";
+                document.getElementById("modal-mentee-email").innerText = this.getAttribute("data-mentee-email") || "";
+                document.getElementById("modal-mentee-phone").innerText = this.getAttribute("data-mentee-phone") || "Chưa cung cấp";
+                document.getElementById("modal-time").innerText = this.getAttribute("data-time") || "N/A";
+                
+                const statusSpan = document.getElementById("modal-status");
+                statusSpan.innerText = this.getAttribute("data-status-text") || "N/A";
+                statusSpan.className = "badge " + this.getAttribute("data-status-class");
+
+                detailsModal.style.display = "flex";
+            }
+
+            function bindMeetingDetails() {
+                document.querySelectorAll(".view-meeting-details").forEach(link => {
+                    link.removeEventListener("click", showDetailsModal);
+                    link.addEventListener("click", showDetailsModal);
+                });
+            }
+
+            if (closeDetailsBtn) {
+                closeDetailsBtn.addEventListener("click", function() {
+                    detailsModal.style.display = "none";
+                });
+            }
+
+            window.addEventListener("click", function(e) {
+                if (e.target === detailsModal) {
+                    detailsModal.style.display = "none";
+                }
+            });
+
+            function fetchLiveStats() {
+                const tr = timeRangeFilter ? timeRangeFilter.value : "1week";
+                const role = roleFilter ? roleFilter.value : "";
+
+                fetch(`/Admin/Dashboard/GetLiveStats?role=${encodeURIComponent(role)}&timeRange=${encodeURIComponent(tr)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("HTTP error " + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        document.getElementById('stat-total-users').innerText = data.totalUsers;
+                        document.getElementById('stat-total-mentors').innerText = data.totalMentors;
+                        document.getElementById('stat-total-students').innerText = data.totalStudents;
+                        document.getElementById('stat-total-meetings').innerText = data.totalMeetings;
+                        
+                        const tbody = document.getElementById('meetingsTableBody');
+                        if (tbody) {
+                            tbody.innerHTML = '';
+                            if (data.meetings && data.meetings.length > 0) {
+                                data.meetings.forEach(m => {
+                                    const tr = document.createElement('tr');
+                                    tr.innerHTML = `
+                                        <td>
+                                            <a href="javascript:void(0)" class="view-meeting-details" 
+                                               data-title="${m.title || ''}" 
+                                               data-desc="${m.description || ''}" 
+                                               data-mentor-name="${m.mentorName || ''}"
+                                               data-mentor-email="${m.mentorEmail || ''}"
+                                               data-mentee-name="${m.menteeName || ''}" 
+                                               data-mentee-email="${m.menteeEmail || ''}" 
+                                               data-mentee-phone="${m.menteePhone || ''}" 
+                                               data-time="${m.time || ''}" 
+                                               data-status-text="${m.statusText || ''}"
+                                               data-status-class="${m.statusClass || ''}"
+                                               style="text-decoration: none; font-weight: 700; color: #1a73e8;">
+                                                ${m.title || 'N/A'}
+                                            </a>
+                                            ${m.description ? `<div class="text-muted small">${m.description}</div>` : ''}
+                                        </td>
+                                        <td>
+                                            <div>${m.mentorName}</div>
+                                            <div class="text-muted small">${m.mentorEmail}</div>
+                                        </td>
+                                        <td>
+                                            <div>${m.menteeName}</div>
+                                            <div class="text-muted small">${m.menteeEmail}</div>
+                                        </td>
+                                        <td>
+                                            <div>${m.time}</div>
+                                            <div class="text-muted small">Tạo ngày: ${m.createdAt}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge ${m.statusClass}">${m.statusText}</span>
+                                        </td>
+                                    `;
+                                    tbody.appendChild(tr);
+                                });
+                                bindMeetingDetails();
+                            } else {
+                                tbody.innerHTML = `
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu cuộc hẹn nào.</td>
+                                    </tr>
+                                `;
+                            }
+                        }
+                        console.log("Live stats successfully updated at " + new Date().toLocaleTimeString());
+                    })
+                    .catch(error => {
+                        console.error("Error fetching live statistics: ", error);
+                    });
+            }
+
+            if (timeRangeFilter) timeRangeFilter.addEventListener("change", fetchLiveStats);
+            if (roleFilter) roleFilter.addEventListener("change", fetchLiveStats);
+
+            // Initial bind
+            bindMeetingDetails();
+
+            // Polling interval of 30 seconds
+            setInterval(fetchLiveStats, 30000);
+        });
+    </script>
+}
