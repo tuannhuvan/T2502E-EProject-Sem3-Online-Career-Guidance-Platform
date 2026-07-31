@@ -9,4 +9,6 @@ public class ProfileViewModel
     public List<Resume> Resumes { get; set; } = new();
     public List<JobApplication> JobApplications { get; set; } = new();
     public List<SavedJob> SavedJobs { get; set; } = new();
+    public List<Goal> Goals { get; set; } = new();
+    public List<MentorshipMeeting> MentorshipMeetings { get; set; } = new();
 }

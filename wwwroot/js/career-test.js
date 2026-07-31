@@ -151,7 +151,11 @@ function renderResult() {
 
 nextBtn.addEventListener("click", () => {
     if (!answers[currentQuestion]) {
-        alert("Bạn cần chọn một đáp án trước khi tiếp tục.");
+        if (window.showToast) {
+            window.showToast("Bạn cần chọn một đáp án trước khi tiếp tục.", "warning");
+        } else {
+            alert("Bạn cần chọn một đáp án trước khi tiếp tục.");
+        }
         return;
     }
 

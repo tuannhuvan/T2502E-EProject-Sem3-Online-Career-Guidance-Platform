@@ -4,6 +4,12 @@
     ViewData["Title"] = "Users";
 }
 
+<!-- Dummy inputs to intercept Chrome/Edge credential autofill -->
+<div style="position: absolute; left: -9999px; top: -9999px; opacity: 0; width: 0; height: 0; overflow: hidden;">
+    <input type="text" name="fake_username_autofill" autocomplete="username" tabindex="-1" />
+    <input type="password" name="fake_password_autofill" autocomplete="current-password" tabindex="-1" />
+</div>
+
 <div class="page-header d-print-none mb-3">
     <div class="mb-2">
         <a href="/Admin/Dashboard" class="btn btn-outline-secondary btn-sm">
@@ -39,7 +45,7 @@
                        class="form-control"
                        placeholder="Search user..."
                        onkeyup="filterUsers()"
-                       autocomplete="new-password" />
+                       autocomplete="off" />
             </div>
 
             <div class="col-md-2">
@@ -299,7 +305,7 @@
 </div>
 
 <!-- Modal Xem Chi Tiết Người Dùng -->
-<div class="modal modal-blur fade" id="userViewModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal modal-blur" id="userViewModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -345,7 +351,39 @@
                     </div>
                     <div class="col-12" id="viewUserExperienceGroup">
                         <label class="form-label text-muted mb-1">Kinh nghiệm làm việc</label>
-                        <div class="bg-light p-2 rounded text-secondary" id="viewUserExperience" style="white-space: pre-line; font-size: 13px;"></div>
+                        <div class="bg-light p-2 rounded text-secondary mb-3" id="viewUserExperience" style="white-space: pre-line; font-size: 13px;"></div>
+                    </div>
+                    
+                    <!-- Goals (Mục tiêu của tôi) -->
+                    <div class="col-12" id="viewUserGoalsWrapper">
+                        <label class="form-label text-muted mb-1 font-weight-bold">🎯 Mục tiêu của tôi</label>
+                        <div id="viewUserGoalsContainer" class="border rounded p-2 bg-light mb-3" style="max-height: 150px; overflow-y: auto; font-size: 13px;">
+                            <div class="text-muted text-center py-2" style="font-style: italic;">Đang tải mục tiêu...</div>
+                        </div>
+                    </div>
+
+                    <!-- Skills (Kỹ năng người dùng) -->
+                    <div class="col-12" id="viewUserSkillsWrapper">
+                        <label class="form-label text-muted mb-1 font-weight-bold">🛠️ Kỹ năng người dùng</label>
+                        <div id="viewUserSkillsContainer" class="border rounded p-2 bg-light mb-3" style="max-height: 180px; overflow-y: auto; font-size: 13px;">
+                            <div class="text-muted text-center py-2" style="font-style: italic;">Đang tải kỹ năng...</div>
+                        </div>
+                    </div>
+
+                    <!-- Connection Requests (Yêu cầu kết nối - Mentor only) -->
+                    <div class="col-12" id="viewUserRequestsWrapper" style="display: none;">
+                        <label class="form-label text-muted mb-1 font-weight-bold">🤝 Yêu cầu kết nối</label>
+                        <div id="viewUserRequestsContainer" class="border rounded p-2 bg-light mb-3" style="max-height: 150px; overflow-y: auto; font-size: 13px;">
+                            <div class="text-muted text-center py-2" style="font-style: italic;">Đang tải yêu cầu...</div>
+                        </div>
+                    </div>
+
+                    <!-- Mentor Meetings -->
+                    <div class="col-12" id="viewUserMeetingsWrapper">
+                        <label class="form-label text-muted mb-1 font-weight-bold" id="viewUserMeetingsLabel">📅 Lịch hẹn với Mentor</label>
+                        <div id="viewUserMeetingsContainer" class="border rounded p-2 bg-light" style="max-height: 150px; overflow-y: auto; font-size: 13px;">
+                            <div class="text-muted text-center py-2" style="font-style: italic;">Đang tải lịch hẹn...</div>
+                        </div>
                     </div>
                 </div>
             </div>

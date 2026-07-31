@@ -171,7 +171,7 @@
 <div id="floatingSelectionBar" class="floating-selection-bar hidden">
     <div class="floating-content">
         <span class="count-badge">💡 Đã chọn <strong id="selectedSkillsCount">0</strong> kỹ năng</span>
-        <button onclick="@(isPremium ? "addSelectedSkillsToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn btn-sm">🎯 @(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
+        <button onclick="@(isPremium ? "addSelectedSkillsToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn btn-sm">🎯 @Html.Raw(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
         <button onclick="clearSkillSelection()" class="btn secondary-btn btn-sm" style="color: white; border-color: rgba(255,255,255,0.3); background: transparent;">Hủy</button>
     </div>
 </div>
@@ -205,11 +205,11 @@
         </div>
         
         <div class="modal-footer">
-            <button id="btnAddSingleGoal" onclick="@(isPremium ? "addCurrentSkillToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn secondary-btn">🎯 @(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
+            <button id="btnAddSingleGoal" onclick="@(isPremium ? "addCurrentSkillToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn secondary-btn">🎯 @Html.Raw(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
             <form id="startLearningForm" method="post" action="/Goal/StartLearning" style="margin: 0;">
                 <input type="hidden" name="skillId" id="startLearningSkillId" value="" />
                 <button id="btnStartLearning" type="@(isPremium ? "submit" : "button")" onclick="@(isPremium ? "" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn" style="@(isPremium ? "" : "background: #cbd5e1; border-color: #cbd5e1; color: #64748b;")">
-                    @(isPremium ? "🚀 Bắt đầu học ngay" : "🔒 Bắt đầu học ngay (Premium)")
+                    @Html.Raw(isPremium ? "🚀 Bắt đầu học ngay" : "🔒 Bắt đầu học ngay (Premium)")
                 </button>
             </form>
         </div>
@@ -423,6 +423,7 @@
 
 <script>
     const userSkillIds = @Html.Raw(Json.Serialize(userSkillIds));
+    const isPremiumUser = @(isPremium ? "true" : "false");
     let selectedSkillIds = [];
     let currentSkillId = null;
 
@@ -466,12 +467,12 @@
                         btnStartLearning.innerText = "🚀 Vào trang học ngay";
                     }
                 } else {
-                    btnAddSingleGoal.innerText = "@(isPremium ? "🎯 Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")";
+                    btnAddSingleGoal.innerText = isPremiumUser ? "🎯 Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)";
                     btnAddSingleGoal.style.opacity = "1";
                     btnAddSingleGoal.style.pointerEvents = "auto";
                     
                     if (btnStartLearning) {
-                        btnStartLearning.innerText = "@(isPremium ? "🚀 Bắt đầu học ngay" : "🔒 Bắt đầu học ngay (Premium)")";
+                        btnStartLearning.innerText = isPremiumUser ? "🚀 Bắt đầu học ngay" : "🔒 Bắt đầu học ngay (Premium)";
                     }
                 }
 
@@ -560,16 +561,39 @@
     function addSelectedSkillsToGoals() {
         if (selectedSkillIds.length === 0) return;
         
+        const idsToAdd = [...selectedSkillIds];
+        
         fetch('/Goal/AddMultipleSkillsToGoals', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(selectedSkillIds)
+            body: JSON.stringify(idsToAdd)
         })
         .then(res => res.json())
         .then(data => {
-            showToast(data.message, data.success ? 'success' : 'error');
             if (data.success) {
+                // Determine redirect URL: if 1 skill, go to its learn page; if more, go to Goals list
+                let redirectUrl = '/Goal';
+                if (idsToAdd.length === 1) {
+                    redirectUrl = `/Goal/Learn?skillId=${idsToAdd[0]}`;
+                }
+                
+                // Mark selected skills as added (checked and disabled) in UI
+                idsToAdd.forEach(id => {
+                    if (!userSkillIds.includes(id)) {
+                        userSkillIds.push(id);
+                    }
+                    const cb = document.querySelector(`.skill-select-checkbox[data-id="${id}"]`);
+                    if (cb) {
+                        cb.checked = true;
+                        cb.disabled = true;
+                        cb.style.cursor = "not-allowed";
+                    }
+                });
+                
+                showToast(data.message, 'success', redirectUrl, 5000);
                 clearSkillSelection();
+            } else {
+                showToast(data.message, 'error');
             }
         })
         .catch(err => showToast("Có lỗi xảy ra: " + err, "error"));

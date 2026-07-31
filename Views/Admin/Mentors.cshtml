@@ -178,6 +178,12 @@
                                                             <div class="form-label text-muted mb-1">Lĩnh vực chuyên môn chính</div>
                                                             <div class="font-weight-medium text-dark">@mentor.Specialization</div>
                                                         </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-label text-muted mb-1">Chi phí tư vấn / giờ</div>
+                                                            <div class="font-weight-medium text-success font-weight-bold">
+                                                                @(mentor.HourlyRate > 0 ? mentor.HourlyRate.ToString("#,##0") + " VNĐ/giờ" : "Miễn phí (Free)")
+                                                            </div>
+                                                        </div>
                                                         <div class="col-12">
                                                             <div class="form-label text-muted mb-1">Kỹ năng chuyên môn (Expertise)</div>
                                                             <div class="font-weight-medium text-dark">

@@ -604,6 +604,62 @@
             const bellBtn = document.getElementById("notificationBellBtn");
             const clearBtn = document.getElementById("clearNotifBtn");
 
+            // Fetch notifications on load
+            function loadNotifications() {
+                fetch('/Home/GetNotifications')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (notifList) {
+                            if (data && data.length > 0) {
+                                notifList.innerHTML = "";
+                                let unreadCount = 0;
+                                data.forEach(n => {
+                                    if (!n.isRead) unreadCount++;
+                                    const notifItem = document.createElement("div");
+                                    notifItem.style.padding = "8px 12px";
+                                    notifItem.style.borderRadius = "8px";
+                                    notifItem.style.backgroundColor = n.isRead ? "#ffffff" : "#f8fafc";
+                                    notifItem.style.borderLeft = n.isRead ? "3px solid #e2e8f0" : "3px solid #4f46e5";
+                                    notifItem.style.marginBottom = "4px";
+                                    notifItem.style.cursor = "pointer";
+                                    notifItem.innerHTML = `
+                                        <div style="font-weight: ${n.isRead ? 'normal' : '600'};">${n.message}</div>
+                                        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${n.createdAt}</div>
+                                    `;
+                                    notifItem.addEventListener("click", () => {
+                                        if (dropdown) dropdown.style.display = "none";
+
+                                        if (!n.isRead) {
+                                            fetch(`/Home/MarkNotificationAsRead?id=${n.id}`, { method: 'POST' })
+                                                .then(() => {
+                                                    loadNotifications();
+                                                })
+                                                .catch(err => console.error("Error marking single notification as read:", err));
+                                        }
+
+                                        // Redirect student to the dynamic computed URL
+                                        window.location.href = n.url || "/Manage";
+                                    });
+                                    notifList.appendChild(notifItem);
+                                });
+
+                                if (unreadCount > 0) {
+                                    badge.textContent = unreadCount;
+                                    badge.style.display = "inline-block";
+                                } else {
+                                    badge.style.display = "none";
+                                }
+                            } else {
+                                notifList.innerHTML = `<div style="text-align: center; color: #64748b; padding: 10px; font-style: italic;">Chưa có thông báo mới</div>`;
+                                badge.style.display = "none";
+                            }
+                        }
+                    })
+                    .catch(err => console.error("Error loading notifications:", err));
+            }
+
+            loadNotifications();
+
             if (bellBtn && dropdown) {
                 bellBtn.addEventListener("click", function(e) {
                     e.stopPropagation();
@@ -622,13 +678,18 @@
 
             if (clearBtn) {
                 clearBtn.addEventListener("click", function() {
-                    if (badge) {
-                        badge.textContent = "0";
-                        badge.style.display = "none";
-                    }
-                    if (notifList) {
-                        notifList.innerHTML = `<div style="text-align: center; color: #64748b; padding: 10px; font-style: italic;">Chưa có thông báo mới</div>`;
-                    }
+                    fetch('/Home/MarkNotificationsAsRead', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (badge) {
+                                    badge.textContent = "0";
+                                    badge.style.display = "none";
+                                }
+                                loadNotifications();
+                            }
+                        })
+                        .catch(err => console.error("Error marking notifications as read:", err));
                 });
             }
 
@@ -638,31 +699,7 @@
                 } else {
                     alert(message);
                 }
-
-                if (badge) {
-                    let currentCount = parseInt(badge.textContent || "0");
-                    currentCount++;
-                    badge.textContent = currentCount;
-                    badge.style.display = "inline-block";
-                }
-
-                if (notifList) {
-                    if (notifList.innerText.includes("Chưa có thông báo")) {
-                        notifList.innerHTML = "";
-                    }
-
-                    const newNotifItem = document.createElement("div");
-                    newNotifItem.style.padding = "8px 12px";
-                    newNotifItem.style.borderRadius = "8px";
-                    newNotifItem.style.backgroundColor = "#f8fafc";
-                    newNotifItem.style.borderLeft = "3px solid #4f46e5";
-                    newNotifItem.style.marginBottom = "4px";
-                    newNotifItem.innerHTML = `
-                        <div style="font-weight: 600;">${message}</div>
-                        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Vừa xong</div>
-                    `;
-                    notifList.prepend(newNotifItem);
-                }
+                loadNotifications();
             });
 
             connection.start().catch(function(err) {

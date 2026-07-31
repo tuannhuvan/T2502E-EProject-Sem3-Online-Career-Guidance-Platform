@@ -47,6 +47,20 @@ namespace Career_Guidance_Platform.Controllers
                 .Where(j => j.CareerPathId == id && j.Status == 1)
                 .ToListAsync();
 
+            var userSkillIds = new List<int>();
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdStr, out int userId))
+                {
+                    userSkillIds = await _context.UserSkills
+                        .Where(us => us.UserId == userId)
+                        .Select(us => us.SkillId)
+                        .ToListAsync();
+                }
+            }
+            ViewBag.UserSkillIds = userSkillIds;
+
             return View(careerPath);
         }
 

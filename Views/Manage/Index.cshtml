@@ -97,6 +97,12 @@
                 <button type="button" class="profile-tab-btn" data-target="tab-saved-jobs">
                     ❤️ Việc làm đã lưu (@Model.SavedJobs.Count)
                 </button>
+                <button type="button" class="profile-tab-btn" data-target="tab-goals">
+                    🎯 Mục tiêu của tôi (@Model.Goals.Count)
+                </button>
+                <button type="button" class="profile-tab-btn" data-target="tab-mentorship">
+                    🤝 Lịch hẹn Mentor (@Model.MentorshipMeetings.Count)
+                </button>
             </div>
 
             <!-- Tab Content: Test Results -->
@@ -374,6 +380,164 @@
                                                     <a href="/Home/Jobs" class="btn btn-sm btn-outline-primary" style="padding: 4px 8px; font-size: 11.5px; border-radius: 8px; text-decoration: none; border: 1px solid #0284c7; color: #0284c7; font-weight: 600;">Xem tin</a>
                                                     <button type="button" class="btn btn-sm btn-outline-danger" onclick="unsaveJob(this, @job.Id)" style="padding: 4px 8px; font-size: 11.5px; border-radius: 8px; background: transparent; border: 1px solid #ef4444; color: #ef4444; font-weight: 600; cursor: pointer;">Bỏ lưu</button>
                                                 </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Tab Content: Goals -->
+            <div class="profile-tab-pane" id="tab-goals">
+                <div class="info-card">
+                    <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #020617;">Mục tiêu học tập của bạn</h3>
+                    
+                    @if (Model.Goals.Count == 0)
+                    {
+                        <div class="empty-state-panel" style="text-align: center; padding: 40px;">
+                            <span class="empty-icon" style="font-size: 48px; display: block; margin-bottom: 10px;">🎯</span>
+                            <h4>Bạn chưa thiết lập mục tiêu nào</h4>
+                            <p style="color: #64748b; font-size: 13.5px; margin-bottom: 15px;">Hãy đặt mục tiêu nghề nghiệp để theo dõi tiến trình học tập của mình.</p>
+                            <a class="btn primary-btn" href="/Goal" style="margin-top: 10px; text-decoration: none; display: inline-flex; justify-content: center; align-items: center; height: 38px; font-size: 13px;">
+                                Quản lý mục tiêu →
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Mục tiêu & Lộ trình</th>
+                                        <th>Loại</th>
+                                        <th>Hạn hoàn thành</th>
+                                        <th>Tiến độ</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var goal in Model.Goals)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight: 700; color: #020617;">@goal.Title</div>
+                                                @if (goal.CareerPath != null)
+                                                {
+                                                    <div style="font-size: 13px; color: #64748b; margin-top: 2px;">🎯 Lộ trình: @goal.CareerPath.Title</div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span style="font-size: 13px; font-weight: 600; color: #4b5563;">
+                                                    @(goal.GoalType == "ShortTerm" ? "Ngắn hạn" : "Dài hạn")
+                                                </span>
+                                            </td>
+                                            <td>@(goal.TargetDate?.ToString("dd/MM/yyyy") ?? "N/A")</td>
+                                            <td>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <div class="progress-bar-mini">
+                                                        <div class="progress-fill" style="width: @(goal.Progress)%"></div>
+                                                    </div>
+                                                    <strong>@(goal.Progress)%</strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="display: flex; gap: 8px;">
+                                                    @if (goal.CareerPathId.HasValue)
+                                                    {
+                                                        <a class="btn secondary-btn" href="/CareerPath/Roadmap/@goal.CareerPathId" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px; text-decoration: none; background: #eef2ff; color: #4f46e5; border-color: #e0e7ff;">
+                                                            🚀 Học ngay
+                                                        </a>
+                                                    }
+                                                    <a class="btn secondary-btn" href="/Goal" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px; text-decoration: none;">
+                                                        ⚙️ Quản lý
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Tab Content: Mentorship Meetings -->
+            <div class="profile-tab-pane" id="tab-mentorship">
+                <div class="info-card">
+                    <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #020617;">Lịch hẹn cố vấn với Mentor</h3>
+                    
+                    @if (Model.MentorshipMeetings.Count == 0)
+                    {
+                        <div class="empty-state-panel" style="text-align: center; padding: 40px;">
+                            <span class="empty-icon" style="font-size: 48px; display: block; margin-bottom: 10px;">🤝</span>
+                            <h4>Bạn chưa có lịch hẹn cố vấn nào</h4>
+                            <p style="color: #64748b; font-size: 13.5px; margin-bottom: 15px;">Kết nối với các Mentor dày dặn kinh nghiệm để được hướng dẫn trực tiếp 1-1.</p>
+                            <a class="btn primary-btn" href="/Mentorship" style="margin-top: 10px; text-decoration: none; display: inline-flex; justify-content: center; align-items: center; height: 38px; font-size: 13px;">
+                                Tìm Mentor ngay →
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="profile-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tiêu đề buổi hẹn</th>
+                                        <th>Mentor</th>
+                                        <th>Thời gian hẹn</th>
+                                        <th>Trạng thái</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var meeting in Model.MentorshipMeetings)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong style="color: #020617;">@meeting.Title</strong>
+                                                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">@meeting.Description</div>
+                                            </td>
+                                            <td>
+                                                <div style="font-weight: 600; color: #334155;">👨‍🏫 @(meeting.Mentor?.FullName ?? "N/A")</div>
+                                            </td>
+                                            <td>@meeting.ScheduledTime.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                @if (meeting.Status == "Scheduled")
+                                                {
+                                                    <span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Lên lịch ⏳
+                                                    </span>
+                                                }
+                                                else if (meeting.Status == "Completed")
+                                                {
+                                                    <span style="background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Đã hoàn thành ✅
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span style="background: #fee2e2; color: #b91c1c; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;">
+                                                        Đã hủy
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (meeting.Status == "Scheduled" && !string.IsNullOrEmpty(meeting.MeetingUrl))
+                                                {
+                                                    <a class="btn primary-btn" href="@meeting.MeetingUrl" target="_blank" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px; text-decoration: none; background: #10b981; border-color: #10b981; color: white;">
+                                                        💻 Tham gia cuộc họp
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span style="color: #64748b; font-size: 13px;">Không có thao tác</span>
+                                                }
                                             </td>
                                         </tr>
                                     }

@@ -2663,4 +2663,65 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
         }
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetUserExtendedDetails(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        var goals = await _context.Goals
+            .Include(g => g.CareerPath)
+            .Where(g => g.StudentId == id && g.Status == 1)
+            .Select(g => new {
+                g.Id,
+                g.Title,
+                GoalType = g.GoalType == "ShortTerm" ? "Ngắn hạn" : "Dài hạn",
+                g.Progress,
+                TargetDate = g.TargetDate.HasValue ? g.TargetDate.Value.ToString("dd/MM/yyyy") : "Không có"
+            })
+            .ToListAsync();
+
+        var skills = await _context.UserSkills
+            .Include(us => us.Skill)
+            .Where(us => us.UserId == id)
+            .Select(us => new {
+                SkillName = us.Skill != null ? us.Skill.Name : "Kỹ năng",
+                us.ProficiencyLevel,
+                us.Status
+            })
+            .ToListAsync();
+
+        var meetings = await _context.MentorshipMeetings
+            .Include(mm => mm.Mentor)
+            .Include(mm => mm.Mentee)
+            .Where(mm => mm.MenteeId == id || mm.MentorId == id)
+            .OrderByDescending(mm => mm.ScheduledTime)
+            .Select(mm => new {
+                mm.Title,
+                MentorName = mm.Mentor != null ? mm.Mentor.FullName : "Cố vấn",
+                MenteeName = mm.Mentee != null ? mm.Mentee.FullName : "Học viên",
+                ScheduledTime = mm.ScheduledTime.ToString("dd/MM/yyyy HH:mm"),
+                mm.Status
+            })
+            .ToListAsync();
+
+        var mentorshipRequests = await _context.MentorshipRequests
+            .Include(r => r.Mentee)
+            .Where(r => r.MentorId == id)
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new {
+                r.Id,
+                MenteeName = r.Mentee != null ? r.Mentee.FullName : "Học viên",
+                Status = r.Status == "Pending" ? "Đang chờ duyệt" : (r.Status == "Approved" ? "Đã chấp nhận" : (r.Status == "Rejected" ? "Từ chối" : r.Status)),
+                CreatedAt = r.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+            })
+            .ToListAsync();
+
+        return Json(new {
+            goals,
+            skills,
+            meetings,
+            mentorshipRequests
+        });
+    }
 }
