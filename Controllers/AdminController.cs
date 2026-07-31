@@ -92,9 +92,24 @@ public class AdminController : Controller
         return View();
     }
 
-    public async Task<IActionResult> Users()
+    public async Task<IActionResult> Users(string? accountType)
     {
-        var users = await _context.Users.ToListAsync();
+        var query = _context.Users.AsQueryable();
+
+        if (!string.IsNullOrEmpty(accountType))
+        {
+            if (accountType == "Premium")
+            {
+                query = query.Where(u => u.IsPremium == true);
+            }
+            else if (accountType == "Free")
+            {
+                query = query.Where(u => u.IsPremium == false);
+            }
+            ViewBag.CurrentAccountType = accountType;
+        }
+
+        var users = await query.ToListAsync();
         return View(users);
     }
 
@@ -723,42 +738,161 @@ public class AdminController : Controller
         return View();
     }
 
-    public async Task<IActionResult> Transactions(DateTime? startDate, DateTime? endDate, string? search, int? month, int? year, string? status)
+    // GET: /Admin/GetRevenueData?range=1week|1month|6months  hoặc  ?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd
+    [HttpGet]
+    public async Task<IActionResult> GetRevenueData(string? range, DateTime? startDate, DateTime? endDate)
+    {
+        var today = DateTime.Now.Date;
+        // Chặn cứng ngày tương lai ở phía server (đề phòng client bị can thiệp)
+        if (startDate.HasValue && startDate.Value.Date > today) startDate = today;
+        if (endDate.HasValue && endDate.Value.Date > today) endDate = today;
+
+        var labels = new List<string>();
+        var values = new List<decimal>();
+
+        if (startDate.HasValue && endDate.HasValue && startDate.Value.Date <= endDate.Value.Date)
+        {
+            // Khoảng ngày tùy chỉnh: gom nhóm theo từng ngày
+            var rangeStart = startDate.Value.Date;
+            var rangeEndExclusive = endDate.Value.Date.AddDays(1);
+
+            var dailyRevenue = await _context.PaymentHistories
+                .Where(p => p.PaymentStatus == "Completed" && p.CreatedAt >= rangeStart && p.CreatedAt < rangeEndExclusive)
+                .GroupBy(p => p.CreatedAt.Date)
+                .Select(g => new { Date = g.Key, Revenue = g.Sum(p => p.Amount) })
+                .ToListAsync();
+
+            for (var d = rangeStart; d <= endDate.Value.Date; d = d.AddDays(1))
+            {
+                labels.Add(d.ToString("dd/MM"));
+                var match = dailyRevenue.FirstOrDefault(x => x.Date == d);
+                values.Add(match?.Revenue ?? 0);
+            }
+        }
+        else
+        {
+            switch (range)
+            {
+                case "1week":
+                    {
+                        var rangeStart = today.AddDays(-6);
+                        var dailyRevenue = await _context.PaymentHistories
+                            .Where(p => p.PaymentStatus == "Completed" && p.CreatedAt >= rangeStart)
+                            .GroupBy(p => p.CreatedAt.Date)
+                            .Select(g => new { Date = g.Key, Revenue = g.Sum(p => p.Amount) })
+                            .ToListAsync();
+
+                        for (var d = rangeStart; d <= today; d = d.AddDays(1))
+                        {
+                            labels.Add(d.ToString("dd/MM"));
+                            var match = dailyRevenue.FirstOrDefault(x => x.Date == d);
+                            values.Add(match?.Revenue ?? 0);
+                        }
+                        break;
+                    }
+                case "1month":
+                    {
+                        var rangeStart = today.AddDays(-29);
+                        var dailyRevenue = await _context.PaymentHistories
+                            .Where(p => p.PaymentStatus == "Completed" && p.CreatedAt >= rangeStart)
+                            .GroupBy(p => p.CreatedAt.Date)
+                            .Select(g => new { Date = g.Key, Revenue = g.Sum(p => p.Amount) })
+                            .ToListAsync();
+
+                        for (var d = rangeStart; d <= today; d = d.AddDays(1))
+                        {
+                            labels.Add(d.ToString("dd/MM"));
+                            var match = dailyRevenue.FirstOrDefault(x => x.Date == d);
+                            values.Add(match?.Revenue ?? 0);
+                        }
+                        break;
+                    }
+                case "6months":
+                default:
+                    {
+                        var sixMonthsAgo = new DateTime(today.AddMonths(-5).Year, today.AddMonths(-5).Month, 1);
+                        var monthlyRevenueQuery = await _context.PaymentHistories
+                            .Where(p => p.PaymentStatus == "Completed" && p.CreatedAt >= sixMonthsAgo)
+                            .GroupBy(p => new { Year = p.CreatedAt.Year, Month = p.CreatedAt.Month })
+                            .Select(g => new { Year = g.Key.Year, Month = g.Key.Month, Revenue = g.Sum(p => p.Amount) })
+                            .ToListAsync();
+
+                        for (int i = 5; i >= 0; i--)
+                        {
+                            var targetDate = today.AddMonths(-i);
+                            labels.Add(targetDate.ToString("MM/yyyy"));
+                            var match = monthlyRevenueQuery.FirstOrDefault(m => m.Year == targetDate.Year && m.Month == targetDate.Month);
+                            values.Add(match?.Revenue ?? 0);
+                        }
+                        break;
+                    }
+            }
+        }
+
+        return Json(new { labels, values });
+    }
+
+    public async Task<IActionResult> Transactions(DateTime? startDate, DateTime? endDate, string? search, int? month, int? year, string? status, string? timeRange)
     {
         var query = _context.PaymentHistories
             .Include(p => p.User)
             .AsQueryable();
 
-        if (month.HasValue)
+        ViewBag.SelectedTimeRange = timeRange;
+
+        if (!string.IsNullOrEmpty(timeRange) && timeRange != "all")
         {
-            query = query.Where(p => p.CreatedAt.Month == month.Value);
-            if (year.HasValue)
+            var today = DateTime.Now;
+            DateTime cutoff = today;
+            if (timeRange == "1day")
             {
-                query = query.Where(p => p.CreatedAt.Year == year.Value);
+                cutoff = today.AddDays(-1);
             }
-            else
+            else if (timeRange == "1week")
             {
-                query = query.Where(p => p.CreatedAt.Year == DateTime.Now.Year);
+                cutoff = today.AddDays(-7);
             }
-            ViewBag.SelectedMonth = month.Value;
-            var startOfMonth = new DateTime(year ?? DateTime.Now.Year, month.Value, 1);
-            var endOfMonth = startOfMonth.AddMonths(1).AddTicks(-1);
-            ViewBag.StartDate = startOfMonth.ToString("yyyy-MM-dd");
-            ViewBag.EndDate = endOfMonth.ToString("yyyy-MM-dd");
+            else if (timeRange == "1month")
+            {
+                cutoff = today.AddMonths(-1);
+            }
+            query = query.Where(p => p.CreatedAt >= cutoff);
+            ViewBag.StartDate = cutoff.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = today.ToString("yyyy-MM-dd");
         }
         else
         {
-            if (startDate.HasValue)
+            if (month.HasValue)
             {
-                query = query.Where(p => p.CreatedAt >= startDate.Value);
+                query = query.Where(p => p.CreatedAt.Month == month.Value);
+                if (year.HasValue)
+                {
+                    query = query.Where(p => p.CreatedAt.Year == year.Value);
+                }
+                else
+                {
+                    query = query.Where(p => p.CreatedAt.Year == DateTime.Now.Year);
+                }
+                ViewBag.SelectedMonth = month.Value;
+                var startOfMonth = new DateTime(year ?? DateTime.Now.Year, month.Value, 1);
+                var endOfMonth = startOfMonth.AddMonths(1).AddTicks(-1);
+                ViewBag.StartDate = startOfMonth.ToString("yyyy-MM-dd");
+                ViewBag.EndDate = endOfMonth.ToString("yyyy-MM-dd");
             }
-            if (endDate.HasValue)
+            else
             {
-                var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
-                query = query.Where(p => p.CreatedAt <= endOfDate);
+                if (startDate.HasValue)
+                {
+                    query = query.Where(p => p.CreatedAt >= startDate.Value);
+                }
+                if (endDate.HasValue)
+                {
+                    var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                    query = query.Where(p => p.CreatedAt <= endOfDate);
+                }
+                ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
+                ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
             }
-            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
-            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
         }
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -783,7 +917,7 @@ public class AdminController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(DateTime? startDate, DateTime? endDate, string? search, string? status)
+    public async Task<IActionResult> ExportToExcel(DateTime? startDate, DateTime? endDate, string? search, string? status, string? timeRange)
     {
         ExcelPackage.License.SetNonCommercialPersonal("CareerGuidanceApp");
 
@@ -791,14 +925,35 @@ public class AdminController : Controller
             .Include(p => p.User)
             .AsQueryable();
 
-        if (startDate.HasValue)
+        if (!string.IsNullOrEmpty(timeRange) && timeRange != "all")
         {
-            query = query.Where(p => p.CreatedAt >= startDate.Value);
+            var today = DateTime.Now;
+            DateTime cutoff = today;
+            if (timeRange == "1day")
+            {
+                cutoff = today.AddDays(-1);
+            }
+            else if (timeRange == "1week")
+            {
+                cutoff = today.AddDays(-7);
+            }
+            else if (timeRange == "1month")
+            {
+                cutoff = today.AddMonths(-1);
+            }
+            query = query.Where(p => p.CreatedAt >= cutoff);
         }
-        if (endDate.HasValue)
+        else
         {
-            var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
-            query = query.Where(p => p.CreatedAt <= endOfDate);
+            if (startDate.HasValue)
+            {
+                query = query.Where(p => p.CreatedAt >= startDate.Value);
+            }
+            if (endDate.HasValue)
+            {
+                var endOfDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                query = query.Where(p => p.CreatedAt <= endOfDate);
+            }
         }
         if (!string.IsNullOrWhiteSpace(search))
         {
