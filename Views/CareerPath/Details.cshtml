@@ -5,7 +5,9 @@
     var isPremium = currentUser?.IsPremium == true || User.IsInRole("Admin") || User.IsInRole("Mentor");
     var testCount = currentUser?.TestAttemptsCount ?? 0;
     var isLimitReached = !isPremium && testCount >= 3;
+    var userSkillIds = ViewBag.UserSkillIds as List<int> ?? new List<int>();
 }
+
 
 <section class="page-hero" style="background: radial-gradient(circle at top left, #f5f3ff 0%, transparent 40%), linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
     <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
@@ -77,7 +79,14 @@
                                                  onmouseover="this.style.background='#eef2ff'; this.style.borderColor='#cbd5e1'; this.style.transform='translateY(-1px)';" 
                                                  onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0'; this.style.transform='none';"
                                                  onclick="openSkillPopup(@css.Skill.Id)">
-                                                <input type="checkbox" class="skill-select-checkbox" data-id="@css.Skill.Id" onclick="event.stopPropagation(); toggleSkillSelection()" style="width: 15px; height: 15px; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                                                @if (userSkillIds.Contains(css.Skill.Id))
+                                                {
+                                                    <input type="checkbox" class="skill-select-checkbox" data-id="@css.Skill.Id" checked disabled style="width: 15px; height: 15px; cursor: not-allowed; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                                                }
+                                                else
+                                                {
+                                                    <input type="checkbox" class="skill-select-checkbox" data-id="@css.Skill.Id" onclick="event.stopPropagation(); toggleSkillSelection()" style="width: 15px; height: 15px; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e1;" />
+                                                }
                                                 <span>⚙️</span>
                                                 <span>@css.Skill.Name</span>
                                                 <span style="font-size: 10px; font-weight: 800; color: @color; background: @(color)15; padding: 2px 6px; border-radius: 4px;">@css.ProficiencyRequired</span>
@@ -199,7 +208,7 @@
             <button id="btnAddSingleGoal" onclick="@(isPremium ? "addCurrentSkillToGoals()" : "window.location.href='/Home/UpgradePremium'")" class="btn secondary-btn">🎯 @(isPremium ? "Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")</button>
             <form id="startLearningForm" method="post" action="/Goal/StartLearning" style="margin: 0;">
                 <input type="hidden" name="skillId" id="startLearningSkillId" value="" />
-                <button type="@(isPremium ? "submit" : "button")" onclick="@(isPremium ? "" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn" style="@(isPremium ? "" : "background: #cbd5e1; border-color: #cbd5e1; color: #64748b;")">
+                <button id="btnStartLearning" type="@(isPremium ? "submit" : "button")" onclick="@(isPremium ? "" : "window.location.href='/Home/UpgradePremium'")" class="btn primary-btn" style="@(isPremium ? "" : "background: #cbd5e1; border-color: #cbd5e1; color: #64748b;")">
                     @(isPremium ? "🚀 Bắt đầu học ngay" : "🔒 Bắt đầu học ngay (Premium)")
                 </button>
             </form>
@@ -413,6 +422,7 @@
 </style>
 
 <script>
+    const userSkillIds = @Html.Raw(Json.Serialize(userSkillIds));
     let selectedSkillIds = [];
     let currentSkillId = null;
 
@@ -443,6 +453,27 @@
                 
                 // Set form input for Start Learning
                 document.getElementById("startLearningSkillId").value = data.id;
+
+                // Update buttons based on userSkillIds
+                const btnAddSingleGoal = document.getElementById("btnAddSingleGoal");
+                const btnStartLearning = document.getElementById("btnStartLearning");
+                if (userSkillIds.includes(data.id)) {
+                    btnAddSingleGoal.innerText = "🎯 Đã thêm vào mục tiêu";
+                    btnAddSingleGoal.style.opacity = "0.6";
+                    btnAddSingleGoal.style.pointerEvents = "none";
+                    
+                    if (btnStartLearning) {
+                        btnStartLearning.innerText = "🚀 Vào trang học ngay";
+                    }
+                } else {
+                    btnAddSingleGoal.innerText = "@(isPremium ? "🎯 Thêm vào Mục tiêu" : "🔒 Thêm vào Mục tiêu (Premium)")";
+                    btnAddSingleGoal.style.opacity = "1";
+                    btnAddSingleGoal.style.pointerEvents = "auto";
+                    
+                    if (btnStartLearning) {
+                        btnStartLearning.innerText = "@(isPremium ? "🚀 Bắt đầu học ngay" : "🔒 Bắt đầu học ngay (Premium)")";
+                    }
+                }
 
                 // Load resources
                 const list = document.getElementById("popupResourcesList");
@@ -485,16 +516,27 @@
         fetch(`/Goal/AddSkillToGoals?skillId=${currentSkillId}`, { method: 'POST' })
             .then(res => res.json())
             .then(data => {
-                showToast(data.message, data.success ? 'success' : 'error');
                 if (data.success) {
+                    showToast(data.message, 'success', `/Goal/Learn?skillId=${currentSkillId}`, 5000);
+                    // Push to local list to reflect instantly without page reload
+                    userSkillIds.push(currentSkillId);
+                    // Check and disable the corresponding checkbox
+                    const cb = document.querySelector(`.skill-select-checkbox[data-id="${currentSkillId}"]`);
+                    if (cb) {
+                        cb.checked = true;
+                        cb.disabled = true;
+                        cb.style.cursor = "not-allowed";
+                    }
                     closeSkillPopup();
+                } else {
+                    showToast(data.message, 'error');
                 }
             })
             .catch(err => showToast("Có lỗi xảy ra: " + err, "error"));
     }
 
     function toggleSkillSelection() {
-        const checkboxes = document.querySelectorAll(".skill-select-checkbox:checked");
+        const checkboxes = document.querySelectorAll(".skill-select-checkbox:checked:not(:disabled)");
         selectedSkillIds = Array.from(checkboxes).map(cb => parseInt(cb.getAttribute("data-id")));
         
         const bar = document.getElementById("floatingSelectionBar");
@@ -509,7 +551,7 @@
     }
 
     function clearSkillSelection() {
-        const checkboxes = document.querySelectorAll(".skill-select-checkbox:checked");
+        const checkboxes = document.querySelectorAll(".skill-select-checkbox:checked:not(:disabled)");
         checkboxes.forEach(cb => cb.checked = false);
         selectedSkillIds = [];
         document.getElementById("floatingSelectionBar").classList.add("hidden");

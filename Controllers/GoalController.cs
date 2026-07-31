@@ -426,9 +426,10 @@ public class GoalController : Controller
                 return Json(new { success = false, message = "Kỹ năng này đã được hoàn thành." });
 
             if (existing.Status == "In-Goals" || existing.Status == "Learning")
-                return Json(new { success = false, message = "Kỹ năng này đã có trong mục tiêu." });
+                return Json(new { success = false, message = "Kỹ năng này đã có trong mục tiêu học tập." });
 
-            existing.Status = "In-Goals";
+            existing.Status = "Learning";
+            existing.StartTimestamp = DateTime.Now;
             _context.UserSkills.Update(existing);
         }
         else
@@ -437,13 +438,14 @@ public class GoalController : Controller
             {
                 UserId = userId,
                 SkillId = skillId,
-                Status = "In-Goals",
+                Status = "Learning",
+                StartTimestamp = DateTime.Now,
                 ProficiencyLevel = "Beginner"
             });
         }
 
         await _context.SaveChangesAsync();
-        return Json(new { success = true, message = "Đã thêm kỹ năng vào mục tiêu học tập!" });
+        return Json(new { success = true, message = "Đã thêm kỹ năng và đăng ký học thành công!" });
     }
 
     [HttpPost]

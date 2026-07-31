@@ -40,29 +40,29 @@
     </div>
 
     <div class="col-sm-6 col-lg-3">
-        <div class="card bg-success-lt">
+        <a asp-controller="Admin" asp-action="Transactions" asp-route-status="Completed" class="card bg-success-lt hover-shadow-sm" style="text-decoration: none; display: block; transition: all 0.2s ease-in-out;">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="subheader text-success">Số lượt nâng cấp</div>
                     <span class="avatar bg-success text-white"><i class="ti ti-shopping-cart"></i></span>
                 </div>
                 <div class="h1 mb-1 text-success">@ViewBag.TotalTransactions</div>
-                <div class="text-muted text-truncate">Thanh toán Premium thành công</div>
+                <div class="text-muted text-truncate">Thanh toán Premium thành công (Xem chi tiết)</div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-sm-6 col-lg-3">
-        <div class="card bg-info-lt">
+        <a asp-controller="Admin" asp-action="Transactions" asp-route-status="Completed" class="card bg-info-lt hover-shadow-sm" style="text-decoration: none; display: block; transition: all 0.2s ease-in-out;">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="subheader text-info">Thành viên Premium</div>
                     <span class="avatar bg-info text-white"><i class="ti ti-user-check"></i></span>
                 </div>
                 <div class="h1 mb-1 text-info">@premiumCount</div>
-                <div class="text-muted text-truncate">Trên tổng số @totalCount người dùng</div>
+                <div class="text-muted text-truncate">Trên tổng số @totalCount người dùng (Xem chi tiết)</div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-sm-6 col-lg-3">
@@ -82,42 +82,42 @@
 <!-- Chi tiết trạng thái giao dịch -->
 <div class="row row-deck row-cards mb-4">
     <div class="col-sm-6 col-lg-4">
-        <div class="card bg-success-lt">
+        <a asp-controller="Admin" asp-action="Transactions" asp-route-status="Completed" class="card bg-success-lt hover-shadow-sm" style="text-decoration: none; display: block; transition: all 0.2s ease-in-out;">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="subheader text-success">Thanh toán thành công</div>
                     <span class="avatar bg-success text-white"><i class="ti ti-check"></i></span>
                 </div>
                 <div class="h1 mb-1 text-success">@ViewBag.CompletedCount</div>
-                <div class="text-muted text-truncate">Giao dịch đã hoàn tất thành công</div>
+                <div class="text-muted text-truncate">Giao dịch đã hoàn tất thành công (Xem chi tiết)</div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-sm-6 col-lg-4">
-        <div class="card bg-danger-lt">
+        <a asp-controller="Admin" asp-action="Transactions" asp-route-status="Cancelled" class="card bg-danger-lt hover-shadow-sm" style="text-decoration: none; display: block; transition: all 0.2s ease-in-out;">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="subheader text-danger">Giao dịch đã hủy</div>
                     <span class="avatar bg-danger text-white"><i class="ti ti-x"></i></span>
                 </div>
                 <div class="h1 mb-1 text-danger">@ViewBag.CancelledCount</div>
-                <div class="text-muted text-truncate">Giao dịch do người dùng hủy bỏ</div>
+                <div class="text-muted text-truncate">Giao dịch do người dùng hủy bỏ (Xem chi tiết)</div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-sm-6 col-lg-4">
-        <div class="card bg-warning-lt">
+        <a asp-controller="Admin" asp-action="Transactions" asp-route-status="Pending" class="card bg-warning-lt hover-shadow-sm" style="text-decoration: none; display: block; transition: all 0.2s ease-in-out;">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div class="subheader text-warning">Đang chờ thanh toán</div>
                     <span class="avatar bg-warning text-white"><i class="ti ti-clock"></i></span>
                 </div>
                 <div class="h1 mb-1 text-warning">@ViewBag.PendingCount</div>
-                <div class="text-muted text-truncate">Giao dịch đang chờ hoặc chưa hoàn tất</div>
+                <div class="text-muted text-truncate">Giao dịch đang chờ hoặc chưa hoàn tất (Xem chi tiết)</div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 

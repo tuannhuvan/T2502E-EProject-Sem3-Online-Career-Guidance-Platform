@@ -723,7 +723,7 @@ public class AdminController : Controller
         return View();
     }
 
-    public async Task<IActionResult> Transactions(DateTime? startDate, DateTime? endDate, string? search, int? month, int? year)
+    public async Task<IActionResult> Transactions(DateTime? startDate, DateTime? endDate, string? search, int? month, int? year, string? status)
     {
         var query = _context.PaymentHistories
             .Include(p => p.User)
@@ -767,6 +767,12 @@ public class AdminController : Controller
             query = query.Where(p => p.User != null && (p.User.FullName.ToLower().Contains(searchLower) || p.User.Email.ToLower().Contains(searchLower)));
         }
 
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(p => p.PaymentStatus == status);
+        }
+        ViewBag.SelectedStatus = status;
+
         var payments = await query
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
@@ -777,7 +783,7 @@ public class AdminController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(DateTime? startDate, DateTime? endDate, string? search)
+    public async Task<IActionResult> ExportToExcel(DateTime? startDate, DateTime? endDate, string? search, string? status)
     {
         ExcelPackage.License.SetNonCommercialPersonal("CareerGuidanceApp");
 
@@ -798,6 +804,10 @@ public class AdminController : Controller
         {
             var searchLower = search.Trim().ToLower();
             query = query.Where(p => p.User != null && (p.User.FullName.ToLower().Contains(searchLower) || p.User.Email.ToLower().Contains(searchLower)));
+        }
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(p => p.PaymentStatus == status);
         }
 
         var payments = await query
