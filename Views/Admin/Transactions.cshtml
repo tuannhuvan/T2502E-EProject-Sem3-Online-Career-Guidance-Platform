@@ -31,7 +31,7 @@
     </div>
     <div class="card-body">
         <form method="get" asp-controller="Admin" asp-action="Transactions" class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label">Tìm kiếm người dùng</label>
                 <div class="input-icon">
                     <span class="input-icon-addon">
@@ -41,10 +41,19 @@
                 </div>
             </div>
             <div class="col-md-3">
+                <label class="form-label">Trạng thái</label>
+                <select name="status" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Completed" selected="@(ViewBag.SelectedStatus == "Completed" ? "selected" : null)">Completed (Thành công)</option>
+                    <option value="Pending" selected="@(ViewBag.SelectedStatus == "Pending" ? "selected" : null)">Pending (Đang chờ)</option>
+                    <option value="Cancelled" selected="@(ViewBag.SelectedStatus == "Cancelled" ? "selected" : null)">Cancelled (Đã hủy)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label class="form-label">Từ ngày</label>
                 <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control" />
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label">Đến ngày</label>
                 <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" />
             </div>
@@ -53,7 +62,7 @@
                     <i class="ti ti-search me-1"></i> Lọc
                 </button>
                 <a asp-controller="Admin" asp-action="Transactions" class="btn btn-outline-secondary w-100">
-                    Xóa lọc
+                    Xóa
                 </a>
             </div>
         </form>
@@ -171,7 +180,8 @@
             const search = '@Html.Raw(ViewBag.Search)';
             const startDate = '@Html.Raw(ViewBag.StartDate)';
             const endDate = '@Html.Raw(ViewBag.EndDate)';
-            window.location.href = `/Admin/ExportToExcel?search=${encodeURIComponent(search)}&startDate=${startDate}&endDate=${endDate}`;
+            const status = '@Html.Raw(ViewBag.SelectedStatus)';
+            window.location.href = `/Admin/ExportToExcel?search=${encodeURIComponent(search)}&startDate=${startDate}&endDate=${endDate}&status=${status}`;
         }
 
         document.addEventListener("DOMContentLoaded", function() {
@@ -257,6 +267,7 @@
                         });
                     }
                     paginationUl.appendChild(nextLi);
+                }
             }
 
             paginate();

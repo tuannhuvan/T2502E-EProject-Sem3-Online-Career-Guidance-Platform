@@ -440,12 +440,15 @@
 }
 
 <script>
-    window.showToast = function(message, type = 'success') {
+    window.showToast = function(message, type = 'success', redirectUrl = null, duration = 4000) {
         const container = document.getElementById('toast-container');
         if (!container) return;
 
         const card = document.createElement('div');
         card.className = `toast-card toast-${type}`;
+        if (redirectUrl) {
+            card.style.cursor = 'pointer';
+        }
 
         let icon = 'ℹ️';
         if (type === 'success') icon = '✅';
@@ -456,6 +459,7 @@
             <div class="toast-icon">${icon}</div>
             <div class="toast-content">
                 <p class="toast-message">${message}</p>
+                ${redirectUrl ? '<small style="font-size: 11px; opacity: 0.8; display: block; margin-top: 4px; text-decoration: underline;">👉 Nhấp vào đây để học ngay!</small>' : ''}
             </div>
         `;
 
@@ -464,19 +468,24 @@
         // Trigger animate-in
         setTimeout(() => card.classList.add('show'), 10);
 
-        // Auto-remove after 4 seconds
+        // Auto-remove after duration
         const autoHide = setTimeout(() => {
             card.classList.remove('show');
             card.classList.add('hide');
             setTimeout(() => card.remove(), 400);
-        }, 4000);
+        }, duration);
 
-        // Click to dismiss
+        // Click to dismiss / redirect
         card.onclick = () => {
             clearTimeout(autoHide);
             card.classList.remove('show');
             card.classList.add('hide');
-            setTimeout(() => card.remove(), 400);
+            setTimeout(() => {
+                card.remove();
+                if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                }
+            }, 400);
         };
     };
 
