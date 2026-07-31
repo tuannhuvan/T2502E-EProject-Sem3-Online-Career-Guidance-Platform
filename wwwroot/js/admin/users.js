@@ -240,10 +240,22 @@ function init() {
         }
     }
 
+    // Parse URL query parameter for accountType (Premium/Free) and sync to membership filter
+    let accountTypeParam = urlParams.get('accountType');
+    if (accountTypeParam && membershipFilter) {
+        if (accountTypeParam === 'Premium') {
+            membershipFilter.value = 'premium';
+        } else if (accountTypeParam === 'Free') {
+            membershipFilter.value = 'free';
+        }
+    }
+
     if (searchInput) searchInput.addEventListener('input', () => filterUsers(true));
     if (roleFilter) roleFilter.addEventListener('change', () => filterUsers(true));
     if (statusFilter) statusFilter.addEventListener('change', () => filterUsers(true));
     if (membershipFilter) membershipFilter.addEventListener('change', () => filterUsers(true));
+
+    rebindActionButtons();
 
     // View user details popup modal logic via event delegation
     const tableBody = document.getElementById('userTableBody');
@@ -283,13 +295,40 @@ function init() {
                 document.getElementById('viewUserMajor').innerText = major;
                 document.getElementById('viewUserExperience').innerText = experience;
 
-                const myModal = new bootstrap.Modal(document.getElementById('userViewModal'));
+                const myModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('userViewModal'));
                 myModal.show();
             }
         });
     }
 
     filterUsers(true);
+}
+
+// Re-attach click handlers for Edit/Delete/View action buttons after the
+// table body is replaced or updated (e.g. following an AJAX refresh).
+// Uses event delegation on the table body, so it is safe to call multiple
+// times without creating duplicate listeners.
+function rebindActionButtons() {
+    const tableBody = document.getElementById('userTableBody');
+    if (!tableBody || tableBody.dataset.actionsBound === 'true') {
+        return;
+    }
+    tableBody.dataset.actionsBound = 'true';
+
+    tableBody.addEventListener('click', function (e) {
+        const editBtn = e.target.closest('.btn-action-edit');
+        if (editBtn && editBtn.tagName === 'BUTTON') {
+            const userId = editBtn.getAttribute('data-id');
+            if (userId) openEditUserModal(editBtn);
+            return;
+        }
+
+        const deleteBtn = e.target.closest('.btn-action-delete');
+        if (deleteBtn) {
+            const userId = deleteBtn.getAttribute('data-id');
+            if (userId) deleteUser(parseInt(userId, 10));
+        }
+    });
 }
 
 if (document.readyState !== 'loading') {

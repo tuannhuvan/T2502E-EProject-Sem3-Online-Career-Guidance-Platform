@@ -147,20 +147,19 @@
                                 <i class="ti ti-eye"></i>
                             </button>
 
-                            <button class="btn btn-sm btn-outline-primary me-1"
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 btn-action-edit"
                                     data-id="@user.Id"
                                     data-fullname="@user.FullName"
                                     data-email="@user.Email"
                                     data-role="@displayRole"
                                     data-status="@displayStatus"
                                     data-bs-toggle="modal"
-                                    data-bs-target="#userModal"
-                                    onclick="openEditUserModal(this)">
+                                    data-bs-target="#userModal">
                                 Edit
                             </button>
 
-                            <button class="btn btn-sm btn-outline-danger"
-                                    onclick="deleteUser(@user.Id)">
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-action-delete"
+                                    data-id="@user.Id">
                                 Delete
                             </button>
                         </td>

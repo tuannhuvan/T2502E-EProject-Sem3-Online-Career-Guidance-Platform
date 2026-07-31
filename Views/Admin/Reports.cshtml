@@ -127,9 +127,22 @@
     <div class="col-lg-8">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="ti ti-trending-up me-2"></i>Xu hướng doanh thu (6 tháng gần nhất)</h3>
+                <h3 class="card-title"><i class="ti ti-trending-up me-2"></i>Xu hướng doanh thu</h3>
             </div>
             <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="btn-group btn-group-sm" role="group" id="revenueQuickFilterGroup">
+                        <button type="button" class="btn btn-outline-primary" onclick="filterRevenue('1week', this)">1 Tuần</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="filterRevenue('1month', this)">1 Tháng</button>
+                        <button type="button" class="btn btn-outline-primary active" onclick="filterRevenue('6months', this)">6 Tháng</button>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-muted">Tùy chỉnh:</span>
+                        <input type="date" id="revenueStartDate" class="form-control form-control-sm" onchange="filterCustomRevenue()">
+                        <span class="small text-muted">đến</span>
+                        <input type="date" id="revenueEndDate" class="form-control form-control-sm" onchange="filterCustomRevenue()">
+                    </div>
+                </div>
                 <div style="height: 320px;">
                     <canvas id="revenueTrendChart" style="width: 100%; height: 100%;"></canvas>
                 </div>
@@ -164,13 +177,22 @@
 
 @section Scripts {
     <script>
+        // Tham chiếu global tới 2 biểu đồ để các hàm filter bên ngoài DOMContentLoaded có thể truy cập
+        let revenueChart;
+        let userChart;
+
         document.addEventListener("DOMContentLoaded", function () {
-            // Line Chart: Doanh thu 6 tháng gần nhất
+            // Chặn cứng không cho chọn ngày tương lai ở bộ lọc tùy chỉnh
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('revenueStartDate').setAttribute('max', todayStr);
+            document.getElementById('revenueEndDate').setAttribute('max', todayStr);
+
+            // Line Chart: Doanh thu 6 tháng gần nhất (mặc định)
             const ctxTrend = document.getElementById('revenueTrendChart').getContext('2d');
             const monthlyLabels = @Html.Raw(Json.Serialize(ViewBag.MonthlyLabels ?? new List<string>()));
             const monthlyValues = @Html.Raw(Json.Serialize(ViewBag.MonthlyValues ?? new List<decimal>()));
             
-            const myChart = new Chart(ctxTrend, {
+            revenueChart = new Chart(ctxTrend, {
                 type: 'line',
                 data: {
                     labels: monthlyLabels,
@@ -193,10 +215,10 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     onClick: function(evt, elements) {
-                        const activePoints = myChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                        const activePoints = revenueChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
                         if (activePoints.length > 0) {
                             const firstPoint = activePoints[0];
-                            const label = myChart.data.labels[firstPoint.index]; // Ví dụ: "Tháng 07" hoặc "07/2026"
+                            const label = revenueChart.data.labels[firstPoint.index]; // Ví dụ: "Tháng 07" hoặc "07/2026"
                             const match = label.match(/\d+/);
                             if (match) {
                                 const month = match[0]; // Trích xuất chỉ số số của tháng
@@ -251,13 +273,14 @@
             const premiumCount = @premiumCount;
             const freeCount = @freeCount;
 
-            new Chart(ctxBreakdown, {
+            userChart = new Chart(ctxBreakdown, {
                 type: 'doughnut',
                 data: {
                     labels: ['Premium', 'Free'],
                     datasets: [{
+                        // Đồng bộ màu Premium (#0d6efd) trùng khớp với chấm chú thích bg-primary bên dưới
                         data: [premiumCount, freeCount],
-                        backgroundColor: ['#198754', '#fd7e14'],
+                        backgroundColor: ['#0d6efd', '#9ca3af'],
                         borderWidth: 3,
                         borderColor: '#ffffff',
                         hoverOffset: 4
@@ -271,9 +294,74 @@
                         legend: {
                             display: false
                         }
+                    },
+                    // Điều hướng sang trang Users, lọc theo loại tài khoản được click
+                    onClick: (evt, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const firstPoint = activeElements[0];
+                            const label = userChart.data.labels[firstPoint.index]; // "Premium" hoặc "Free"
+                            window.location.href = `/Admin/Users?accountType=${label}`;
+                        }
                     }
                 }
             });
         });
+
+        // ==========================================
+        // Bộ lọc thời gian thông minh cho biểu đồ Doanh thu
+        // ==========================================
+        function setActiveQuickFilterButton(btn) {
+            document.querySelectorAll('#revenueQuickFilterGroup .btn').forEach(b => b.classList.remove('active'));
+            if (btn) {
+                btn.classList.add('active');
+            }
+        }
+
+        function updateRevenueChartData(labels, values) {
+            if (!revenueChart) return;
+            revenueChart.data.labels = labels;
+            revenueChart.data.datasets[0].data = values;
+            revenueChart.update();
+        }
+
+        async function filterRevenue(range, btn) {
+            setActiveQuickFilterButton(btn);
+            // Xóa lựa chọn ngày tùy chỉnh khi dùng nút nhanh
+            document.getElementById('revenueStartDate').value = '';
+            document.getElementById('revenueEndDate').value = '';
+
+            try {
+                const res = await fetch(`/Admin/GetRevenueData?range=${encodeURIComponent(range)}`);
+                if (!res.ok) throw new Error('Không thể tải dữ liệu doanh thu');
+                const result = await res.json();
+                updateRevenueChartData(result.labels, result.values);
+            } catch (err) {
+                console.error('Lỗi khi lọc doanh thu theo khoảng thời gian nhanh:', err);
+            }
+        }
+
+        async function filterCustomRevenue() {
+            const startDate = document.getElementById('revenueStartDate').value;
+            const endDate = document.getElementById('revenueEndDate').value;
+
+            // Chờ cho đến khi cả hai ngày được chọn
+            if (!startDate || !endDate) return;
+
+            if (startDate > endDate) {
+                alert('Ngày bắt đầu không được lớn hơn ngày kết thúc.');
+                return;
+            }
+
+            setActiveQuickFilterButton(null);
+
+            try {
+                const res = await fetch(`/Admin/GetRevenueData?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`);
+                if (!res.ok) throw new Error('Không thể tải dữ liệu doanh thu tùy chỉnh');
+                const result = await res.json();
+                updateRevenueChartData(result.labels, result.values);
+            } catch (err) {
+                console.error('Lỗi khi lọc doanh thu theo khoảng ngày tùy chỉnh:', err);
+            }
+        }
     </script>
 }

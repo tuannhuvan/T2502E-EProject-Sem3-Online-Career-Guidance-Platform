@@ -31,7 +31,7 @@
     </div>
     <div class="card-body">
         <form method="get" asp-controller="Admin" asp-action="Transactions" class="row g-3">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label class="form-label">Tìm kiếm người dùng</label>
                 <div class="input-icon">
                     <span class="input-icon-addon">
@@ -40,13 +40,22 @@
                     <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Nhập tên hoặc email..." />
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label">Trạng thái</label>
                 <select name="status" class="form-select">
                     <option value="">Tất cả trạng thái</option>
                     <option value="Completed" selected="@(ViewBag.SelectedStatus == "Completed" ? "selected" : null)">Completed (Thành công)</option>
                     <option value="Pending" selected="@(ViewBag.SelectedStatus == "Pending" ? "selected" : null)">Pending (Đang chờ)</option>
                     <option value="Cancelled" selected="@(ViewBag.SelectedStatus == "Cancelled" ? "selected" : null)">Cancelled (Đã hủy)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Chọn nhanh</label>
+                <select id="timeRangeFilter" name="timeRange" class="form-select">
+                    <option value="all" selected="@(ViewBag.SelectedTimeRange == "all" || string.IsNullOrEmpty(ViewBag.SelectedTimeRange) ? "selected" : null)">Tất cả thời gian</option>
+                    <option value="1day" selected="@(ViewBag.SelectedTimeRange == "1day" ? "selected" : null)">Trong 24 giờ qua</option>
+                    <option value="1week" selected="@(ViewBag.SelectedTimeRange == "1week" ? "selected" : null)">Trong 1 tuần qua</option>
+                    <option value="1month" selected="@(ViewBag.SelectedTimeRange == "1month" ? "selected" : null)">Trong 1 tháng qua</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -57,11 +66,11 @@
                 <label class="form-label">Đến ngày</label>
                 <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" />
             </div>
-            <div class="col-md-2 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary w-100">
+            <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                <button type="submit" class="btn btn-primary px-4">
                     <i class="ti ti-search me-1"></i> Lọc
                 </button>
-                <a asp-controller="Admin" asp-action="Transactions" class="btn btn-outline-secondary w-100">
+                <a asp-controller="Admin" asp-action="Transactions" class="btn btn-outline-secondary px-4">
                     Xóa
                 </a>
             </div>
@@ -72,7 +81,7 @@
 <!-- Chi tiết giao dịch -->
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title"><i class="ti ti-list me-2"></i>Lịch sử nâng cấp Premium (Dữ liệu động)</h3>
+        <h3 class="card-title"><i class="ti ti-list me-2"></i>Lịch sử nâng cấp Premium</h3>
         <span class="badge bg-blue-lt">@Model.Count giao dịch</span>
     </div>
     
@@ -89,7 +98,7 @@
                     <th class="text-center">Hành động</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="transactionsTableBody">
                 @if (Model != null && Model.Any())
                 {
                     int index = 1;
@@ -177,100 +186,235 @@
 @section Scripts {
     <script>
         function exportExcel() {
-            const search = '@Html.Raw(ViewBag.Search)';
-            const startDate = '@Html.Raw(ViewBag.StartDate)';
-            const endDate = '@Html.Raw(ViewBag.EndDate)';
-            const status = '@Html.Raw(ViewBag.SelectedStatus)';
-            window.location.href = `/Admin/ExportToExcel?search=${encodeURIComponent(search)}&startDate=${startDate}&endDate=${endDate}&status=${status}`;
+            const search = document.querySelector('input[name="search"]')?.value || '';
+            const startDate = document.querySelector('input[name="startDate"]')?.value || '';
+            const endDate = document.querySelector('input[name="endDate"]')?.value || '';
+            const status = document.querySelector('select[name="status"]')?.value || '';
+            const timeRange = document.getElementById('timeRangeFilter')?.value || '';
+            window.location.href = `/Admin/ExportToExcel?search=${encodeURIComponent(search)}&startDate=${startDate}&endDate=${endDate}&status=${status}&timeRange=${timeRange}`;
+        }
+
+        let rows = [];
+        const pageSize = 5;
+        let currentPage = 1;
+
+        function initPagination() {
+            rows = document.querySelectorAll('.payment-row');
+            currentPage = 1;
+            paginate();
+        }
+
+        function paginate() {
+            const totalItems = rows.length;
+            const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+            if (currentPage > totalPages) {
+                currentPage = totalPages;
+            }
+
+            const startIdx = (currentPage - 1) * pageSize;
+            const endIdx = startIdx + pageSize;
+
+            rows.forEach((row, idx) => {
+                if (idx >= startIdx && idx < endIdx) {
+                    row.style.display = '';
+                    const sttCell = row.querySelector('td:first-child');
+                    if (sttCell) {
+                        sttCell.innerText = idx + 1;
+                    }
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update entry text
+            const startEntry = totalItems === 0 ? 0 : startIdx + 1;
+            const endEntry = Math.min(endIdx, totalItems);
+            document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} giao dịch`;
+
+            // Render pagination
+            const paginationUl = document.getElementById('pagination-ul');
+            if (paginationUl) {
+                paginationUl.innerHTML = '';
+
+                // Prev Button
+                const prevLi = document.createElement('li');
+                prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
+                if (currentPage > 1) {
+                    prevLi.querySelector('a').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage--;
+                        paginate();
+                    });
+                }
+                paginationUl.appendChild(prevLi);
+
+                // Page buttons
+                const maxButtons = 5;
+                let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                if (endPage - startPage + 1 < maxButtons) {
+                    startPage = Math.max(1, endPage - maxButtons + 1);
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const li = document.createElement('li');
+                    li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                    li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                    li.querySelector('a').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage = i;
+                        paginate();
+                    });
+                    paginationUl.appendChild(li);
+                }
+
+                // Next Button
+                const nextLi = document.createElement('li');
+                nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
+                if (currentPage < totalPages) {
+                    nextLi.querySelector('a').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage++;
+                        paginate();
+                    });
+                }
+                paginationUl.appendChild(nextLi);
+            }
+        }
+
+        function applyFilters() {
+            const form = document.querySelector('form');
+            const searchInput = form.querySelector('input[name="search"]');
+            const statusSelect = form.querySelector('select[name="status"]');
+            const timeRangeSelect = document.getElementById('timeRangeFilter');
+            const startDateInput = form.querySelector('input[name="startDate"]');
+            const endDateInput = form.querySelector('input[name="endDate"]');
+
+            const params = new URLSearchParams();
+            if (searchInput?.value) params.set('search', searchInput.value);
+            if (statusSelect?.value) params.set('status', statusSelect.value);
+            if (timeRangeSelect?.value) params.set('timeRange', timeRangeSelect.value);
+            if (startDateInput?.value) params.set('startDate', startDateInput.value);
+            if (endDateInput?.value) params.set('endDate', endDateInput.value);
+
+            const url = `${window.location.pathname}?${params.toString()}`;
+
+            // Update browser URL without reload
+            window.history.pushState(null, '', url);
+
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // Replace the table body content
+                    const newTableBody = doc.getElementById('transactionsTableBody');
+                    const currentTableBody = document.getElementById('transactionsTableBody');
+                    if (newTableBody && currentTableBody) {
+                        currentTableBody.innerHTML = newTableBody.innerHTML;
+                    }
+
+                    // Update total transactions count badge
+                    const newBadge = doc.querySelector('.card-header .badge');
+                    const currentBadge = document.querySelector('.card-header .badge');
+                    if (newBadge && currentBadge) {
+                        currentBadge.innerHTML = newBadge.innerHTML;
+                    }
+
+                    // Re-run pagination with the new rows
+                    initPagination();
+                })
+                .catch(error => console.error('Error filtering transactions:', error));
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            const rows = document.querySelectorAll('.payment-row');
-            const pageSize = 5;
-            let currentPage = 1;
+            initPagination();
 
-            function paginate() {
-                const totalItems = rows.length;
-                const totalPages = Math.ceil(totalItems / pageSize) || 1;
-
-                if (currentPage > totalPages) {
-                    currentPage = totalPages;
-                }
-
-                const startIdx = (currentPage - 1) * pageSize;
-                const endIdx = startIdx + pageSize;
-
-                rows.forEach((row, idx) => {
-                    if (idx >= startIdx && idx < endIdx) {
-                        row.style.display = '';
-                        const sttCell = row.querySelector('td:first-child');
-                        if (sttCell) {
-                            sttCell.innerText = idx + 1;
-                        }
-                    } else {
-                        row.style.display = 'none';
-                    }
+            // Intercept form submit (pressing enter in search box or clicking "Lọc")
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    applyFilters();
                 });
-
-                // Update entry text
-                const startEntry = totalItems === 0 ? 0 : startIdx + 1;
-                const endEntry = Math.min(endIdx, totalItems);
-                document.getElementById('entryText').innerHTML = `Hiển thị từ ${startEntry} đến ${endEntry} trong số ${totalItems} giao dịch`;
-
-                // Render pagination
-                const paginationUl = document.getElementById('pagination-ul');
-                if (paginationUl) {
-                    paginationUl.innerHTML = '';
-
-                    // Prev Button
-                    const prevLi = document.createElement('li');
-                    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-                    prevLi.innerHTML = `<a class="page-link" href="#" tabindex="-1" aria-disabled="${currentPage === 1}"><i class="ti ti-chevron-left"></i> prev</a>`;
-                    if (currentPage > 1) {
-                        prevLi.querySelector('a').addEventListener('click', function(e) {
-                            e.preventDefault();
-                            currentPage--;
-                            paginate();
-                        });
-                    }
-                    paginationUl.appendChild(prevLi);
-
-                    // Page buttons
-                    const maxButtons = 5;
-                    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-                    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-                    if (endPage - startPage + 1 < maxButtons) {
-                        startPage = Math.max(1, endPage - maxButtons + 1);
-                    }
-
-                    for (let i = startPage; i <= endPage; i++) {
-                        const li = document.createElement('li');
-                        li.className = `page-item ${currentPage === i ? 'active' : ''}`;
-                        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-                        li.querySelector('a').addEventListener('click', function(e) {
-                            e.preventDefault();
-                            currentPage = i;
-                            paginate();
-                        });
-                        paginationUl.appendChild(li);
-                    }
-
-                    // Next Button
-                    const nextLi = document.createElement('li');
-                    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-                    nextLi.innerHTML = `<a class="page-link" href="#">next <i class="ti ti-chevron-right"></i></a>`;
-                    if (currentPage < totalPages) {
-                        nextLi.querySelector('a').addEventListener('click', function(e) {
-                            e.preventDefault();
-                            currentPage++;
-                            paginate();
-                        });
-                    }
-                    paginationUl.appendChild(nextLi);
-                }
             }
 
-            paginate();
+            // Intercept time range change
+            const timeRangeFilter = document.getElementById('timeRangeFilter');
+            if (timeRangeFilter) {
+                timeRangeFilter.addEventListener('change', function() {
+                    const val = this.value;
+                    const startDateInput = document.querySelector('input[name="startDate"]');
+                    const endDateInput = document.querySelector('input[name="endDate"]');
+
+                    if (val === 'all') {
+                        startDateInput.value = '';
+                        endDateInput.value = '';
+                    } else {
+                        const now = new Date();
+                        let start = new Date();
+
+                        if (val === '1day') {
+                            start.setDate(now.getDate() - 1);
+                        } else if (val === '1week') {
+                            start.setDate(now.getDate() - 7);
+                        } else if (val === '1month') {
+                            start.setMonth(now.getMonth() - 1);
+                        }
+
+                        const formatDate = (date) => {
+                            const y = date.getFullYear();
+                            const m = String(date.getMonth() + 1).padStart(2, '0');
+                            const d = String(date.getDate()).padStart(2, '0');
+                            return `${y}-${m}-${d}`;
+                        };
+
+                        startDateInput.value = formatDate(start);
+                        endDateInput.value = formatDate(now);
+                    }
+
+                    applyFilters();
+                });
+            }
+
+            // Intercept status change
+            const statusSelect = document.querySelector('select[name="status"]');
+            if (statusSelect) {
+                statusSelect.addEventListener('change', function() {
+                    applyFilters();
+                });
+            }
+
+            // Intercept inputs (change on custom dates triggers filtration)
+            const startDateInput = document.querySelector('input[name="startDate"]');
+            const endDateInput = document.querySelector('input[name="endDate"]');
+            if (startDateInput) startDateInput.addEventListener('change', () => {
+                document.getElementById('timeRangeFilter').value = 'all';
+                applyFilters();
+            });
+            if (endDateInput) endDateInput.addEventListener('change', () => {
+                document.getElementById('timeRangeFilter').value = 'all';
+                applyFilters();
+            });
+
+            // Intercept reset (Xóa) link to filter silently without F5
+            const resetBtn = document.querySelector('a[href*="/Admin/Transactions"]');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (form) form.reset();
+                    document.getElementById('timeRangeFilter').value = 'all';
+                    document.querySelector('input[name="startDate"]').value = '';
+                    document.querySelector('input[name="endDate"]').value = '';
+                    document.querySelector('input[name="search"]').value = '';
+                    document.querySelector('select[name="status"]').value = '';
+                    applyFilters();
+                });
+            }
 
             // Bind view detail popups
             const tableBody = document.querySelector('.table tbody');
@@ -298,7 +442,7 @@
                         badge.innerText = status === 'Completed' ? 'Thành công' : (status === 'Pending' ? 'Đang xử lý' : 'Thất bại');
                         badge.className = 'badge ' + (status === 'Completed' ? 'bg-success-lt' : (status === 'Pending' ? 'bg-warning-lt' : 'bg-danger-lt'));
 
-                        const myModal = new bootstrap.Modal(document.getElementById('transactionDetailsModal'));
+                        const myModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('transactionDetailsModal'));
                         myModal.show();
                     }
                 });
