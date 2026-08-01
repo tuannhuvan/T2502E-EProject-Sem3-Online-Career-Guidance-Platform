@@ -113,7 +113,7 @@
                                 </td>
                                 <td>
                                     <div class="btn-list flex-nowrap">
-                                        <button class="btn btn-icon btn-sm btn-outline-info me-1" 
+                                        <button type="button" class="btn btn-icon btn-sm btn-outline-info me-1" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#mentorModal-@mentor.UserId"
                                                 title="Xem chi tiết">
@@ -134,102 +134,6 @@
                                             </form>
                                         }
                                     </div>
-
-                                    <!-- Modal Chi tiết cho từng Mentor -->
-                                    <div class="modal modal-blur fade" id="mentorModal-@mentor.UserId" tabindex="-1" role="dialog" aria-hidden="true">
-                                        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-                                            <div class="modal-content text-start">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Chi tiết Hồ sơ Đăng ký Cố vấn: @mentor.User?.FullName</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="row g-3">
-                                                        <div class="col-md-6">
-                                                            <div class="form-label text-muted mb-1">Họ và tên</div>
-                                                            <div class="font-weight-medium text-dark">@mentor.User?.FullName</div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-label text-muted mb-1">Email</div>
-                                                            <div class="font-weight-medium text-dark">@mentor.User?.Email</div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-label text-muted mb-1">Số điện thoại</div>
-                                                            <div class="font-weight-medium text-dark">@(string.IsNullOrEmpty(mentor.User?.PhoneNumber) ? "Chưa cung cấp" : mentor.User.PhoneNumber)</div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-label text-muted mb-1">Đường dẫn LinkedIn</div>
-                                                            <div class="font-weight-medium text-dark">
-                                                                @if (!string.IsNullOrEmpty(mentor.LinkedInUrl))
-                                                                {
-                                                                    <a href="@mentor.LinkedInUrl" target="_blank">@mentor.LinkedInUrl</a>
-                                                                }
-                                                                else
-                                                                {
-                                                                    <span class="text-muted">Chưa cung cấp</span>
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-label text-muted mb-1">Chức danh công việc & Công ty</div>
-                                                            <div class="font-weight-medium text-dark">@mentor.JobTitle tại @mentor.Company</div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-label text-muted mb-1">Lĩnh vực chuyên môn chính</div>
-                                                            <div class="font-weight-medium text-dark">@mentor.Specialization</div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-label text-muted mb-1">Chi phí tư vấn / giờ</div>
-                                                            <div class="font-weight-medium text-success font-weight-bold">
-                                                                @(mentor.HourlyRate > 0 ? mentor.HourlyRate.ToString("#,##0") + " VNĐ/giờ" : "Miễn phí (Free)")
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-12">
-                                                            <div class="form-label text-muted mb-1">Kỹ năng chuyên môn (Expertise)</div>
-                                                            <div class="font-weight-medium text-dark">
-                                                                @if (!string.IsNullOrEmpty(mentor.Expertise))
-                                                                {
-                                                                    @foreach (var skill in mentor.Expertise.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                                                                    {
-                                                                        <span class="badge bg-blue-lt me-1 mb-1">@skill.Trim()</span>
-                                                                    }
-                                                                }
-                                                                else
-                                                                {
-                                                                    <span class="text-muted">Chưa cung cấp</span>
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-12">
-                                                            <div class="form-label text-muted mb-1">Giới thiệu bản thân (Biography)</div>
-                                                            <div class="bg-light p-3 rounded text-secondary" style="white-space: pre-wrap; font-size: 13px; max-height: 200px; overflow-y: auto;">@mentor.Biography</div>
-                                                        </div>
-                                                        <div class="col-12">
-                                                            <div class="form-label text-muted mb-1">Kinh nghiệm làm việc chi tiết</div>
-                                                            <div class="bg-light p-3 rounded text-secondary" style="white-space: pre-wrap; font-size: 13px; max-height: 250px; overflow-y: auto;">@mentor.ExperienceDescription</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Đóng</button>
-                                                    @if (!mentor.IsVerified)
-                                                    {
-                                                        <form asp-controller="Admin" asp-action="ApproveMentor" asp-route-id="@mentor.UserId" method="post" class="d-inline">
-                                                            @Html.AntiForgeryToken()
-                                                            <button type="submit" class="btn btn-success">Duyệt hồ sơ</button>
-                                                        </form>
-                                                    }
-                                                    else
-                                                    {
-                                                        <form asp-controller="Admin" asp-action="RejectMentor" asp-route-id="@mentor.UserId" method="post" class="d-inline">
-                                                            @Html.AntiForgeryToken()
-                                                            <button type="submit" class="btn btn-outline-danger">Hủy duyệt</button>
-                                                        </form>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </td>
                             </tr>
                         }
@@ -237,7 +141,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-secondary py-4">Chưa có cố vấn nào đăng ký trên hệ thống.</td>
+                            <td colspan="6" class="text-center text-secondary py-4">Chưa có cố vấn nào đăng ký trên hệ thống.</td>
                         </tr>
                     }
                     </tbody>
@@ -253,6 +157,111 @@
         </div>
     </div>
 </div>
+
+@* Các modal chi tiết được render tách biệt bên ngoài <table> để tránh xung đột với
+   script phân trang/tìm kiếm phía trên: script đó set style.display = 'none' cho
+   từng <tr> khi lọc/đổi trang, nên nếu modal còn nằm trong <tr> thì modal đang mở
+   sẽ bị ẩn theo dòng cha ngay khi người dùng gõ tìm kiếm hoặc chuyển trang. *@
+@if (Model != null && Model.Any())
+{
+    foreach (var mentor in Model)
+    {
+        <div class="modal modal-blur fade" id="mentorModal-@mentor.UserId" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-content text-start">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Chi tiết Hồ sơ Đăng ký Cố vấn: @mentor.User?.FullName</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-label text-muted mb-1">Họ và tên</div>
+                                <div class="font-weight-medium text-dark">@mentor.User?.FullName</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-label text-muted mb-1">Email</div>
+                                <div class="font-weight-medium text-dark">@mentor.User?.Email</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-label text-muted mb-1">Số điện thoại</div>
+                                <div class="font-weight-medium text-dark">@(string.IsNullOrEmpty(mentor.User?.PhoneNumber) ? "Chưa cung cấp" : mentor.User.PhoneNumber)</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-label text-muted mb-1">Đường dẫn LinkedIn</div>
+                                <div class="font-weight-medium text-dark">
+                                    @if (!string.IsNullOrEmpty(mentor.LinkedInUrl))
+                                    {
+                                        <a href="@mentor.LinkedInUrl" target="_blank">@mentor.LinkedInUrl</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa cung cấp</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-label text-muted mb-1">Chức danh công việc & Công ty</div>
+                                <div class="font-weight-medium text-dark">@mentor.JobTitle tại @mentor.Company</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-label text-muted mb-1">Lĩnh vực chuyên môn chính</div>
+                                <div class="font-weight-medium text-dark">@mentor.Specialization</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-label text-muted mb-1">Chi phí tư vấn / giờ</div>
+                                <div class="font-weight-medium text-success font-weight-bold">
+                                    @(mentor.HourlyRate > 0 ? mentor.HourlyRate.ToString("#,##0") + " VNĐ/giờ" : "Miễn phí (Free)")
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-label text-muted mb-1">Kỹ năng chuyên môn (Expertise)</div>
+                                <div class="font-weight-medium text-dark">
+                                    @if (!string.IsNullOrEmpty(mentor.Expertise))
+                                    {
+                                        @foreach (var skill in mentor.Expertise.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                        {
+                                            <span class="badge bg-blue-lt me-1 mb-1">@skill.Trim()</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa cung cấp</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-label text-muted mb-1">Giới thiệu bản thân (Biography)</div>
+                                <div class="bg-light p-3 rounded text-secondary" style="white-space: pre-wrap; font-size: 13px; max-height: 200px; overflow-y: auto;">@mentor.Biography</div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-label text-muted mb-1">Kinh nghiệm làm việc chi tiết</div>
+                                <div class="bg-light p-3 rounded text-secondary" style="white-space: pre-wrap; font-size: 13px; max-height: 250px; overflow-y: auto;">@mentor.ExperienceDescription</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Đóng</button>
+                        @if (!mentor.IsVerified)
+                        {
+                            <form asp-controller="Admin" asp-action="ApproveMentor" asp-route-id="@mentor.UserId" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success">Duyệt hồ sơ</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-controller="Admin" asp-action="RejectMentor" asp-route-id="@mentor.UserId" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger">Hủy duyệt</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
 
 @section Scripts {
     <script>
