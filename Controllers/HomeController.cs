@@ -14,9 +14,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Drawing;
 using System;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.SignalR;
+using Career_Guidance_Platform.Hubs;
 
 namespace Career_Guidance_Platform.Controllers;
 
@@ -27,19 +30,22 @@ public class HomeController : Controller
     private readonly AppDbContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IConfiguration _configuration;
+    private readonly IHubContext<NotificationHub> _hubContext;
 
     public HomeController(
         IQuestionUserService questionUserService,
         ILogger<HomeController> logger,
         AppDbContext context,
         UserManager<User> userManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHubContext<NotificationHub> hubContext)
     {
         _questionUserService = questionUserService;
         _logger = logger;
         _context = context;
         _userManager = userManager;
         _configuration = configuration;
+        _hubContext = hubContext;
     }
 
     public IActionResult Index() => View();
@@ -915,5 +921,164 @@ public class HomeController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    private async Task CheckUpcomingMeetingsAsync(int userId)
+    {
+        var now = DateTime.Now;
+        var soon = now.AddMinutes(30);
+
+        var upcomingMeetings = await _context.MentorshipMeetings
+            .Include(mm => mm.Mentee)
+            .Include(mm => mm.Mentor)
+            .Where(mm => mm.Status == "Scheduled" 
+                         && mm.ScheduledTime > now 
+                         && mm.ScheduledTime <= soon
+                         && (mm.MenteeId == userId || mm.MentorId == userId))
+            .ToListAsync();
+
+        if (upcomingMeetings.Count == 0) return;
+
+        bool databaseChanged = false;
+
+        foreach (var meeting in upcomingMeetings)
+        {
+            if (meeting.MenteeId == userId)
+            {
+                var msg = $"Lịch hẹn sắp diễn ra: \"{meeting.Title}\" lúc {meeting.ScheduledTime:HH:mm}. Hãy chuẩn bị vào phòng học.";
+                var exists = await _context.Notifications
+                    .AnyAsync(n => n.UserId == userId && n.Message.Contains(meeting.Title) && n.Message.Contains("Lịch hẹn sắp diễn ra"));
+
+                if (!exists)
+                {
+                    var notification = new Notification
+                    {
+                        UserId = userId,
+                        Message = msg,
+                        IsRead = false,
+                        CreatedAt = now
+                    };
+                    _context.Notifications.Add(notification);
+                    databaseChanged = true;
+
+                    try { await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", msg); } catch {}
+                }
+            }
+
+            if (meeting.MentorId == userId)
+            {
+                var msg = $"Lịch hẹn sắp diễn ra: \"{meeting.Title}\" với học viên lúc {meeting.ScheduledTime:HH:mm}.";
+                var exists = await _context.Notifications
+                    .AnyAsync(n => n.UserId == userId && n.Message.Contains(meeting.Title) && n.Message.Contains("Lịch hẹn sắp diễn ra"));
+
+                if (!exists)
+                {
+                    var notification = new Notification
+                    {
+                        UserId = userId,
+                        Message = msg,
+                        IsRead = false,
+                        CreatedAt = now
+                    };
+                    _context.Notifications.Add(notification);
+                    databaseChanged = true;
+
+                    try { await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", msg); } catch {}
+                }
+            }
+        }
+
+        if (databaseChanged)
+        {
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetNotifications()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        await CheckUpcomingMeetingsAsync(user.Id);
+
+        var notifications = await _context.Notifications
+            .Where(n => n.UserId == user.Id)
+            .OrderByDescending(n => n.CreatedAt)
+            .Take(20)
+            .ToListAsync();
+
+        var notificationList = new List<object>();
+        foreach (var n in notifications)
+        {
+            string redirectUrl = "/Manage"; // Default page
+
+            if (n.Message.Contains("phê duyệt yêu cầu kết nối"))
+            {
+                var approvedRequests = await _context.MentorshipRequests
+                    .Include(r => r.Mentor)
+                    .Where(r => r.MenteeId == user.Id && r.Status == "Approved")
+                    .ToListAsync();
+
+                var matchingRequest = approvedRequests.FirstOrDefault(r => 
+                    r.Mentor != null && n.Message.Contains(r.Mentor.FullName));
+
+                if (matchingRequest != null)
+                {
+                    redirectUrl = $"/Mentorship/Details/{matchingRequest.MentorId}";
+                }
+                else if (approvedRequests.Any())
+                {
+                    redirectUrl = $"/Mentorship/Details/{approvedRequests.First().MentorId}";
+                }
+            }
+
+            notificationList.Add(new {
+                n.Id,
+                n.Message,
+                n.IsRead,
+                CreatedAt = n.CreatedAt.ToString("dd/MM/yyyy HH:mm"),
+                Url = redirectUrl
+            });
+        }
+
+        return Json(notificationList);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> MarkNotificationsAsRead()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var unread = await _context.Notifications
+            .Where(n => n.UserId == user.Id && !n.IsRead)
+            .ToListAsync();
+
+        foreach (var n in unread)
+        {
+            n.IsRead = true;
+        }
+
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> MarkNotificationAsRead(int id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        var notification = await _context.Notifications
+            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == user.Id);
+
+        if (notification != null && !notification.IsRead)
+        {
+            notification.IsRead = true;
+            await _context.SaveChangesAsync();
+        }
+
+        return Json(new { success = true });
     }
 }

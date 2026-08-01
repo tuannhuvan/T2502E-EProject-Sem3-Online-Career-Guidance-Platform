@@ -228,6 +228,18 @@ function init() {
     const statusFilter = document.getElementById('statusFilter');
     const membershipFilter = document.getElementById('membershipFilter');
 
+    // Prevent browser autofill on page load
+    if (searchInput) {
+        searchInput.value = '';
+        const clearVal = () => {
+            if (searchInput.value !== '') {
+                searchInput.value = '';
+                filterUsers(true);
+            }
+        };
+        [50, 150, 300, 600, 1000].forEach(delay => setTimeout(clearVal, delay));
+    }
+
     // Parse URL query parameter for role
     const urlParams = new URLSearchParams(window.location.search);
     let roleParam = urlParams.get('role');
@@ -259,7 +271,8 @@ function init() {
 
     // View user details popup modal logic via event delegation
     const tableBody = document.getElementById('userTableBody');
-    if (tableBody) {
+    if (tableBody && tableBody.dataset.detailsBound !== 'true') {
+        tableBody.dataset.detailsBound = 'true';
         tableBody.addEventListener('click', function(e) {
             const btn = e.target.closest('.view-details-btn');
             if (btn) {
@@ -294,6 +307,162 @@ function init() {
                 document.getElementById('viewUserSchool').innerText = school;
                 document.getElementById('viewUserMajor').innerText = major;
                 document.getElementById('viewUserExperience').innerText = experience;
+
+                // Toggle display depending on role
+                const isMentor = role === 'Mentor';
+                document.getElementById('viewUserGoalsWrapper').style.display = isMentor ? 'none' : 'block';
+                document.getElementById('viewUserSkillsWrapper').style.display = isMentor ? 'none' : 'block';
+                document.getElementById('viewUserRequestsWrapper').style.display = isMentor ? 'block' : 'none';
+                document.getElementById('viewUserMeetingsLabel').innerText = isMentor ? '📅 Lịch hẹn giảng dạy / tư vấn' : '📅 Lịch hẹn với Mentor';
+
+                // Clear & Show loading states
+                const goalsContainer = document.getElementById('viewUserGoalsContainer');
+                const skillsContainer = document.getElementById('viewUserSkillsContainer');
+                const requestsContainer = document.getElementById('viewUserRequestsContainer');
+                const meetingsContainer = document.getElementById('viewUserMeetingsContainer');
+
+                goalsContainer.innerHTML = '<div class="text-muted text-center py-2" style="font-style: italic;">Đang tải mục tiêu...</div>';
+                skillsContainer.innerHTML = '<div class="text-muted text-center py-2" style="font-style: italic;">Đang tải kỹ năng...</div>';
+                requestsContainer.innerHTML = '<div class="text-muted text-center py-2" style="font-style: italic;">Đang tải yêu cầu...</div>';
+                meetingsContainer.innerHTML = '<div class="text-muted text-center py-2" style="font-style: italic;">Đang tải lịch hẹn...</div>';
+
+                const userId = btn.getAttribute('data-id');
+                fetch('/Admin/GetUserExtendedDetails?id=' + userId)
+                    .then(res => res.json())
+                    .then(data => {
+                        // Populate goals progress (Student only)
+                        if (!isMentor) {
+                            if (data.goals && data.goals.length > 0) {
+                                goalsContainer.innerHTML = '';
+                                data.goals.forEach(g => {
+                                    const item = document.createElement('div');
+                                    item.className = 'mb-3 p-2 border rounded bg-white shadow-sm';
+                                    
+                                    item.innerHTML = `
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="font-weight-bold text-dark"><i class="ti ti-target me-1 text-secondary"></i>${g.title}</span>
+                                            <span class="badge bg-secondary-lt">${g.goalType}</span>
+                                        </div>
+                                        <div class="progress progress-sm mb-1" style="height: 6px; border-radius: 3px;">
+                                            <div class="progress-bar ${g.progress === 100 ? 'bg-success' : 'bg-primary'}" style="width: ${g.progress}%"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center text-muted mt-1" style="font-size: 11px;">
+                                            <span>Tiến độ: <strong>${g.progress}%</strong></span>
+                                            <span>Hạn chót: <strong>${g.targetDate}</strong></span>
+                                        </div>
+                                    `;
+                                    goalsContainer.appendChild(item);
+                                });
+                            } else {
+                                goalsContainer.innerHTML = '<div class="text-muted text-center py-3" style="font-style: italic;">Chưa thiết lập mục tiêu nào.</div>';
+                            }
+
+                            // Populate user skills
+                            if (data.skills && data.skills.length > 0) {
+                                skillsContainer.innerHTML = '';
+                                data.skills.forEach(s => {
+                                    const item = document.createElement('div');
+                                    item.className = 'mb-2 p-2 border rounded bg-white shadow-sm';
+                                    
+                                    let statusText = 'Đang rèn luyện';
+                                    let statusClass = 'bg-warning-lt';
+                                    if (s.status === 'Completed' || s.status === 'Acquired') {
+                                        statusText = 'Đã hoàn thành';
+                                        statusClass = 'bg-success-lt';
+                                    } else if (s.status === 'Gap') {
+                                        statusText = 'Cần cải thiện';
+                                        statusClass = 'bg-danger-lt';
+                                    }
+
+                                    item.innerHTML = `
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="font-weight-bold text-dark"><i class="ti ti-code me-1 text-secondary"></i>${s.skillName}</span>
+                                            <span class="badge ${statusClass}">${statusText}</span>
+                                        </div>
+                                        <div class="text-muted d-flex justify-content-between mt-1" style="font-size: 11px;">
+                                            <span>Cấp độ: <strong class="text-dark">${s.proficiencyLevel}</strong></span>
+                                        </div>
+                                    `;
+                                    skillsContainer.appendChild(item);
+                                });
+                            } else {
+                                skillsContainer.innerHTML = '<div class="text-muted text-center py-3" style="font-style: italic;">Chưa cập nhật danh sách kỹ năng.</div>';
+                            }
+                        }
+
+                        // Populate mentorship requests (Mentor only)
+                        if (isMentor) {
+                            if (data.mentorshipRequests && data.mentorshipRequests.length > 0) {
+                                requestsContainer.innerHTML = '';
+                                data.mentorshipRequests.forEach(r => {
+                                    const item = document.createElement('div');
+                                    item.className = 'mb-2 p-2 border rounded bg-white shadow-sm';
+                                    
+                                    let statusClass = 'bg-warning-lt';
+                                    if (r.status === 'Đã chấp nhận') statusClass = 'bg-success-lt';
+                                    else if (r.status === 'Từ chối') statusClass = 'bg-danger-lt';
+
+                                    item.innerHTML = `
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="font-weight-bold text-dark"><i class="ti ti-user-check me-1 text-secondary"></i>Yêu cầu từ: <strong class="text-dark">${r.menteeName}</strong></span>
+                                            <span class="badge ${statusClass}">${r.status}</span>
+                                        </div>
+                                        <div class="text-muted text-end" style="font-size: 11px;">
+                                            <span>Gửi lúc: ${r.createdAt}</span>
+                                        </div>
+                                    `;
+                                    requestsContainer.appendChild(item);
+                                });
+                            } else {
+                                requestsContainer.innerHTML = '<div class="text-muted text-center py-3" style="font-style: italic;">Chưa có yêu cầu kết nối nào.</div>';
+                            }
+                        }
+
+                        // Populate meetings
+                        if (data.meetings && data.meetings.length > 0) {
+                            meetingsContainer.innerHTML = '';
+                            data.meetings.forEach(m => {
+                                const item = document.createElement('div');
+                                item.className = 'mb-2 p-2 border rounded bg-white shadow-sm';
+                                
+                                let statusText = 'Chưa diễn ra';
+                                let statusClass = 'bg-blue-lt';
+                                if (m.status === 'Completed') {
+                                    statusText = 'Đã hoàn thành';
+                                    statusClass = 'bg-success-lt';
+                                } else if (m.status === 'NoShow') {
+                                    statusText = 'Vắng mặt';
+                                    statusClass = 'bg-danger-lt';
+                                } else if (m.status === 'Cancelled') {
+                                    statusText = 'Đã hủy';
+                                    statusClass = 'bg-secondary-lt';
+                                }
+
+                                const otherParty = isMentor 
+                                    ? `Học viên: <strong class="text-dark">${m.menteeName}</strong>` 
+                                    : `Cố vấn: <strong class="text-dark">${m.mentorName}</strong>`;
+
+                                item.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="font-weight-bold text-dark"><i class="ti ti-video me-1 text-secondary"></i>${m.title}</span>
+                                        <span class="badge ${statusClass}">${statusText}</span>
+                                    </div>
+                                    <div class="text-muted d-flex justify-content-between mt-1" style="font-size: 11px;">
+                                        <span>${otherParty}</span>
+                                        <span><i class="ti ti-calendar me-1"></i>${m.scheduledTime}</span>
+                                    </div>
+                                `;
+                                meetingsContainer.appendChild(item);
+                            });
+                        } else {
+                            meetingsContainer.innerHTML = '<div class="text-muted text-center py-2" style="font-style: italic;">Chưa có cuộc hẹn nào.</div>';
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        coursesContainer.innerHTML = '<div class="text-danger text-center py-2">Lỗi tải dữ liệu.</div>';
+                        meetingsContainer.innerHTML = '<div class="text-danger text-center py-2">Lỗi tải dữ liệu.</div>';
+                    });
 
                 const myModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('userViewModal'));
                 myModal.show();

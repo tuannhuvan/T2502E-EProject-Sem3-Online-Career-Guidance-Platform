@@ -25,7 +25,6 @@ namespace Career_Guidance_Platform.Controllers
             _context = context;
             _configuration = configuration;
         }
-
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -38,7 +37,7 @@ namespace Career_Guidance_Platform.Controllers
             var testResultsQuery = _context.TestResults
                 .Include(tr => tr.RecommendedCareerPath)
                 .Where(tr => tr.UserId == user.Id)
-                .OrderByDescending(tr => tr.DateTaken);
+                .OrderBy(tr => tr.AttemptNumber);
 
             var testResults = isPremiumOrSpecial
                 ? await testResultsQuery.ToListAsync()
@@ -63,13 +62,27 @@ namespace Career_Guidance_Platform.Controllers
                 .OrderByDescending(sj => sj.SavedAt)
                 .ToListAsync();
 
+            var goals = await _context.Goals
+                .Include(g => g.CareerPath)
+                .Where(g => g.StudentId == user.Id)
+                .OrderByDescending(g => g.CreatedAt)
+                .ToListAsync();
+
+            var mentorshipMeetings = await _context.MentorshipMeetings
+                .Include(mm => mm.Mentor)
+                .Where(mm => mm.MenteeId == user.Id)
+                .OrderByDescending(mm => mm.ScheduledTime)
+                .ToListAsync();
+
             var viewModel = new ProfileViewModel
             {
                 User = user,
                 TestResults = testResults,
                 Resumes = resumes,
                 JobApplications = jobApplications,
-                SavedJobs = savedJobs
+                SavedJobs = savedJobs,
+                Goals = goals,
+                MentorshipMeetings = mentorshipMeetings
             };
 
             return View(viewModel);

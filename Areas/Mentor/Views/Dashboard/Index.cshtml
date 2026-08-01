@@ -845,14 +845,36 @@
                         body: new FormData(form),
                         credentials: "same-origin"
                     })
-                    .then(function(response) {
-                        if (response.ok) {
-                            window.location.href = response.url;
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error("HTTP error " + res.status);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                        }
+                        if (data.success) {
+                            if (window.showToast) {
+                                window.showToast(data.message, "success");
+                            } else {
+                                alert(data.message);
+                            }
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
                         } else {
-                            throw new Error("API error");
+                            if (window.showToast) {
+                                window.showToast(data.message, "warning");
+                            } else {
+                                alert(data.message);
+                            }
                         }
                     })
-                    .catch(function() {
+                    .catch(err => {
+                        console.error(err);
                         alert("Có lỗi xảy ra trong quá trình xử lý. Vui lòng tải lại trang và thử lại.");
                         if (submitBtn) {
                             submitBtn.disabled = false;

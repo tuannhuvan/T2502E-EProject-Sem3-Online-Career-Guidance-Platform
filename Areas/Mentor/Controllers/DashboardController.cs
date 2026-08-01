@@ -10,6 +10,8 @@ using Career_Guidance_Platform.Models;
 using Career_Guidance_Platform.Data;
 using OfficeOpenXml;
 using System.IO;
+using Microsoft.AspNetCore.SignalR;
+using Career_Guidance_Platform.Hubs;
 
 namespace Career_Guidance_Platform.Areas.Mentor.Controllers
 {
@@ -19,11 +21,13 @@ namespace Career_Guidance_Platform.Areas.Mentor.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public DashboardController(AppDbContext context, UserManager<User> userManager)
+        public DashboardController(AppDbContext context, UserManager<User> userManager, IHubContext<NotificationHub> hubContext)
         {
             _context = context;
             _userManager = userManager;
+            _hubContext = hubContext;
         }
 
         private const int EarlyCompleteWindowMinutes = 30;
@@ -100,33 +104,57 @@ namespace Career_Guidance_Platform.Areas.Mentor.Controllers
         public async Task<IActionResult> HandleRequest(int requestId, string status)
         {
             var userIdValue = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userIdValue)) return Challenge();
+            if (string.IsNullOrEmpty(userIdValue)) return Json(new { success = false, message = "Bạn chưa đăng nhập." });
             var userId = int.Parse(userIdValue);
 
             var request = await _context.MentorshipRequests.FindAsync(requestId);
             if (request == null || request.MentorId != userId)
             {
-                return NotFound("Không tìm thấy yêu cầu.");
+                return Json(new { success = false, message = "Không tìm thấy yêu cầu kết nối." });
             }
 
             var allowedStatuses = new[] { "Approved", "Rejected", "Cancelled" };
             if (!allowedStatuses.Contains(status))
             {
-                TempData["MessageWarning"] = "Trạng thái không hợp lệ.";
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = false, message = "Trạng thái không hợp lệ." });
             }
 
             if (request.Status != "Pending")
             {
-                TempData["MessageWarning"] = "Yêu cầu này đã được xử lý trước đó, không thể thay đổi lại.";
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = false, message = "Yêu cầu này đã được xử lý trước đó, không thể thay đổi lại." });
             }
 
             request.Status = status;
             await _context.SaveChangesAsync();
 
-            TempData["DashboardSuccess"] = $"Đã cập nhật trạng thái yêu cầu kết nối thành: {status}";
-            return RedirectToAction(nameof(Index));
+            // Create notification for Mentee (User)
+            var mentorUser = await _userManager.GetUserAsync(User);
+            var mentorName = mentorUser?.FullName ?? "Cố vấn";
+            var statusVietnamese = status == "Approved" ? "phê duyệt" : (status == "Rejected" ? "từ chối" : status);
+            var msg = $"Cố vấn {mentorName} đã {statusVietnamese} yêu cầu kết nối của bạn.";
+
+            var notification = new Notification
+            {
+                UserId = request.MenteeId,
+                Message = msg,
+                IsRead = false,
+                CreatedAt = DateTime.Now
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            // Push SignalR notification to Mentee
+            try
+            {
+                await _hubContext.Clients.User(request.MenteeId.ToString()).SendAsync("ReceiveNotification", msg);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WARNING] SignalR failed to push notification to user {request.MenteeId}: {ex.Message}");
+            }
+
+            string statusText = status == "Approved" ? "Phê duyệt" : (status == "Rejected" ? "Từ chối" : status);
+            return Json(new { success = true, message = $"Đã cập nhật trạng thái yêu cầu kết nối thành công: {statusText}" });
         }
 
         [HttpPost]
@@ -134,39 +162,35 @@ namespace Career_Guidance_Platform.Areas.Mentor.Controllers
         public async Task<IActionResult> CompleteMeeting(int meetingId)
         {
             var userIdValue = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userIdValue)) return Challenge();
+            if (string.IsNullOrEmpty(userIdValue)) return Json(new { success = false, message = "Bạn chưa đăng nhập." });
             var userId = int.Parse(userIdValue);
 
             var meeting = await _context.MentorshipMeetings.FindAsync(meetingId);
             if (meeting == null || meeting.MentorId != userId)
             {
-                return NotFound("Không tìm thấy buổi tư vấn.");
+                return Json(new { success = false, message = "Không tìm thấy buổi tư vấn." });
             }
 
             if (meeting.Status == "Expired" || meeting.Status == "NoShow")
             {
-                TempData["MessageWarning"] = "Buổi tư vấn này đã bị đánh dấu Quá hạn do quá lâu không được xác nhận hoàn thành. Vui lòng trao đổi lại với học viên để đặt lịch mới.";
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = false, message = "Buổi tư vấn này đã bị đánh dấu Quá hạn do quá lâu không được xác nhận hoàn thành." });
             }
 
             if (meeting.Status != "Scheduled")
             {
-                TempData["MessageWarning"] = "Buổi tư vấn này đã được xử lý trước đó, không thể cập nhật lại.";
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = false, message = "Buổi tư vấn này đã được xử lý trước đó, không thể cập nhật lại." });
             }
 
             var earliestAllowedTime = meeting.ScheduledTime.AddMinutes(-EarlyCompleteWindowMinutes);
             if (DateTime.Now < earliestAllowedTime)
             {
-                TempData["MessageWarning"] = $"Chưa thể đánh dấu hoàn thành. Bạn có thể xác nhận sớm nhất từ {earliestAllowedTime:HH:mm dd/MM/yyyy} ({EarlyCompleteWindowMinutes} phút trước giờ hẹn).";
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = false, message = $"Chưa thể đánh dấu hoàn thành. Bạn có thể xác nhận sớm nhất từ {earliestAllowedTime:HH:mm dd/MM/yyyy} ({EarlyCompleteWindowMinutes} phút trước giờ hẹn)." });
             }
 
             meeting.Status = "Completed";
             await _context.SaveChangesAsync();
 
-            TempData["DashboardSuccess"] = "Buổi tư vấn đã được đánh dấu hoàn thành. Hệ thống sẽ mở form đánh giá cho người học.";
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = "Buổi tư vấn đã được đánh dấu hoàn thành thành công." });
         }
 
         [HttpPost]
@@ -174,32 +198,29 @@ namespace Career_Guidance_Platform.Areas.Mentor.Controllers
         public async Task<IActionResult> MarkNoShow(int meetingId)
         {
             var userIdValue = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userIdValue)) return Challenge();
+            if (string.IsNullOrEmpty(userIdValue)) return Json(new { success = false, message = "Bạn chưa đăng nhập." });
             var userId = int.Parse(userIdValue);
 
             var meeting = await _context.MentorshipMeetings.FindAsync(meetingId);
             if (meeting == null || meeting.MentorId != userId)
             {
-                return NotFound("Không tìm thấy buổi tư vấn.");
+                return Json(new { success = false, message = "Không tìm thấy buổi tư vấn." });
             }
 
             if (meeting.Status != "Scheduled")
             {
-                TempData["MessageWarning"] = "Chỉ có thể đánh dấu Vắng mặt cho các buổi hẹn đang ở trạng thái Đã lên lịch.";
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = false, message = "Chỉ có thể đánh dấu Vắng mặt cho các buổi hẹn đang ở trạng thái Đã lên lịch." });
             }
 
             if (meeting.ScheduledTime > DateTime.Now)
             {
-                TempData["MessageWarning"] = "Chưa thể đánh dấu Vắng mặt vì buổi tư vấn chưa đến giờ hẹn.";
-                return RedirectToAction(nameof(Index));
+                return Json(new { success = false, message = "Chưa thể đánh dấu Vắng mặt vì buổi tư vấn chưa đến giờ hẹn." });
             }
 
             meeting.Status = "NoShow";
             await _context.SaveChangesAsync();
 
-            TempData["DashboardSuccess"] = "Đã đánh dấu buổi tư vấn là Vắng mặt (học viên không tham gia).";
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = "Đã đánh dấu buổi tư vấn là Vắng mặt." });
         }
 
         [HttpPost]
@@ -280,6 +301,137 @@ namespace Career_Guidance_Platform.Areas.Mentor.Controllers
                 string excelName = $"LichHen_TuVan_Mentor_{userId}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
                 return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
             }
+        }
+
+        private async Task CheckUpcomingMeetingsAsync(int userId)
+        {
+            var now = DateTime.Now;
+            var soon = now.AddMinutes(30);
+
+            var upcomingMeetings = await _context.MentorshipMeetings
+                .Include(mm => mm.Mentee)
+                .Include(mm => mm.Mentor)
+                .Where(mm => mm.Status == "Scheduled" 
+                             && mm.ScheduledTime > now 
+                             && mm.ScheduledTime <= soon
+                             && (mm.MenteeId == userId || mm.MentorId == userId))
+                .ToListAsync();
+
+            if (upcomingMeetings.Count == 0) return;
+
+            bool databaseChanged = false;
+
+            foreach (var meeting in upcomingMeetings)
+            {
+                if (meeting.MenteeId == userId)
+                {
+                    var msg = $"Lịch hẹn sắp diễn ra: \"{meeting.Title}\" lúc {meeting.ScheduledTime:HH:mm}. Hãy chuẩn bị vào phòng học.";
+                    var exists = await _context.Notifications
+                        .AnyAsync(n => n.UserId == userId && n.Message.Contains(meeting.Title) && n.Message.Contains("Lịch hẹn sắp diễn ra"));
+
+                    if (!exists)
+                    {
+                        var notification = new Notification
+                        {
+                            UserId = userId,
+                            Message = msg,
+                            IsRead = false,
+                            CreatedAt = now
+                        };
+                        _context.Notifications.Add(notification);
+                        databaseChanged = true;
+
+                        try { await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", msg); } catch {}
+                    }
+                }
+
+                if (meeting.MentorId == userId)
+                {
+                    var msg = $"Lịch hẹn sắp diễn ra: \"{meeting.Title}\" với học viên lúc {meeting.ScheduledTime:HH:mm}.";
+                    var exists = await _context.Notifications
+                        .AnyAsync(n => n.UserId == userId && n.Message.Contains(meeting.Title) && n.Message.Contains("Lịch hẹn sắp diễn ra"));
+
+                    if (!exists)
+                    {
+                        var notification = new Notification
+                        {
+                            UserId = userId,
+                            Message = msg,
+                            IsRead = false,
+                            CreatedAt = now
+                        };
+                        _context.Notifications.Add(notification);
+                        databaseChanged = true;
+
+                        try { await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", msg); } catch {}
+                    }
+                }
+            }
+
+            if (databaseChanged)
+            {
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNotifications()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            await CheckUpcomingMeetingsAsync(user.Id);
+
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == user.Id)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(20)
+                .Select(n => new {
+                    n.Id,
+                    n.Message,
+                    n.IsRead,
+                    CreatedAt = n.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                })
+                .ToListAsync();
+
+            return Json(notifications);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkNotificationsAsRead()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var unread = await _context.Notifications
+                .Where(n => n.UserId == user.Id && !n.IsRead)
+                .ToListAsync();
+
+            foreach (var n in unread)
+            {
+                n.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.Id == id && n.UserId == user.Id);
+
+            if (notification != null && !notification.IsRead)
+            {
+                notification.IsRead = true;
+                await _context.SaveChangesAsync();
+            }
+
+            return Json(new { success = true });
         }
     }
 }
