@@ -63,7 +63,7 @@
 
 <script>
     function startSettingGoal() {
-        const isAuthenticated = @(User.Identity.IsAuthenticated ? "true" : "false");
+        const isAuthenticated = @(User.Identity?.IsAuthenticated == true ? "true" : "false");
         if (isAuthenticated) {
             window.location.href = "/Goal/Create";
         } else {

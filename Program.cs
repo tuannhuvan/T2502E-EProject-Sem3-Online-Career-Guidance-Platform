@@ -143,9 +143,9 @@ using (var scope = app.Services.CreateScope())
 
             foreach (var migration in migrations)
             {
-                dbContext.Database.ExecuteSqlRaw($@"
+                dbContext.Database.ExecuteSql($@"
                     INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`)
-                    VALUES ('{migration}', '8.0.0');
+                    VALUES ({migration}, '8.0.0');
                 ");
             }
 

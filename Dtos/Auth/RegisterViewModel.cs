@@ -15,5 +15,5 @@ public class RegisterViewModel
     [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
     [DataType(DataType.Password)]
     [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp")]
-    public string ConfirmPassword { get; set; }
+    public string ConfirmPassword { get; set; } = string.Empty;
 }

@@ -638,7 +638,7 @@ public class GoalController : Controller
         ViewBag.CompletedSkills = await _context.UserSkills
             .Include(us => us.Skill)
             .Where(us => us.UserId == userId && (us.Status == "Completed" || us.Status == "Acquired"))
-            .Select(us => us.Skill.Name)
+            .Select(us => us.Skill!.Name)
             .ToListAsync();
 
         ViewBag.Resumes = await _context.Resumes
@@ -714,7 +714,7 @@ public class GoalController : Controller
 
     [HttpGet("/Goals/Overview")]
     [AllowAnonymous]
-    public async Task<IActionResult> Overview()
+    public IActionResult Overview()
     {
         var userIdValue = _userManager.GetUserId(User);
         if (!string.IsNullOrEmpty(userIdValue))
