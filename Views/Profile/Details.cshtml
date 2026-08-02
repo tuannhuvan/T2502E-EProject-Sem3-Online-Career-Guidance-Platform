@@ -5,7 +5,7 @@
     string connStatus = ViewBag.ConnectionStatus ?? "None";
     var completedCourses = ViewBag.CompletedCourses as List<string> ?? new List<string>();
     var latestResume = ViewBag.LatestResume as Career_Guidance_Platform.Models.Resume;
-    string recommendedPath = ViewBag.RecommendedPath as string;
+    string? recommendedPath = ViewBag.RecommendedPath as string;
 }
 
 <!-- Profile Header Banner with curated color palette -->

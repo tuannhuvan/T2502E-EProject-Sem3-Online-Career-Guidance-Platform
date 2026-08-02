@@ -465,7 +465,7 @@ public class HomeController : Controller
         var userId = int.Parse(userIdValue);
         var pathIds = await _context.TestResults
             .Where(tr => tr.UserId == userId && tr.RecommendedCareerPathId.HasValue)
-            .Select(tr => tr.RecommendedCareerPathId.Value)
+            .Select(tr => tr.RecommendedCareerPathId ?? 0)
             .Distinct()
             .ToListAsync();
 
@@ -797,7 +797,7 @@ public class HomeController : Controller
             isPaymentCaptured = true;
         }
 
-        if (isPaymentCaptured || token.StartsWith("MOCK-PAYPAL-"))
+        if (isPaymentCaptured || (token != null && token.StartsWith("MOCK-PAYPAL-")))
         {
             user.IsPremium = true;
             await _userManager.UpdateAsync(user);
@@ -874,8 +874,8 @@ public class HomeController : Controller
 
     private async Task<string?> GetPayPalAccessTokenAsync()
     {
-        string clientId = _configuration["PayPal:ClientId"];
-        string secret = _configuration["PayPal:Secret"];
+        string? clientId = _configuration["PayPal:ClientId"];
+        string? secret = _configuration["PayPal:Secret"];
 
         if (string.IsNullOrEmpty(clientId) || clientId.Contains("YOUR_PAYPAL_SANDBOX") || string.IsNullOrEmpty(secret) || secret.Contains("YOUR_PAYPAL_SANDBOX"))
         {

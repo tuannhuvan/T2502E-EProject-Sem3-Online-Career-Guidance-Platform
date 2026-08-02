@@ -427,7 +427,7 @@
                     }
                     else
                     {
-                        <span>@fullName[0].ToString().ToUpper()</span>
+                        <span>@(string.IsNullOrEmpty(fullName) ? "?" : fullName[0].ToString().ToUpper())</span>
                     }
                 </div>
                 <div class="profile-meta">
