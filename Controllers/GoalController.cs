@@ -590,7 +590,55 @@ public class GoalController : Controller
 
         if (userSkill == null) return NotFound();
 
-        int score = answers?.Count(a => a == "correct") * 20 ?? 0;
+        var correctAnswers = new List<string>();
+        var skillName = userSkill.Skill?.Name ?? "";
+
+        if (skillName.Contains("C#"))
+        {
+            correctAnswers.Add("Cho phép kiểm soát tính đóng gói, kiểm tra tính hợp lệ của dữ liệu trước khi gán.");
+            correctAnswers.Add("Đảm bảo giải phóng tài nguyên IDisposable (như file hoặc connection) ngay sau khi hết khối lệnh.");
+            correctAnswers.Add("Class là kiểu tham chiếu (Reference Type), Struct là kiểu giá trị (Value Type).");
+            correctAnswers.Add("Tự động thu hồi bộ nhớ Heap đã cấp phát cho các đối tượng không còn được sử dụng.");
+            correctAnswers.Add("Cung cấp cú pháp truy vấn đồng nhất để truy xuất dữ liệu từ Objects, SQL, XML, v.v.");
+        }
+        else if (skillName.Contains("SQL") || skillName.Contains("Cơ sở dữ liệu"))
+        {
+            correctAnswers.Add("SELECT DISTINCT");
+            correctAnswers.Add("WHERE lọc các dòng trước khi gom nhóm, HAVING lọc các nhóm sau khi GROUP BY.");
+            correctAnswers.Add("Thiết lập liên kết giữa hai bảng và đảm bảo tính toàn vẹn tham chiếu dữ liệu.");
+            correctAnswers.Add("Tăng tốc độ truy vấn và tìm kiếm dữ liệu trên bảng.");
+            correctAnswers.Add("Đảm bảo một nhóm các câu lệnh SQL thực hiện thành công toàn bộ hoặc hủy bỏ toàn bộ (Tính nguyên tố ACID).");
+        }
+        else if (skillName.Contains("Git"))
+        {
+            correctAnswers.Add("git clone");
+            correctAnswers.Add("Là nơi chuẩn bị và chọn lọc các file thay đổi trước khi tiến hành commit.");
+            correctAnswers.Add("Gộp các thay đổi từ một nhánh (branch) khác vào nhánh hiện tại.");
+            correctAnswers.Add("Khi muốn lưu tạm các thay đổi chưa commit để dọn sạch thư mục làm việc trước khi chuyển branch.");
+            correctAnswers.Add("git fetch chỉ tải dữ liệu từ remote về, git pull tải về và tự động merge vào nhánh hiện tại.");
+        }
+        else
+        {
+            correctAnswers.Add("Học lý thuyết căn bản kết hợp thực hành dự án thực tế và nhận góp ý từ người có kinh nghiệm.");
+            correctAnswers.Add("Đọc kỹ thông báo lỗi, tra cứu tài liệu hệ thống và thảo luận nhóm để tìm nguyên nhân gốc rễ.");
+            correctAnswers.Add("Cung cấp quy chuẩn, các phương pháp tối ưu và hướng dẫn chuẩn để xây dựng hệ thống chính xác.");
+            correctAnswers.Add("Giúp thích ứng nhanh với thay đổi, minh bạch hóa tiến độ và tăng cường giao tiếp liên tục.");
+            correctAnswers.Add("Nhận diện các lỗ hổng kiến thức để kịp thời bổ sung và định hình lộ trình thăng tiến rõ ràng.");
+        }
+
+        int score = 0;
+        if (answers != null)
+        {
+            int correctCount = 0;
+            foreach (var ans in answers)
+            {
+                if (correctAnswers.Any(c => c.Trim() == ans.Trim()))
+                {
+                    correctCount++;
+                }
+            }
+            score = correctCount * 20;
+        }
 
         if (score >= 80)
         {

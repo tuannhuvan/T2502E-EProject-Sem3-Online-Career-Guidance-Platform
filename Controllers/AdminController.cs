@@ -114,6 +114,7 @@ public class AdminController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateUser([FromBody] UserAdminDto dto)
     {
         if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.FullName))
@@ -158,6 +159,7 @@ public class AdminController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditUser([FromBody] UserAdminDto dto)
     {
         if (dto == null || dto.Id <= 0 || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.FullName))
@@ -207,6 +209,7 @@ public class AdminController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteUser(int id)
     {
         var user = await _userManager.FindByIdAsync(id.ToString());
@@ -415,6 +418,7 @@ public class AdminController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveQuestion([FromBody] Career_Guidance_Platform.Models.ViewModels.QuestionAdminDto dto)
     {
         if (dto == null || string.IsNullOrWhiteSpace(dto.Content))
@@ -527,6 +531,7 @@ public class AdminController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteQuestion(int id)
     {
         var question = await _context.QuestionTests
@@ -992,23 +997,23 @@ public class AdminController : Controller
                 worksheet.Cells[row, 1].Value = row - 1; // STT
                 worksheet.Cells[row, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                worksheet.Cells[row, 2].Value = p.User?.FullName ?? "N/A"; // Name
-                worksheet.Cells[row, 3].Value = p.User?.Email ?? "N/A"; // Email
+                worksheet.Cells[row, 2].Value = EscapeFormula(p.User?.FullName ?? "N/A"); // Name
+                worksheet.Cells[row, 3].Value = EscapeFormula(p.User?.Email ?? "N/A"); // Email
                 
-                worksheet.Cells[row, 4].Value = p.PaypalOrderId; // PayPal Transaction ID
+                worksheet.Cells[row, 4].Value = EscapeFormula(p.PaypalOrderId); // PayPal Transaction ID
                 
                 worksheet.Cells[row, 5].Value = (double)p.Amount; // Amount (use double/decimal for numeric format)
                 worksheet.Cells[row, 5].Style.Numberformat.Format = "$#,##0.00"; // Currency Format
                 worksheet.Cells[row, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 
-                worksheet.Cells[row, 6].Value = p.Currency; // Currency
+                worksheet.Cells[row, 6].Value = EscapeFormula(p.Currency); // Currency
                 worksheet.Cells[row, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                 worksheet.Cells[row, 7].Value = p.CreatedAt; // CreatedAt
                 worksheet.Cells[row, 7].Style.Numberformat.Format = "dd/MM/yyyy HH:mm"; // Date format
                 worksheet.Cells[row, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                worksheet.Cells[row, 8].Value = p.PaymentStatus; // Status
+                worksheet.Cells[row, 8].Value = EscapeFormula(p.PaymentStatus); // Status
                 worksheet.Cells[row, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                 // Add border to all cells in the row
@@ -1573,6 +1578,7 @@ public class AdminController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     [Route("Admin/SaveCareerPath")]
     public async Task<IActionResult> SaveCareerPath([FromBody] SaveCareerPathDto dto)
     {
@@ -2572,6 +2578,7 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteEvent(int id)
     {
         var careerEvent = await _context.CareerEvents.FindAsync(id);
@@ -2643,9 +2650,9 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
             foreach (var r in registrants)
             {
                 worksheet.Cells[row, 1].Value = row - 1;
-                worksheet.Cells[row, 2].Value = r.User?.FullName ?? "N/A";
-                worksheet.Cells[row, 3].Value = r.User?.Email ?? "N/A";
-                worksheet.Cells[row, 4].Value = r.User?.PhoneNumber ?? "N/A";
+                worksheet.Cells[row, 2].Value = EscapeFormula(r.User?.FullName ?? "N/A");
+                worksheet.Cells[row, 3].Value = EscapeFormula(r.User?.Email ?? "N/A");
+                worksheet.Cells[row, 4].Value = EscapeFormula(r.User?.PhoneNumber ?? "N/A");
                 worksheet.Cells[row, 5].Value = r.RegisteredAt.ToString("dd/MM/yyyy HH:mm");
 
                 for (int i = 1; i <= 5; i++)
@@ -2723,5 +2730,15 @@ private async Task LoadResourceDropdownData(int? currentResourceId = null)
             meetings,
             mentorshipRequests
         });
+    }
+
+    private string EscapeFormula(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        if (value.StartsWith("=") || value.StartsWith("+") || value.StartsWith("-") || value.StartsWith("@"))
+        {
+            return "'" + value;
+        }
+        return value;
     }
 }

@@ -23,6 +23,7 @@ using Career_Guidance_Platform.Hubs;
 
 namespace Career_Guidance_Platform.Controllers;
 
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 public class HomeController : Controller
 {
     private readonly IQuestionUserService _questionUserService;
@@ -995,6 +996,7 @@ public class HomeController : Controller
     }
 
     [HttpGet]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> GetNotifications()
     {
         var user = await _userManager.GetUserAsync(User);
@@ -1046,6 +1048,7 @@ public class HomeController : Controller
     }
 
     [HttpPost]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> MarkNotificationsAsRead()
     {
         var user = await _userManager.GetUserAsync(User);
@@ -1065,6 +1068,7 @@ public class HomeController : Controller
     }
 
     [HttpPost]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> MarkNotificationAsRead(int id)
     {
         var user = await _userManager.GetUserAsync(User);

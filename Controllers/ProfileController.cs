@@ -91,6 +91,25 @@ namespace Career_Guidance_Platform.Controllers
                 .OrderByDescending(tr => tr.CreatedAt)
                 .FirstOrDefaultAsync();
 
+            // Determine if viewer is allowed to see full details:
+            // Allowed if:
+            // 1. It is the user's own profile (isSelf == true)
+            // 2. The viewer and target user are connected (connectionStatus == "Accepted")
+            // 3. The target user is a Mentor (role is "Mentor")
+            // 4. The current user is an Admin
+            bool currentIsAdmin = User.IsInRole("Admin");
+            bool canViewFullProfile = isSelf || connectionStatus == "Accepted" || targetUser.Role == "Mentor" || currentIsAdmin;
+
+            if (!canViewFullProfile)
+            {
+                targetUser.School = "Thông tin riêng tư (Chỉ hiển thị với bạn bè đã kết nối)";
+                targetUser.Major = "Thông tin riêng tư (Chỉ hiển thị với bạn bè đã kết nối)";
+                targetUser.Experience = "Thông tin riêng tư (Chỉ hiển thị với bạn bè đã kết nối)";
+                completedCourses = new List<string>();
+                latestResume = null;
+                latestResult = null;
+            }
+
             ViewBag.IsSelf = isSelf;
             ViewBag.ConnectionStatus = connectionStatus;
             ViewBag.CompletedCourses = completedCourses;

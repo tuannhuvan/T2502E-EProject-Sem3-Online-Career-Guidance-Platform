@@ -551,7 +551,7 @@
                                 @if (meeting.Status == "Scheduled")
                                 {
                                     <div style="display: inline-flex; gap: 8px; justify-content: flex-end;">
-                                        <form asp-area="Mentor" asp-controller="Dashboard" asp-action="CompleteMeeting" method="post" class="ajax-form" style="margin: 0;">
+                                        <form asp-area="Mentor" asp-controller="Dashboard" asp-action="CompleteMeeting" method="post" class="ajax-form" style="margin: 0;" data-confirm-time="@meeting.ScheduledTime.ToString("dd/MM/yyyy HH:mm")">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="meetingId" value="@meeting.Id" />
                                             <button type="submit" class="btn-action btn-success">
@@ -568,6 +568,15 @@
                                                 </button>
                                             </form>
                                         }
+                                    </div>
+                                }
+                                else if (meeting.Status == "Completed")
+                                {
+                                    <div style="display: inline-flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                                        <span style="color: var(--text-secondary); font-size: 13.5px; font-style: italic; margin-right: 8px;">Đã hoàn thành</span>
+                                        <a href="/Chat?peerId=@meeting.MenteeId" class="btn-action btn-primary-sm" style="text-decoration: none; padding: 6px 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; background-color: #4f46e5; color: white;">
+                                            <i class="bi bi-chat-dots-fill"></i> Nhắn tin
+                                        </a>
                                     </div>
                                 }
                                 else
@@ -833,6 +842,14 @@
             document.querySelectorAll("form.ajax-form").forEach(function(form) {
                 form.addEventListener("submit", function(e) {
                     e.preventDefault();
+                    
+                    const confirmTime = form.getAttribute("data-confirm-time");
+                    if (confirmTime) {
+                        if (!confirm("Bạn có chắc chắn muốn xác nhận hoàn thành cuộc hẹn lúc " + confirmTime + " không?")) {
+                            return;
+                        }
+                    }
+
                     const submitBtn = form.querySelector("button[type=submit]");
                     const originalText = submitBtn ? submitBtn.innerHTML : null;
                     if (submitBtn) {

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Career_Guidance_Platform.Controllers;
 
+[Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 public class QuestionController : Controller
 {
     private readonly IQuestionService _service;

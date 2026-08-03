@@ -6,6 +6,7 @@ using Career_Guidance_Platform.Filters;
 
 namespace Career_Guidance_Platform.Controllers
 {
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     public class CareerPathController : Controller
     {
         private readonly AppDbContext _context;

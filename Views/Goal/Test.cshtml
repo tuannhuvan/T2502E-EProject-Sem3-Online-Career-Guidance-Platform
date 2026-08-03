@@ -205,7 +205,7 @@
                     @foreach (var opt in shuffledOpts)
                     {
                         <label class="answer-item-label" style="display: flex; gap: 12px; align-items: flex-start; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
-                            <input type="radio" name="answers[@i]" value="@opt.Val" required style="margin-top: 4px;" />
+                            <input type="radio" name="answers[@i]" value="@opt.Text" required style="margin-top: 4px;" />
                             <div style="font-size: 14.5px; color: #334155; line-height: 1.5;">
                                 @opt.Text
                             </div>

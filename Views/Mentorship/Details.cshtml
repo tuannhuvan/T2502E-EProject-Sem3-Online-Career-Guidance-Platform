@@ -168,7 +168,7 @@
                                     var isReviewed = reviewedMeetingIds.Contains(meeting.Id);
                                     var existingReview = isReviewed && menteeReviews.ContainsKey(meeting.Id) ? menteeReviews[meeting.Id] : null;
 
-                                    <div style="margin-top: 5px;" id="review-container-@meeting.Id">
+                                    <div style="margin-top: 5px; display: flex; gap: 10px; flex-wrap: wrap;" id="review-container-@meeting.Id">
                                         @if (isReviewed && existingReview != null)
                                         {
                                             var starsStr = "";
@@ -183,6 +183,9 @@
                                                 ⭐ Viết đánh giá cho Mentor
                                             </button>
                                         }
+                                        <a href="/Chat?peerId=@meeting.MentorId" class="btn" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #e0e7ff; color: #4f46e5; border: 1px solid #c7d2fe; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px; text-decoration: none; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.05);">
+                                            <i class="bi bi-chat-dots-fill"></i> Nhắn tin Cố vấn
+                                        </a>
                                     </div>
                                 }
                             </div>

@@ -3,11 +3,46 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Career_Guidance_Platform.Models;
 
+using Microsoft.AspNetCore.Http;
+
 namespace Career_Guidance_Platform.Data
 {
     public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
-        public AppDbContext(DbContextOptions<AppDbContext> opts) : base(opts) { }
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+
+        public AppDbContext(DbContextOptions<AppDbContext> opts, IHttpContextAccessor? httpContextAccessor = null) : base(opts)
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private int? CurrentUserId
+        {
+            get
+            {
+                var user = _httpContextAccessor?.HttpContext?.User;
+                if (user != null && user.Identity != null && user.Identity.IsAuthenticated)
+                {
+                    var userIdStr = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    if (int.TryParse(userIdStr, out int userId))
+                    {
+                        return userId;
+                    }
+                }
+                return null;
+            }
+        }
+
+        private string? CurrentUserIdString => CurrentUserId?.ToString();
+
+        private bool IsAdmin
+        {
+            get
+            {
+                var user = _httpContextAccessor?.HttpContext?.User;
+                return user != null && user.Identity != null && user.Identity.IsAuthenticated && user.IsInRole("Admin");
+            }
+        }
 
         public DbSet<Test> Tests { get; set; }
         public DbSet<QuestionTest> QuestionTests { get; set; }
@@ -66,6 +101,18 @@ namespace Career_Guidance_Platform.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<TestResult>()
+                .HasQueryFilter(t => IsAdmin || !t.UserId.HasValue || t.UserId == CurrentUserId);
+
+            modelBuilder.Entity<AssessmentResult>()
+                .HasQueryFilter(a => IsAdmin || a.UserId == CurrentUserIdString);
+
+            modelBuilder.Entity<Resume>()
+                .HasQueryFilter(r => IsAdmin || r.UserId == CurrentUserId);
+
+            modelBuilder.Entity<Notification>()
+                .HasQueryFilter(n => IsAdmin || n.UserId == CurrentUserId);
             modelBuilder.Entity<CareerPathCourse>()
                 .HasOne(c => c.CareerPath)
                 .WithMany()
