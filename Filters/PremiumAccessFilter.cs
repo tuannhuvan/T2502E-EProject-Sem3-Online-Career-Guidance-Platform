@@ -19,35 +19,45 @@ namespace Career_Guidance_Platform.Filters
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var userPrincipal = context.HttpContext.User;
-            if (userPrincipal != null && userPrincipal.Identity != null && userPrincipal.Identity.IsAuthenticated)
+            if (userPrincipal == null || userPrincipal.Identity == null || !userPrincipal.Identity.IsAuthenticated)
             {
-                // Bỏ qua giới hạn đối với Admin và Mentor
-                if (userPrincipal.IsInRole("Admin") || userPrincipal.IsInRole("Mentor"))
+                var controller = context.Controller as Controller;
+                if (controller != null)
                 {
-                    await next();
-                    return;
+                    controller.TempData["RequireAuthForTestResult"] = "Vui lòng đăng nhập hoặc đăng ký tài khoản để tiếp tục.";
                 }
 
-                var userIdValue = _userManager.GetUserId(userPrincipal);
-                if (!string.IsNullOrEmpty(userIdValue))
-                {
-                    var user = await _userManager.FindByIdAsync(userIdValue);
-                    if (user != null)
-                    {
-                        // Nếu tài khoản không phải Premium và số lần làm test đã từ 3 trở lên
-                        if (!user.IsPremium && user.TestAttemptsCount >= 3)
-                        {
-                            var controller = context.Controller as Controller;
-                            if (controller != null)
-                            {
-                                controller.TempData["PremiumLimitMessage"] = "Bạn đã đạt giới hạn 3 lần thực hiện bài trắc nghiệm đối với tài khoản miễn phí. Vui lòng nâng cấp lên gói thành viên Premium để mở khóa không giới hạn lượt làm test, lộ trình và kho học liệu.";
-                            }
+                var originalUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
+                context.Result = new RedirectToActionResult("Register", "Account", new { returnUrl = originalUrl });
+                return;
+            }
 
-                            // Điều hướng người dùng đến trang nâng cấp Premium, kèm theo returnUrl để quay lại đúng trang nguồn sau khi thanh toán
-                            var originalUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
-                            context.Result = new RedirectToActionResult("UpgradePremium", "Home", new { returnUrl = originalUrl });
-                            return;
+            // Bỏ qua giới hạn đối với Admin và Mentor
+            if (userPrincipal.IsInRole("Admin") || userPrincipal.IsInRole("Mentor"))
+            {
+                await next();
+                return;
+            }
+
+            var userIdValue = _userManager.GetUserId(userPrincipal);
+            if (!string.IsNullOrEmpty(userIdValue))
+            {
+                var user = await _userManager.FindByIdAsync(userIdValue);
+                if (user != null)
+                {
+                    // Nếu tài khoản không phải Premium và số lần làm test đã từ 3 trở lên
+                    if (!user.IsPremium && user.TestAttemptsCount >= 3)
+                    {
+                        var controller = context.Controller as Controller;
+                        if (controller != null)
+                        {
+                            controller.TempData["PremiumLimitMessage"] = "Bạn đã đạt giới hạn 3 lần thực hiện bài trắc nghiệm đối với tài khoản miễn phí. Vui lòng nâng cấp lên gói thành viên Premium để mở khóa không giới hạn lượt làm test, lộ trình và kho học liệu.";
                         }
+
+                        // Điều hướng người dùng đến trang nâng cấp Premium, kèm theo returnUrl để quay lại đúng trang nguồn sau khi thanh toán
+                        var originalUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
+                        context.Result = new RedirectToActionResult("UpgradePremium", "Home", new { returnUrl = originalUrl });
+                        return;
                     }
                 }
             }

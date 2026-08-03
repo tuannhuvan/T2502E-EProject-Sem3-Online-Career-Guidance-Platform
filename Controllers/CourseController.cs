@@ -8,6 +8,7 @@ using Career_Guidance_Platform.Filters;
 
 namespace Career_Guidance_Platform.Controllers
 {
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     public class CourseController : Controller
     {
         private readonly AppDbContext _context;
@@ -132,7 +133,7 @@ namespace Career_Guidance_Platform.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SubmitTest(int courseId, int score)
+        public async Task<IActionResult> SubmitTest(int courseId, string q1, string q2, string q3)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var progress = await _context.UserCourseProgresses
@@ -148,6 +149,11 @@ namespace Career_Guidance_Platform.Controllers
             {
                 return NotFound("Không tìm thấy khóa học.");
             }
+
+            int score = 0;
+            if (q1 == "correct") score += 34;
+            if (q2 == "correct") score += 33;
+            if (q3 == "correct") score += 33;
 
             // Update course progress to completed
             progress.Status = "Completed";

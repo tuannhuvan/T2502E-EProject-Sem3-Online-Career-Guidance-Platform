@@ -534,6 +534,12 @@
                                                         💻 Tham gia cuộc họp
                                                     </a>
                                                 }
+                                                else if (meeting.Status == "Completed")
+                                                {
+                                                    <a class="btn primary-btn" href="/Chat?peerId=@meeting.MentorId" style="min-height: auto; padding: 6px 12px; font-size: 13px; border-radius: 6px; text-decoration: none; background: #4f46e5; border-color: #4f46e5; color: white; display: inline-flex; align-items: center; gap: 6px;">
+                                                        💬 Nhắn tin Mentor
+                                                    </a>
+                                                }
                                                 else
                                                 {
                                                     <span style="color: #64748b; font-size: 13px;">Không có thao tác</span>

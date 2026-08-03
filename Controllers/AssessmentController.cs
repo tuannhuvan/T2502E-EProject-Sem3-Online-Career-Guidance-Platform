@@ -5,25 +5,36 @@ using Career_Guidance_Platform.Service.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using Career_Guidance_Platform.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+
 namespace Career_Guidance_Platform.Controllers;
 
+[Authorize]
 public class AssessmentController : Controller
 {
     private readonly IAssessmentService _assessmentService;
     private readonly AppDbContext _context;
+    private readonly UserManager<User> _userManager;
 
-    public AssessmentController(AppDbContext context, IAssessmentService assessmentService)
+    public AssessmentController(AppDbContext context, IAssessmentService assessmentService, UserManager<User> userManager)
     {
         _context = context;
         _assessmentService = assessmentService;
+        _userManager = userManager;
     }
 
     // =========================
     // SUBMIT TEST
     // =========================
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Submit(AssessmentResultDto dto)
     {
+        var userId = _userManager.GetUserId(User);
+        dto.UserId = userId ?? string.Empty;
+
         var resultId = await _assessmentService.SubmitTestAsync(dto);
 
         return RedirectToAction("Result", new { id = resultId });
@@ -34,10 +45,12 @@ public class AssessmentController : Controller
     // =========================
     public async Task<IActionResult> Result(int id)
     {
+        var userId = _userManager.GetUserId(User);
+
         // 1. Lấy result từ DB
         var result = await _context.AssessmentResults
             .Include(x => x.UserAnswers)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId);
 
         if (result == null)
             return NotFound();
@@ -71,6 +84,6 @@ public class AssessmentController : Controller
             Score = top3.First(x => x.Key == c.Id).Value
         }).ToList();
 
-        return View("~/Views/Assessment/Result.cshtml",resultData);
+        return View("~/Views/Assessment/Result.cshtml", resultData);
     }
 }

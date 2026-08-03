@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Career_Guidance_Platform.Controllers
 {
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     public class ResumeController : Controller
     {
         private readonly AppDbContext _context;

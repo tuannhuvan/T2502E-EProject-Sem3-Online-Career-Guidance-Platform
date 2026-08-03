@@ -43,6 +43,14 @@ namespace Career_Guidance_Platform.Controllers
             {
                 if (thumbnailFile != null && thumbnailFile.Length > 0)
                 {
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                    var extension = Path.GetExtension(thumbnailFile.FileName).ToLower();
+                    if (!allowedExtensions.Contains(extension) || !ValidateImageSignature(thumbnailFile) || thumbnailFile.Length > 5 * 1024 * 1024)
+                    {
+                        ModelState.AddModelError(string.Empty, "File ảnh thumbnail không hợp lệ. Chỉ chấp nhận định dạng JPG, JPEG, PNG, WEBP và dung lượng tối đa 5MB.");
+                        return View("~/Views/Admin/ResumeTemplates/Create.cshtml", template);
+                    }
+
                     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "templates");
                     if (!Directory.Exists(uploadsFolder))
                     {
@@ -98,6 +106,14 @@ namespace Career_Guidance_Platform.Controllers
 
                     if (thumbnailFile != null && thumbnailFile.Length > 0)
                     {
+                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                        var extension = Path.GetExtension(thumbnailFile.FileName).ToLower();
+                        if (!allowedExtensions.Contains(extension) || !ValidateImageSignature(thumbnailFile) || thumbnailFile.Length > 5 * 1024 * 1024)
+                        {
+                            ModelState.AddModelError(string.Empty, "File ảnh thumbnail không hợp lệ. Chỉ chấp nhận định dạng JPG, JPEG, PNG, WEBP và dung lượng tối đa 5MB.");
+                            return View("~/Views/Admin/ResumeTemplates/Edit.cshtml", template);
+                        }
+
                         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "templates");
                         if (!Directory.Exists(uploadsFolder))
                         {
@@ -155,6 +171,34 @@ namespace Career_Guidance_Platform.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        private bool ValidateImageSignature(IFormFile file)
+        {
+            using (var stream = file.OpenReadStream())
+            {
+                if (stream.Length < 4) return false;
+                var buffer = new byte[12];
+                stream.Read(buffer, 0, buffer.Length);
+                
+                // JPEG
+                if (buffer[0] == 0xFF && buffer[1] == 0xD8 && buffer[2] == 0xFF)
+                    return true;
+                
+                // PNG
+                if (buffer[0] == 0x89 && buffer[1] == 0x50 && buffer[2] == 0x4E && buffer[3] == 0x47)
+                    return true;
+                
+                // GIF
+                if (buffer[0] == 0x47 && buffer[1] == 0x49 && buffer[2] == 0x46 && buffer[3] == 0x38)
+                    return true;
+                
+                // WEBP
+                if (buffer[0] == 0x52 && buffer[1] == 0x49 && buffer[2] == 0x46 && buffer[3] == 0x46 &&
+                    buffer[8] == 0x57 && buffer[9] == 0x45 && buffer[10] == 0x42 && buffer[11] == 0x50)
+                    return true;
+            }
+            return false;
         }
     }
 }
